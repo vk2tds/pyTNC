@@ -115,108 +115,108 @@ def input_loop():
 
 # Register our completer function
 completer = BufferAwareCompleter({
-    'list': ['files', 'directories'],
-    'print': ['byname', 'bysize'],
-    'stop': [],
-    '8bitconv': ['on', 'off'],          # Strip high-order bit when in convers mode
-    'AUtolf': ['on', 'off'],            # Send Linefeed to terminal after each CR
-    'AWlen': [7, 8],                    # Terminal character length (7/8)
-    'Ax2512v2': ['on', 'off'],          # Run as version 1.0 of AX.25
-    'AXDelay': [],                      # (O-180 * 0.1 set) Voice Repeater keyup delay
-    'AXHang': [],                       # (O-20 * 0.1 set) Voice Repeater hang time
-    'Beacon': ['every', 'after'],       # Every/After O-250 *lO sec
-    'BKondel': ['on', 'off'],           # Send BS SP BS for each DELETE character
-    'BText': [],                        # (120 char) Text to be sent for a beacon)
-    'BUdlist': ['on', 'off'],           # Stations in Lcalls are ignored
-    'CALibra': [],                      # Used to calibrate the builtin modem
-    'CALSet' : [],                      # Used with CALibrate
-    'CANline': [],                      # (Control-X) The Line Delete character
-    'CANPac': [],                       # (Ctrl-Y) Cancel current character
-    'CHech': [],                        # O-250 * 10 set) Idle link time out
-    'CLKADJ': [],                       # (O-65535) Real time clock adjustment constant
-    'CMDtime': [],                      # (O-255 set) transparent mode escape timer
-    'CMSG': ['on', 'off'],              # Don't send CTEXT when user links to your TNC
-    'COMmand': [],                      # Char to escape from CONVERS mode to command mode
-    'CONMode': ['convers', 'trans'],    # Mode to enter when link established
-    'Connect': [],                      # Establish Link with station via optional stations
-    'CONOk': ['on', 'off'],             # Allow stations to establish a link with your TNC
-    'CONPerm': ['on', 'off'],           # If ON always keep this link up (never Disconnect)
-    'CONStamp': ['on', 'off'],          # If ON print date & time stamp on connect messages
-    'CStatus':  [],                     # Prints the status of all links (Str%eams)
-    'CONVers': [],                      # Enter Converse mode from command mode
-    'CPactime': ['on', 'off'],          # Don? forward data based on timers (see Pactime)
-    'CR': ['on', 'off'],                # Append a Carriage Return to each data packet
-    'CText': [],                        # (120 Ch) Connect Message Text (see CMSG)
-    'DAytime': [],                      # Date and time for real time clock
-    'DAYUsa': ['on', 'off'],            # Print date as mm/dd/yy instead of dd-mm-yy
-    'DELete': ['on', 'off'],            # The character delete is BS ($08) not DEL ($7E')
-    'DIGipeat': ['on', 'off'],          # Allow stations to use you as a Digipeater
-    'Disconne': [],                     # Request a link disconnect from the other station
-    'Display': ['Async',                # (Async/Character/Id/Monitor/Timing) Parameters
+    'list': {'Commands': ['files', 'directories']},
+    'print': {'Commands': ['byname', 'bysize'],
+    'stop': {'Commands': [],
+    '8bitconv': {'Commands': ['on', 'off'], 'Default': 'Off'         # Strip high-order bit when in convers mode
+    'AUtolf': {'Commands': ['on', 'off'], 'Default': 'On'            # Send Linefeed to terminal after each CR
+    'AWlen': {'Commands': [7, 8],  'Default': '7'                   # Terminal character length (7/8)
+    'Ax2512v2': {'Commands': ['on', 'off'],  'Default': 'Off'          # Run as version 1.0 of AX.25
+    'AXDelay': {'Commands': [], 'Default': '0'                      # (O-180 * 0.1 set) Voice Repeater keyup delay
+    'AXHang': {'Commands': [],  'Default': '0'                      # (O-20 * 0.1 set) Voice Repeater hang time
+    'Beacon': {'Commands': ['every', 'after'],  'Default': 'Every 0'       # Every/After O-250 *lO sec
+    'BKondel': {'Commands': ['on', 'off'], 'Default': 'On'           # Send BS SP BS for each DELETE character
+    'BText': {'Commands': [],  'Default': 'Beacon Text'                       # (120 char) Text to be sent for a beacon)
+    'BUdlist': {'Commands': ['on', 'off'],  'Default': 'Off'           # Stations in Lcalls are ignored
+    'CALibra': {'Commands': [],                      # Used to calibrate the builtin modem
+    'CALSet' : {'Commands': [],                      # Used with CALibrate
+    'CANline': {'Commands': [], 'Default': '$18'                      # (Control-X) The Line Delete character
+    'CANPac': {'Commands': [], 'Default': '$19'                       # (Ctrl-Y) Cancel current character
+    'CHech': {'Commands': [], 'Default': '30'                        # O-250 * 10 set) Idle link time out
+    'CLKADJ': {'Commands': [], 'Default': '0'                      # (O-65535) Real time clock adjustment constant
+    'CMDtime': {'Commands': [], 'Default': '1'                      # (O-255 set) transparent mode escape timer
+    'CMSG': {'Commands': ['on', 'off'], 'Default': 'Off'              # Don't send CTEXT when user links to your TNC
+    'COMmand': {'Commands': [], 'Default': '$03'                      # Char to escape from CONVERS mode to command mode
+    'CONMode': {'Commands': ['convers', 'trans'], 'Default': 'Convers'    # Mode to enter when link established
+    'Connect': {'Commands': [],                      # Establish Link with station via optional stations
+    'CONOk': {'Commands': ['on', 'off'], 'Default': 'On'             # Allow stations to establish a link with your TNC
+    'CONPerm': {'Commands': ['on', 'off'], 'Default': 'Off'           # If ON always keep this link up (never Disconnect)
+    'CONStamp': {'Commands': ['on', 'off'], 'Default': 'Off'         # If ON print date & time stamp on connect messages
+    'CStatus':  {'Commands': [],                     # Prints the status of all links (Str%eams)
+    'CONVers': {'Commands': [],                      # Enter Converse mode from command mode
+    'CPactime': {'Commands': ['on', 'off'], 'Default': 'Off'         # Don? forward data based on timers (see Pactime)
+    'CR': {'Commands': ['on', 'off'], 'Default': 'On'                # Append a Carriage Return to each data packet
+    'CText': {'Commands': [],  'Default': 'Hello and Good Morning'                       # (120 Ch) Connect Message Text (see CMSG)
+    'DAytime': {'Commands': [],                      # Date and time for real time clock
+    'DAYUsa': {'Commands': ['on', 'off'], 'Default': 'Off'            # Print date as mm/dd/yy instead of dd-mm-yy
+    'DELete': {'Commands': ['on', 'off'], 'Default': 'Off'            # The character delete is BS ($08) not DEL ($7E')
+    'DIGipeat': {'Commands': ['on', 'off'], 'Default': 'On'          # Allow stations to use you as a Digipeater
+    'Disconne': {'Commands': [],                     # Request a link disconnect from the other station
+    'Display': {'Commands': ['Async',                # (Async/Character/Id/Monitor/Timing) Parameters
                 'Character', 
                 'Id', 
                 'Monitor',
                 'Timing'],
-    'DWait': [],                        # (O-250 * 10 msec) Delay to let digipeater repeat
-    'Echo': ['on', 'off'],              # Echo characters typed on keyboard to terminal
-    'Escape': ['on', 'off'],            # Don't translate ES@ character ($lB) to $ ($24:)
-    'Flow': ['on', 'off'],              # Don't print to terminal while user is typing
-    'FRack': [],                        # (l-15 set) Time needed to ack a packet per station
-    'FUlldup': ['on', 'off'],           # Operate in Simplex mode
-    'HEaderln': ['on', 'off'],          # Print the frame header and text on the same line
-    'HID': ['on', 'off'],               # Don't send an ID packet every 9.5 mins when active
-    'ID': [],                           # Force an ID packet (UI frame Via UNproto path)
-    'LCALLS': [],                       # (O-8 calls) to receive or ignore stations (BUDLIST)
-    'LCok': ['on', 'off'],              # Do not convert lower case to UPPER CASE on terminal
-    'LCSTREAM': ['on', 'off'],          # Convert the stream select specifer to Upper case
-    'LFadd': ['on', 'off'],             # Add a Line Feed after each CR send to the terminal
-    'MA11': ['on', 'off'],              # Monitor data frames as well as beacons
-    'MAXframe': [],                     # The window size for outstanding frames
-    'MCOM': ['on', 'off'],              # Monitor only data frames instead of all types
-    'MCon': ['on', 'off'],              # Don't monitor frames when linked to another station
-    'MFilter': [],                      # Up to 4 characters to be removed from monitored data
-    'MHClear': [],                      # Clear the calls Heard list
-    'MHeard': [],                       # Display the calls heard and date/time if clock set
-    'Monitor': ['on', 'off'],           # Monitor mode on - see BUDLIST, MALL, MCON, MSTAMP
-    'MRpt': ['on', 'off'],              # Display the digipeater path in monitored frames
-    'MStamp': ['on', 'off'],            # Monitored frames are Not time stamped
-    'MYAlias': [],                      # An identifier for a digipeater
-    'MYcall': [],                       # The station callsign for ID and linking
-    'NEwmode': ['on', 'off'],           # The TNC acts like a TNC I for changing modes
-    'NOmode': ['on', 'off'],            # If ON allow explicit mode change only
-    'NUcr': ['on', 'off'],              # Don't send NULLS ($00) after a CR
-    'NULf': ['on', 'off'],              # Don't send Nulls after a LF
-    'NULLS': [],                        # (O-30) Number of nulls to send as requested
-    'Paclen': [],                       # (O-255,0=256) size of the data field in a data frame
-    'PACTime': ['Every', 'After'],      # (Every/After O-250 *lOO ms) Data forwarding timer
-    'PARity': [0,1,2,3],                # (O-3) Terminal parity 0,2=None l=odd 3=even
-    'PASs': [],                         # (CTRL-V) char to allow any character to be typed
-    'PASSAll': ['on', 'off'],           # Accept only frames with valid CRCs
-    'RECOnnect': [],                    # Like Connect but to restablish a link via a new path
-    'REDisplay': [],                     # (CTRL-R) char to print the current input buffer
-    'RESET': [],                        # RESET bbRAM PARAMETERS TO DEFAULTS
-    'RESptime': [],                     # (O-250 * 100 ms) minimum delay for sending an ACK
-    'RESTART': [],                      # Perform a power on reset
-    'RETry': [],                        # (O-15) maximum number of retries for a frame
-    'Screenln': [],                     # (O-255) Terminal output width
-    'SEndpac': [],                      # (CR) Char to force a frame to be sent)
-    'STArt': [],                        # (CTRL-Q) the XON for data TO the terminal
-    'STOp': [],                         # (CTRL-S) the XOFF for data TO the terminal
-    'STREAMCa': ['on', 'off'],          # Don't show the callsign after stream id
-    'STREAMDbl': ['on', 'off'],         # Don't print the stream switch char twice (!!A)
-    'STReamsw': [],                     # Character to use to change streams (links)
-    'TRAce': ['on', 'off'],             # Hexidecimal trace mode is disabled
-    'TRANS': [],                        # The TNC enters Transparent data mode
-    'TRFlow': ['on', 'off'],            # Disable flow control to the Terminal (Trans mode)
-    'TRIes': [],                        # (O-15) set or display the current retry counter
-    'TXdelay': [],                      # (O-120 * 10ms) Keyup delay for the transmitter
-    'TXFlow': ['on', 'off'],            # Disable flow control to the TNC (Transparent mode)
-    'Unproto': [],                      # Path and address to send beacon data
-    'Users': [],                        # Sets the number of streams (links) allowed
-    'Xflow': ['on', 'off'],             # XON/XOFF Flow control enabled instead of hardware
-    'XMitok': ['on', 'off'],            # Allow transmitter to come on
-    'XOff': [],                         # (CTRL-S) Character to stop data from terminal
-    'XON': [],                          # (CTRL-Q) Character to start data from terminal
+    'DWait': {'Commands': [], 'Default': '16'                        # (O-250 * 10 msec) Delay to let digipeater repeat
+    'Echo': {'Commands': ['on', 'off'], 'Default': 'On'              # Echo characters typed on keyboard to terminal
+    'Escape': {'Commands': ['on', 'off'], 'Default': 'Off'            # Don't translate ES@ character ($lB) to $ ($24:)
+    'Flow': {'Commands': ['on', 'off'], 'Default': 'On'              # Don't print to terminal while user is typing
+    'FRack': {'Commands': [], 'Default': '3'                        # (l-15 set) Time needed to ack a packet per station
+    'FUlldup': {'Commands': ['on', 'off'], 'Default': 'Off'           # Operate in Simplex mode
+    'HEaderln': {'Commands': ['on', 'off'], 'Default': 'Off'          # Print the frame header and text on the same line
+    'HID': {'Commands': ['on', 'off'], 'Default': 'Off'               # Don't send an ID packet every 9.5 mins when active
+    'ID': {'Commands': [],                           # Force an ID packet (UI frame Via UNproto path)
+    'LCALLS': {'Commands': [], 'Default': ''                       # (O-8 calls) to receive or ignore stations (BUDLIST)
+    'LCok': {'Commands': ['on', 'off'], 'Default': 'On'              # Do not convert lower case to UPPER CASE on terminal
+    'LCSTREAM': {'Commands': ['on', 'off'], 'Default': 'On'          # Convert the stream select specifer to Upper case
+    'LFadd': {'Commands': ['on', 'off'], 'Default': 'Off'             # Add a Line Feed after each CR send to the terminal
+    'MA11': {'Commands': ['on', 'off'], 'Default': 'On'              # Monitor data frames as well as beacons
+    'MAXframe': {'Commands': [], 'Default': '4'                     # The window size for outstanding frames
+    'MCOM': {'Commands': ['on', 'off'], 'Default': 'Off'              # Monitor only data frames instead of all types
+    'MCon': {'Commands': ['on', 'off'], 'Default': 'Off'              # Don't monitor frames when linked to another station
+    'MFilter': {'Commands': [],                      # Up to 4 characters to be removed from monitored data
+    'MHClear': {'Commands': [],                      # Clear the calls Heard list
+    'MHeard': {'Commands': [],                       # Display the calls heard and date/time if clock set
+    'Monitor': {'Commands': ['on', 'off'], 'Default': 'On'          # Monitor mode on - see BUDLIST, MALL, MCON, MSTAMP
+    'MRpt': {'Commands': ['on', 'off'], 'Default': 'On'              # Display the digipeater path in monitored frames
+    'MStamp': {'Commands': ['on', 'off'], 'Default': 'Off'            # Monitored frames are Not time stamped
+    'MYAlias': {'Commands': [],                      # An identifier for a digipeater
+    'MYcall': {'Commands': [], 'Default': 'N0CALL'                       # The station callsign for ID and linking
+    'NEwmode': {'Commands': ['on', 'off'],  'Default': 'Off'          # The TNC acts like a TNC I for changing modes
+    'NOmode': {'Commands': ['on', 'off'], 'Default': 'Off'            # If ON allow explicit mode change only
+    'NUcr': {'Commands': ['on', 'off'], 'Default': 'Off'              # Don't send NULLS ($00) after a CR
+    'NULf': {'Commands': ['on', 'off'], 'Default': 'Off'              # Don't send Nulls after a LF
+    'NULLS': {'Commands': [], 'Default': '0'                        # (O-30) Number of nulls to send as requested
+    'Paclen': {'Commands': [], 'Default': '128'                       # (O-255,0=256) size of the data field in a data frame
+    'PACTime': {'Commands': ['Every', 'After'], 'Default': 'After 10'      # (Every/After O-250 *lOO ms) Data forwarding timer
+    'PARity': {'Commands': [0,1,2,3], 'Default': '3'                # (O-3) Terminal parity 0,2=None l=odd 3=even
+    'PASs': {'Commands': [], 'Default': '$16'                         # (CTRL-V) char to allow any character to be typed
+    'PASSAll': {'Commands': ['on', 'off'], 'Default': 'Off'           # Accept only frames with valid CRCs
+    'RECOnnect': {'Commands': [],                    # Like Connect but to restablish a link via a new path
+    'REDisplay': {'Commands': [], 'Default': '$12'                     # (CTRL-R) char to print the current input buffer
+    'RESET': {'Commands': [],                        # RESET bbRAM PARAMETERS TO DEFAULTS
+    'RESptime': {'Commands': [], 'Default': '12'                     # (O-250 * 100 ms) minimum delay for sending an ACK
+    'RESTART': {'Commands': [],                      # Perform a power on reset
+    'RETry': {'Commands': [], 'Default': '10'                        # (O-15) maximum number of retries for a frame
+    'Screenln': {'Commands': [], 'Default': '80'                     # (O-255) Terminal output width
+    'SEndpac': {'Commands': [], 'Default': '$0D'                      # (CR) Char to force a frame to be sent)
+    'STArt': {'Commands': [], 'Default': '$11'                        # (CTRL-Q) the XON for data TO the terminal
+    'STOp': {'Commands': [], 'Default': '$13'                         # (CTRL-S) the XOFF for data TO the terminal
+    'STREAMCa': {'Commands': ['on', 'off'], 'Default': 'Off'         # Don't show the callsign after stream id
+    'STREAMDbl': {'Commands': ['on', 'off'], 'Default': 'Off'         # Don't print the stream switch char twice (!!A)
+    'STReamsw': {'Commands': [], 'Default': '$7c'                     # Character to use to change streams (links)
+    'TRAce': {'Commands': ['on', 'off'], 'Default': 'Off'             # Hexidecimal trace mode is disabled
+    'TRANS': {'Commands': [],                        # The TNC enters Transparent data mode
+    'TRFlow': {'Commands': ['on', 'off'], 'Default': 'Off'            # Disable flow control to the Terminal (Trans mode)
+    'TRIes': {'Commands': [],                        # (O-15) set or display the current retry counter
+    'TXdelay': {'Commands': [], 'Default': '30'                      # (O-120 * 10ms) Keyup delay for the transmitter
+    'TXFlow': {'Commands': ['on', 'off'], 'Default': 'Off'            # Disable flow control to the TNC (Transparent mode)
+    'Unproto': {'Commands': [], 'Default': 'CQ'                      # Path and address to send beacon data
+    'Users': {'Commands': [], 'Default': '1'                        # Sets the number of streams (links) allowed
+    'Xflow': {'Commands': ['on', 'off'], 'Default': 'On'             # XON/XOFF Flow control enabled instead of hardware
+    'XMitok': {'Commands': ['on', 'off'], 'Default': 'On'            # Allow transmitter to come on
+    'XOff': {'Commands': [], 'Default': '$13'                         # (CTRL-S) Character to stop data from terminal
+    'XON': {'Commands': [], 'Default': '$11'                          # (CTRL-Q) Character to start data from terminal
 
 
 

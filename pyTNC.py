@@ -49,7 +49,26 @@ class BufferAwareCompleter:
         self.UC = {}
         for o in self.options:
             self.UC[o.upper()] = o 
+        self.options['Help'] = {}
+        self.options['Help']['Commands'] = list(self.options)
+
+        self.options['Help']['Help'] = 'Get help on commands'
+        self.UC['HELP'] = 'Help'
+
+        self.values = {}
+        for o in self.options:
+            if 'Default' in self.options[o]:
+                default = self.options[o]['Default']
+                if default.upper() == 'OFF':
+                    self.options[o]['Value'] = False
+                elif default.upper() == 'ON':
+                    self.options[o]['Value'] = True
+                else:
+                    self.options[o]['Value'] = self.options[o]['Default']
+
         self.current_candidates = []
+
+
 
     def complete(self, text, state):
         response = None
@@ -82,8 +101,11 @@ class BufferAwareCompleter:
                     else:
                         # later word
                         first = words[0]
-                        candidates = self.options[self.UC(first.upper)]['Commands']
-
+                        c = self.options[self.UC[first.upper()]]['Commands']
+                        candidates = [x.upper() for x in c]
+                        # print (candidates)
+                        #logging.debug('Xcandidates=%s',
+                        #          c)
                     if being_completed:
                         # match options with portion of input
                         # being completed
@@ -113,17 +135,54 @@ class BufferAwareCompleter:
         return response
 
 
+def input_process (line):
+
+    words = line.upper().split()
+    print (words)
+    if len(words) == 0:
+        return
+
+    if False:
+        True
+    elif words[0] == 'HELP':
+        if len(words) == 1:
+            print (completer.options['Help']['Help'])
+            return
+        if len(words) >= 2:
+            if words[1] in completer.UC:
+                uc = completer.UC[words[1]]
+                if 'Help' in completer.options[uc]:
+                    print (completer.options[uc]['Help'])
+                else:
+                    print ('No help available')
+        return 
+    elif words[0] == 'DUMP':
+        for o in completer.options:
+            if 'Value' in completer.options[o]:
+                print (('%s = %s') % ( o, completer.options[o]['Value']))
+        return
+    
+
+    if len(words) == 1 and words[0].upper() in completer.UC:
+        if 'Value' in completer.options[completer.UC[words[0]]]:
+            print (('%s = %s') % ( words[0], completer.options[completer.UC[words[0]]]['Value']))
+
+
+
+
 def input_loop():
     line = ''
     while line != 'stop':
         line = input('Prompt ("stop" to quit): ')
         print('Dispatch {}'.format(line))
+        input_process(line)
 
 # Register our completer function
 completer = BufferAwareCompleter({
     'list': {'Commands': ['files', 'directories']},
     'print': {'Commands': ['byname', 'bysize']}, 
     'stop': {'Commands': []}, 
+    'Dump': {'Commands': [], 'Help': 'Dump all values'}, # VK2TDS custom command
     '8bitconv': {'Commands': ['on', 'off'], 'Default': 'Off', 'Help': 'Strip high-order bit when in convers mode'},
     'AUtolf': {'Commands': ['on', 'off'], 'Default': 'On', 'Help': 'Send Linefeed to terminal after each CR'},
     'AWlen': {'Commands': [7, 8],  'Default': '7', 'Help': 'Terminal character length (7/8)'},

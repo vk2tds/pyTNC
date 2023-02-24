@@ -33,6 +33,7 @@ import gnureadline as readline
 #    import readline
 import logging
 import string
+from types import SimpleNamespace
 
 LOG_FILENAME = '/tmp/completer.log'
 logging.basicConfig(
@@ -50,14 +51,14 @@ class BufferAwareCompleter:
 
     def __init__(self, options):
         self.options = options
-        self.UC = {}
-        for o in self.options:
-            self.UC[o.upper()] = o 
-        self.options['Help'] = {}
-        self.options['Help']['Commands'] = list(self.options)
+        #self.UC = {}
+        #for o in self.options:
+        #    self.UC[o.upper()] = o 
+        self.options['HELP'] = {}
+        self.options['HELP']['Commands'] = list(self.options)
 
-        self.options['Help']['Help'] = 'Get help on commands'
-        self.UC['HELP'] = 'Help'
+        self.options['HELP']['HELP'] = 'Get help on commands'
+        #self.UC['HELP'] = 'Help'
 
         self.current_candidates = []
 
@@ -90,13 +91,15 @@ class BufferAwareCompleter:
                     if begin == 0:
                         # first word
                         #candidates = self.options.keys()
-                        candidates = self.UC.keys()
+                        candidates = self.options.keys()
                     else:
                         # later word
                         first = words[0]
-                        c = self.options[self.UC[first.upper()]]['Commands']
+                        #logging.debug (first)
+                        c = self.options[first.upper()]['Commands']
+                        #logging.debug (c)
                         candidates = [x.upper() for x in c]
-                        # print (candidates)
+                        #print (candidates)
                         #logging.debug('Xcandidates=%s',
                         #          c)
                     if being_completed:
@@ -128,68 +131,79 @@ class BufferAwareCompleter:
         return response
 
 
+returns = SimpleNamespace(**{'Ok':0, 'Eh': 1, 'Bad': 2, 'NotImplemented': 3})
+
 def input_process (line):
 
     words = line.upper().split()
     print (words)
     if len(words) == 0:
-        return
+        return returns.Ok
 
     if False:
         True
     elif words[0] == 'HELP':
         if len(words) == 1:
             print (completer.options['Help']['Help'])
-            return
+            return returns.Ok
         if len(words) >= 2:
-            if words[1] in completer.UC:
-                uc = completer.UC[words[1]]
+            if words[1] in completer.options:
+                uc = words[1].upper()
                 if 'Help' in completer.options[uc]:
                     print (completer.options[uc]['Help'])
+                    return returns.Ok
                 else:
                     print ('No help available')
-        return 
+                    return returns.Ok
+        return returns.Bad
     elif words[0] == 'DUMP':
+        if len(words) == 0:
+            for o in completer.options:
+                if 'Value' in completer.options[o]:
+                    #ToDo: Print True as On
+                    print (('%s = %s') % ( o, completer.options[o]['Value']))
+            return returns.Ok
         for o in completer.options:
-            if 'Value' in completer.options[o]:
+            if o == words[1] and 'Value' in completer.options[o]:
                 #ToDo: Print True as On
                 print (('%s = %s') % ( o, completer.options[o]['Value']))
-        return
+            return returns.Ok
+        return returns.Bad        
     
 
-    if len(words) == 1 and words[0].upper() in completer.UC:        # If a single word only, and it has a value,
-        if 'Value' in completer.options[completer.UC[words[0]]]:       # then print the value
+    if len(words) == 1 and words[0].upper() in completer.options:        # If a single word only, and it has a value,
+        if 'Value' in completer.options[words[0].upper()]:       # then print the value
             #ToDo: Print True as 'On'
-            print (('%s = %s') % ( words[0], completer.options[completer.UC[words[0]]]['Value']))
-            return
+            print (('%s = %s') % ( words[0], completer.options[words[0].upper()]['Value']))
+            return returns.Ok
     
-        if not 'Default' in completer.options[completer.UC[words[0]]]:   # We are a command
+        if not 'Default' in completer.options[words[0].upper()]:   # We are a command
             if False:
                 True
             elif words[0] == 'CALIBRA':
-                return
+                return returns.NotImplemented
             elif words[0] == 'CALSET':
-                return
+                return returns.NotImplemented
             elif words[0] == 'CSTATUS':
-                return
+                return returns.NotImplemented
             elif words[0] == 'CONVERS':
-                return
+                return returns.NotImplemented
             elif words[0] == 'DISCONNE':
-                return
+                return returns.NotImplemented
             elif words[0] == 'ID':
-                return
+                return returns.NotImplemented
             elif words[0] == 'MHCLEAR':
-                return
+                return returns.NotImplemented
             elif words[0] == 'MHEARD':
-                return
+                return returns.NotImplemented 
             elif words[0] == 'RESTART':
-                return
+                return returns.NotImplemented
             elif words[0] == 'TRANS':
-                return
+                return returns.NotImplemented
 
-    if len(words) > 1 and words[0].upper() in completer.UC:
+    if len(words) > 1 and words[0].upper() in completer.options:
         # Arbitary length strings
-        uc = completer.UC[words[0]]
+        uc = words[0].upper()
         if 'Minimum' in completer.options[uc]:
             if completer.options[uc]['Minimum'] == -1:
                 length = len(words[0]) + 1
@@ -197,44 +211,44 @@ def input_process (line):
                 new_words.pop(0) # remove the first item
                 new_words = " ".join(new_words)
                 completer.options[uc]['Value'] = new_words
-            return 
+                return returns.Ok
+            return returns.Bad
 
 
-    if len(words) == 2 and words[0].upper() in completer.UC:
+    if len(words) == 2 and words[0].upper() in completer.options:
         # Start with two words, and go from there 
 
         # Start with On/Off
-        uc = completer.UC[words[0]]
+        uc = words[0].upper()
         if 'Default' in completer.options[uc]:
             default = completer.options[uc]['Default']
             if words[1].upper() == 'ON' and 'On' in completer.options[uc]['Commands']:
                 completer.options[uc]['Value'] = True
-                return
+                return returns.Ok
             if words[1].upper() == 'OFF' and 'Off' in completer.options[uc]['Commands']:
                 completer.options[uc]['Value'] = False
-                return
+                return returns.Ok
             if len(default) == 3 and default[0] == '$' and len(words[1]) == 3:
                 # We need to enter a HEX value, of the form $NN
                 if words[1][0] == '$' and is_hex(words[1][1:]):
                     completer.options[uc]['Value'] = words[1]
-                    return                     
+                    return returns.Ok                    
 
   
-    max = {'CMDTIME': 255, 'DWAIT': 250, 'AXDELAY': 180, 'AXHANG': 20, 'AWLEN': 8, 'CHECK': 250, 'CLKADJ': 65535,
-        'FRACK': 15, 'MAXFRAME': 6, 'NULLS': 30, 'PACLEN': 255, 'RESPTIME': 250, 'RETRY':15,
-        'SCREENLN': 255, 'USERS': 16, 'TXDELAY': 120, 'PARITY': 3}               
-    if len(words) == 2 and words[0].upper() in max:
-        uc = completer.UC[words[0]]
+    if len(words) == 2:
+        uc = words[0].upper()
         # Commands in the form 'TXDELAY 20'
-        number = int (words[1])
-        if number < 0: return # Minimum should be 0
-        if number == 0 and uc == 'FRACK': #except for FRACK where minimum should be 1
-            return 
-        if number <7 and uc == 'AWLEN': 
-            return 
-        completer.options[uc]['Value'] = number   
-        return 
-        #ToDo: WhatIf other defaults?
+        if words[1].isnumeric():
+            number = int (words[1])
+            if 'Min' in completer.options[uc] and 'Max' in completer.options[uc]:
+                if number < completer.options[uc]['Min']: 
+                    return returns.Bad
+                if number > completer.options[uc]['Max']: 
+                    return returns.Bad
+                completer.options[uc]['Value'] = number   
+                return returns.Ok
+
+    return returns.Eh
 
     print ('Err: Did not find %s' %(words))
 
@@ -246,10 +260,15 @@ def input_loop():
         #line = input('Prompt ("stop" to quit): ')
         line = input('cmd: ')
         print('Dispatch {}'.format(line))
-        input_process(line)
+        r = input_process(line)
+        if r == returns.Eh:
+            print ('?EH')
+        elif r == returns.Bad:
+            print ('?BAD')
 
-# Register our completer function
-completer = BufferAwareCompleter({
+
+
+TNC2_ROM = {
     'list': {'Commands': ['files', 'directories']},
     'print': {'Commands': ['byname', 'bysize']}, 
     'stop': {'Commands': []}, 
@@ -353,7 +372,17 @@ completer = BufferAwareCompleter({
     'XMitok': {'Commands': ['On', 'Off'], 'Default': 'On', 'Help': 'Allow transmitter to come on'},
     'XOff': {'Commands': [], 'Default': '$13', 'Help': '(CTRL-S) Character to stop data from terminal'},
     'XON': {'Commands': [], 'Default': '$11', 'Help': '(CTRL-Q) Character to start data from terminal'},
-})
+}
+
+TNC2 = {}
+for index in TNC2_ROM:
+    TNC2[index.upper()] = TNC2_ROM[index]
+    TNC2[index.upper()]['Display'] = index
+
+
+
+# Register our completer function
+completer = BufferAwareCompleter(TNC2)
 
 
 readline.set_completer(completer.complete)

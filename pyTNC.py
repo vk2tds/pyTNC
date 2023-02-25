@@ -442,20 +442,94 @@ TNC2_ROM = {
 
 
 def _on_receive(interface, frame, match=None):
-   logging.debug ('OnReceive')
-   # interface = ax25int above
-   # frame = the incoming UI frame (aioax25.frame.AX25UnnumberedInformationFrame)
-   # match = Regular expression Match object, if regular expressions were used in
-   #         the bind() call.
-   print ('_on_receive')
-   print (frame)
-   pass
+    # NOTE: Make sure the kissdevice lines up with the one you wnat to listen too
+
+    # interface = ax25int above
+    # frame = the incoming UI frame (aioax25.frame.AX25UnnumberedInformationFrame)
+    # match = Regular expression Match object, if regular expressions were used in
+    #         the bind() call.
+    print ('_on_receive')
+    print (frame.header)
+    print (frame.header.destination)
+    print (frame.header.source)
+    print (frame.header.repeaters)
+    print (frame.header.cr)     # cd = Command Response bit
+    print (frame.header.src_cr)
+    print (frame.control)
+    print (frame.pid)
+    print (frame.frame_payload)
+    print (frame)
+    #https://stackoverflow.com/questions/70181515/how-to-have-a-comfortable-e-g-gnu-readline-style-input-line-in-an-asyncio-tas
+
+    if completer.options['TRACE']['Value']:
+        # Trace mode enabled.
+        bytes = frame.__bytes__() 
+        paclen = len(bytes)
+        print (paclen)
+        print (    'byte  ------------hex display------------ -shifted ASCII-- -----ASCII------')
+        offset = 0
+        #6, 42, 59
+
+        while offset < paclen:
+            # deal with the string as a list
+            line = list(('%03x                                                                        ' % (offset)))
+            i = 0
+            hpos = 6
+            sapos = 42
+            apos = 59
+            hexcount = 0 
+            #print ('Offset %s' % (offset))
+            while (offset + i < paclen) and (i < 16):
+                #print ('Offset %s %s' % (offset, i))
+                ascii = bytes[offset+i]
+                hex = "{:02x}".format(ascii)
+                line [hpos] = hex[0]
+                line [hpos+1] = hex [1]
+                hpos += 2
+                hexcount += 1
+
+                if hexcount == 4: 
+                    hexcount = 5
+                elif hexcount == 9:
+                    hexcount = 10
+                elif hexcount == 14:
+                    hexcount = 15
+
+                if chr(bytes[offset+i] >> 1).isprintable():
+                    line [sapos] = chr(bytes[offset+i] >> 1)
+                else:
+                    line[sapos] = '.'
+                sapos += 1
+
+                #print ('apos %s' %(apos))
+                if chr(bytes[offset+i]).isprintable():
+                    line [apos] = chr(bytes[offset+i])
+                else:
+                    line[apos] = '.'
+                apos += 1
+                i += 1
+            offset += 0x10
+
+            #print (line)
+            line = "".join(line)
+            print (line)
+
+
+
+        print ()
+
+
+
+
+
+    pass
 
 
 
 
 def start_ax25():
     global logging
+    global ax25int
 
     loop = asyncio.get_event_loop()
 
@@ -476,7 +550,7 @@ def start_ax25():
 
 
     ax25int = aioax25.interface.AX25Interface(
-    kissport=kissdevice[2],
+    kissport=kissdevice[0],         # 0 = HF; 2 = USB
     loop=loop, log=logging.getLogger('ax25.interface')
     )
 
@@ -530,6 +604,13 @@ def init():
             input_process (line, display=False)
 
 
+    # Custom startup for debugging...
+    for custom in ('TRACE ON', ''):
+        input_process (custom, display=True)
+
+
+
+
     # Prompt the user for text
 
 
@@ -551,7 +632,7 @@ async def main_async():
             print ('?BAD')
 
 
-        print("got chunk: ", chunk)
+        #print("got chunk: ", chunk)
 
 
 def event_loop(loop):

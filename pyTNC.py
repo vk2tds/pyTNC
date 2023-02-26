@@ -42,6 +42,7 @@ from aioax25.signal import Signal
 from aioax25.interface import AX25Interface
 from aioax25.frame import AX25UnnumberedInformationFrame
 from threading import Thread
+import re
 
 
 
@@ -165,6 +166,7 @@ def to_user (command, old, new):
 
 
 def input_process (line, display=True):
+    
     words = line.upper().split()
     if len(words) == 0:
         return returns.Ok
@@ -211,7 +213,24 @@ def input_process (line, display=True):
                             #ToDo: Print True as On
                             if display == True: to_user (o, None, completer.options[o]['Value'])
             return returns.Ok
-        return returns.Bad        
+        return returns.Bad
+    elif words[0] == 'LCALLS':
+        # special case - blank with %
+        if len(words) > 1:
+            completer.options['LCALLS']['Value'] = ''
+            return returns.Ok
+        else:
+            if words[1][0] == '%' or words[1][0] == '&':
+                completer.options['LCALLS']['Value'] = ''
+                return returns.Ok
+    elif words[0] == 'CTEXT':
+        # special case - blank with %
+        if len(words) > 1:
+            if words[1][0] == '%' or words[1][0] == '&':
+                completer.options['CTEXT']['Value'] = ''
+                return returns.Ok
+            
+
     
 
     if len(words) == 1 and words[0].upper() in completer.options:        # If a single word only, and it has a value,
@@ -325,6 +344,7 @@ TNC2_ROM = {
     '8bitconv': {'Commands': ['On', 'Off'], 'Group': 'A', 'Default': 'Off', 'Help': 'Strip high-order bit when in convers mode'},
     'ANSWRQRA': {'Commands': ['On', 'Off'], 'Group': 'A', 'Default': 'On', 'Help': 'Setting ANSWRQRA  to OFF  disables the TNC\'s  ping-response function'},
     'ACKPRIOR': {'Commands': ['On', 'Off'], 'Group': 'L', 'Default': 'On', 'Help': 'When ACKPRIOR is  ON, acknowledgments have priority'},
+    'ADRdisp': {'Commands': ['On', 'Off'], 'Group': 'M', 'Default': 'On', 'Help': 'Address headers on monitored frames will be displayed.'},
     'AUtolf': {'Commands': ['On', 'Off'], 'Group': 'A', 'Default': 'On', 'Help': 'Send Linefeed to terminal after each CR'},
     'AWlen': {'Commands': [7, 8], 'Group': 'A',  'Default': '7', 'Min': 7, 'Max': 8, 'Help': 'Terminal character length (7/8)'},
     'Ax2512v2': {'Commands': ['On', 'Off'], 'Group': 'L',  'Default': 'Off', 'Help': 'Run as version 1.0 of AX.25'},
@@ -344,7 +364,7 @@ TNC2_ROM = {
     'CLKADJ': {'Commands': [], 'Group': 'T', 'Default': '0', 'Min': 0, 'Max': 65536, 'Help': '(O-65535) Real time clock adjustment constant'},
     'CMDtime': {'Commands': [], 'Group': 'T', 'Default': '1', 'Min': 0, 'Max': 255, 'Help': '(O-255 set) transparent mode escape timer'},
     'CMSG': {'Commands': ['On', 'Off'], 'Group': 'I', 'Default': 'Off', 'Help': 'Don\'t send CTEXT when user links to your TNC'},
-    'CMSG': {'Commands': ['On', 'Off'], 'Group': 'I', 'Default': 'Off', 'Help': 'Ring a bell on Connect'},
+    'CBELL': {'Commands': ['On', 'Off'], 'Group': 'I', 'Default': 'Off', 'Help': 'Ring a bell on Connect'},
     'COMmand': {'Commands': [], 'Group': 'C', 'Default': '$03', 'Help': 'Char to escape from CONVERS mode to command mode'},
     'CONMode': {'Commands': ['convers', 'trans'], 'Group': 'L', 'Default': 'Convers', 'Help': 'Mode to enter when link established'},
     'Connect': {'Commands': [], 'Help': 'Establish Link with station via optional stations'},
@@ -357,9 +377,9 @@ TNC2_ROM = {
     'CMSGDISC': {'Commands': ['On', 'Off'], 'Group': 'I', 'Default': 'Off', 'Help': 'Automatic disconnect'},
     'CPactime': {'Commands': ['On', 'Off'], 'Group': 'T', 'Default': 'Off', 'Help': 'Don\'t forward data based on timers (see Pactime)'},
     'CR': {'Commands': ['On', 'Off'], 'Group': 'L', 'Default': 'On', 'Help': 'Append a Carriage Return to each data packet'},
-    'CText': {'Commands': [], 'Group': 'I',  'Default': 'Hello and Good Morning', 'Minimum': -1, 'Help': '(120 Ch) Connect Message Text (see CMSG)'},
+    'CText': {'Commands': [], 'Group': 'I',  'Default': '%', 'Minimum': -1, 'Help': '(120 Ch) Connect Message Text (see CMSG)'},
     'DAytime': {'Commands': [], 'Help': 'Date and time for real time clock'},
-    'DAYUsa': {'Commands': ['On', 'Off'], 'Group': 'M', 'Default': 'Off', 'Help': 'Print date as mm/dd/yy instead of dd-mm-yy'},
+    'DAYUsa': {'Commands': ['On', 'Off'], 'Group': 'M', 'Default': 'On', 'Help': 'Print date as mm/dd/yy instead of dd-mm-yy'},
     'DELete': {'Commands': ['On', 'Off'], 'Group': 'C', 'Default': 'Off', 'Help': 'The character delete is BS ($08) not DEL ($7E)'},
     'DIGipeat': {'Commands': ['On', 'Off'], 'Group': 'L', 'Default': 'On', 'Help': 'Allow stations to use you as a Digipeater'},
     'Disconne': {'Commands': [], 'Help': 'Request a link disconnect from the other station'},
@@ -379,15 +399,16 @@ TNC2_ROM = {
     'HEaderln': {'Commands': ['On', 'Off'], 'Group': 'M', 'Default': 'Off', 'Help': 'Print the frame header and text on the same line'},
     'HID': {'Commands': ['On', 'Off'], 'Group': 'I', 'Default': 'Off', 'Help': 'Don\'t send an ID packet every 9.5 mins when active'},
     'ID': {'Commands': [], 'Help': 'Force an ID packet (UI frame Via UNproto path)'},
-    'LCALLS': {'Commands': [], 'Group': 'M', 'Default': '', 'Minimum': -1, 'Help': '(O-8 calls) to receive or ignore stations (BUDLIST)'},
+    'LCALLS': {'Commands': [], 'Group': 'M', 'Default': '%', 'Minimum': -1, 'Help': '(O-8 calls) to receive or ignore stations (BUDLIST)'},
     'LCok': {'Commands': ['On', 'Off'], 'Group': 'A', 'Default': 'On', 'Help': 'Do not convert lower case to UPPER CASE on terminal'},
     'LCSTREAM': {'Commands': ['On', 'Off'], 'Group': 'C', 'Default': 'On', 'Help': 'Convert the stream select specifer to Upper case'},
     'LFIGNORE': {'Commands': ['On', 'Off'], 'Group': 'L', 'Default': 'Off', 'Help': 'TNC will ignore <LF> characters'},
     'LFadd': {'Commands': ['On', 'Off'], 'Group': 'L', 'Default': 'Off', 'Help': 'Add a Line Feed after each CR send to the terminal'},
-    'MA11': {'Commands': ['On', 'Off'], 'Group': 'M', 'Default': 'On', 'Help': 'Monitor data frames as well as beacons'},
+    'MAll': {'Commands': ['On', 'Off'], 'Group': 'M', 'Default': 'On', 'Help': 'Monitor data frames as well as beacons'},
     'MAXframe': {'Commands': [], 'Group': 'L', 'Default': '4', 'Min': 1, 'Max': 7, 'Help': 'The window size for outstanding frames'},
     'MCOM': {'Commands': ['On', 'Off'], 'Group': 'M', 'Default': 'Off', 'Help': 'Monitor only data frames instead of all types'},
-    'MCon': {'Commands': ['On', 'Off'], 'Group': 'N', 'Default': 'Off', 'Help': 'Don\'t monitor frames when linked to another station'},
+    'MCon': {'Commands': ['On', 'Off'], 'Group': 'M', 'Default': 'Off', 'Help': 'Don\'t monitor frames when linked to another station'},
+    'MRpt': {'Commands': ['On', 'Off'], 'Group': 'M', 'Default': 'On', 'Help': 'Dont show monitored intermediate stations when off'},
     'MNONAX25': {'Commands': ['On', 'Off'], 'Group': 'N', 'Default': 'Off', 'Help': 'Monitors  AX.25  Level   2  Protocol  frames  with   no higher-level protocols (PID = F0)'},
     'MFilter': {'Commands': [], 'Group': 'I', 'Minimum': -1, 'Help': 'Up to 4 characters to be removed from monitored data with commas'},
     'MHClear': {'Commands': [], 'Help': 'Clear the calls Heard list'},
@@ -441,6 +462,264 @@ TNC2_ROM = {
 }
 
 
+def _on_receive_trace (frame): 
+    bytes = frame.__bytes__() 
+    paclen = len(bytes)
+    print (paclen)
+    print (    'byte  ------------hex display------------ -shifted ASCII-- -----ASCII------')
+    offset = 0
+    #6, 42, 59
+
+    while offset < paclen:
+        # deal with the string as a list
+        line = list(('%03x                                                                        ' % (offset)))
+        i = 0
+        hpos = 6
+        sapos = 42
+        apos = 59
+        hexcount = 0 
+        #print ('Offset %s' % (offset))
+        while (offset + i < paclen) and (i < 16):
+            #print ('Offset %s %s' % (offset, i))
+            ascii = bytes[offset+i]
+            hex = "{:02x}".format(ascii)
+            line [hpos] = hex[0]
+            line [hpos+1] = hex [1]
+            hpos += 2
+            hexcount += 1
+
+            if hexcount == 4 or hexcount == 8 or hexcount == 12:
+                hpos += 1
+
+            if chr(bytes[offset+i] >> 1).isprintable():
+                line [sapos] = chr(bytes[offset+i] >> 1)
+            else:
+                line[sapos] = '.'
+            sapos += 1
+
+            #print ('apos %s' %(apos))
+            if chr(bytes[offset+i]).isprintable():
+                line [apos] = chr(bytes[offset+i])
+            else:
+                line[apos] = '.'
+            apos += 1
+            i += 1
+        offset += 0x10
+
+        #print (line)
+        line = "".join(line)
+        print (line)
+
+modeConverse = 0
+modeTransparent = 1
+modeCommand = 2
+
+
+tnc = {}
+tnc['Mode'] = modeConverse
+tnc['Connected'] = False
+
+
+
+
+
+
+def _on_receive_monitor (frame):
+
+    calls = re.split (r"[*>,]", str(frame.header))
+    calls = [value for value in calls if value != '']
+    lcalls = completer.options['LCALLS']['Value'].split(',')
+    budlist = completer.options['BUDLIST']['Value']
+    mall = completer.options['MALL']['Value']
+    mcon = completer.options['MCON']['Value']
+    mrpt = completer.options['MRPT']['Value']
+    headerln = completer.options['HEADERLN']['Value']
+    adrdisp = completer.options['ADRDISP']['Value']
+    trace = completer.options['TRACE']['Value']
+
+
+    if tnc['Mode'] == modeTransparent:
+        # No Monitoring
+        return False
+
+    displayPacket = False
+
+    if tnc['Connected']:
+        if mcon == False:
+            # do not display in Connected mode if mcon = False
+            return
+
+    print (calls)
+    print (lcalls)
+    print (budlist)
+    if set(calls).intersection(lcalls):
+        if budlist == True:
+            # Monitor these
+            True
+        else:
+            # Ignore these
+            print ('Ignore BUDLIST')
+            return
+    else:
+        if budlist == True:
+            # Ignore these
+            print ('Ignore BUDLIST')
+            return
+        else:
+            # Monitor these
+            True
+
+    if mall:
+        # mon connected and unconnected
+        True
+    else:
+        # mon unconnected only
+        if type(frame) is aioax25.frame.AX25UnnumberedInformationFrame:
+            True
+        else:
+            return
+
+    if completer.options['MONITOR']['Value']: # MONITOR ON
+        True
+    else:
+        # If Monitor is OFF, Return
+        return
+        
+    #MRPT On: WB9FLW>AD7I,K9NG*,N2WX-7:Hi Paul.
+    #MRPT OFF: WB9FLW>AD7I:Hi Paul.
+    if mrpt:
+        callsigns = frame.header.source.__str__() + '>' + frame.header.destination.__str__() + ',' + frame.header.repeaters.__str__()
+    else:
+        callsigns = frame.header.source.__str__() + '>' + frame.header.destination.__str__()
+
+
+    c = frame.control
+    # x1 = RR; x5 = RNR, x9 = REJ, 03 = UI, 0F = DM, 2F = SABM, 43 = DISC, 63 = UA, 87 = FRMR, even = I
+    if False:
+        True
+    elif (c & 0x0F) == 0x01:
+        control = 'RR'
+    elif (c & 0x0F) == 0x05:
+        control = 'RNR'
+    elif (c & 0x0F) == 0x09:
+        control = 'REJ'
+    elif c == 0x03:
+        control = 'UI'
+    elif c == 0x0F:
+        control = 'DM'
+    elif c == 0x2F:
+        control = 'SABM'
+    elif c == 0x43:
+        control = 'DISC'
+    elif c == 0x63:
+        control = 'UA'
+    elif c == 0x87:
+        control = 'FRMR'
+    elif (c & 0x01) == 0x00:
+        control = 'I'
+
+    #ToDo: Check Polarity
+    if frame.header.cr:
+        control = control + ' C'
+    else:
+        control = control + ' R'
+
+    #ToDo: Check Polarity
+    if frame.pf:
+        control = control + ' P'
+    else:
+        control = control + ' F'
+
+    if (c & 0x01) == 0x00:
+        # Sequenced I frames
+        control = control + ' ToDo-Sn'
+
+    if  ((c & 0x01) == 0x00) or ((c & 0x0F) == 0x01) or ((c & 0x0F) == 0x05) or ((c & 0x0F) == 0x09):
+        # I, REJ, RNR, RR
+        control = control + ' ToDo-Rn'
+
+    control = ' <' + control + '>:'
+    
+
+    #ADRdisp - default ON - N4UQQ>N4UQR,TPA5* <UI R>:This is a monitored frame.
+    if headerln:
+        #HEADERLN On: KV7D>N2WX: Go ahead and transfer the file.
+        if adrdisp:
+            print (callsigns + control)
+        print (frame.payload)
+    else:
+        #HEADERLN Off: N2WX>KV7D:
+        #           Sorry, I'm not quite ready yet.
+        if adrdisp:
+            print (callsigns + control + str(frame.payload.decode()))
+        else:
+            print (frame.payload)
+    
+
+
+
+
+    #MFILTER Comma separated characters to totally ignore
+
+    #MSTAMP WB9FLW>AD7I,K9NG*,N2WX-71 05/24/97 16:53:19]:Hi Paul.
+    #UTC - display in UTC. Default OFF
+
+    #MTRANS Monitoring enabled in TRANS mode *****
+
+    #MONITOR - 1 = No characters > 0x7F; 2 = MONITOR ON
+
+    #ADRdisp - default ON - N4UQQ>N4UQR,TPA5* <UI R>:This is a monitored frame.
+
+    #AMONTH - Default On - All months = three letter alpha
+
+    #CONRPT - if on, LTEXT -> L3TEXT, STEXT, CTEXT (if CMSG = On) sent on connection
+    #    break if CMSGDISC????
+
+    #CONStamp - Connection messages are time stamped
+    #    *** CONNECTED to KL7EV 105128/97 16:28:31J
+
+    # K === Converse
+
+    #CPOLL?
+
+    #CSTATUS - Status of connection streams
+
+    #CTEXT
+
+    #DGPscall
+
+    #Digipeat - Complex
+
+    #EBEACON - Default OFF - BTEXT echoed to terminal on transmission
+
+    #ENCRYPT, ENSHIFT
+
+    #FSCreen - Display command generates 4 columns - default ON
+
+    #Group - default Off - group monitoring (MASTERM) - Ignore this command
+
+    #STATUS
+
+    if trace:
+        # Trace mode enabled.
+        _on_receive_trace (frame)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 def _on_receive(interface, frame, match=None):
     # NOTE: Make sure the kissdevice lines up with the one you wnat to listen too
 
@@ -455,68 +734,24 @@ def _on_receive(interface, frame, match=None):
     print (frame.header.repeaters)
     print (frame.header.cr)     # cd = Command Response bit
     print (frame.header.src_cr)
-    print (frame.control)
+    print ('Control %x' %(frame.control))
     print (frame.pid)
     print (frame.frame_payload)
     print (frame)
+    print (str(type(frame)))
+    print (type(frame) is aioax25.frame.AX25UnnumberedInformationFrame)
     #https://stackoverflow.com/questions/70181515/how-to-have-a-comfortable-e-g-gnu-readline-style-input-line-in-an-asyncio-tas
 
-    if completer.options['TRACE']['Value']:
-        # Trace mode enabled.
-        bytes = frame.__bytes__() 
-        paclen = len(bytes)
-        print (paclen)
-        print (    'byte  ------------hex display------------ -shifted ASCII-- -----ASCII------')
-        offset = 0
-        #6, 42, 59
 
-        while offset < paclen:
-            # deal with the string as a list
-            line = list(('%03x                                                                        ' % (offset)))
-            i = 0
-            hpos = 6
-            sapos = 42
-            apos = 59
-            hexcount = 0 
-            #print ('Offset %s' % (offset))
-            while (offset + i < paclen) and (i < 16):
-                #print ('Offset %s %s' % (offset, i))
-                ascii = bytes[offset+i]
-                hex = "{:02x}".format(ascii)
-                line [hpos] = hex[0]
-                line [hpos+1] = hex [1]
-                hpos += 2
-                hexcount += 1
-
-                if hexcount == 4: 
-                    hexcount = 5
-                elif hexcount == 9:
-                    hexcount = 10
-                elif hexcount == 14:
-                    hexcount = 15
-
-                if chr(bytes[offset+i] >> 1).isprintable():
-                    line [sapos] = chr(bytes[offset+i] >> 1)
-                else:
-                    line[sapos] = '.'
-                sapos += 1
-
-                #print ('apos %s' %(apos))
-                if chr(bytes[offset+i]).isprintable():
-                    line [apos] = chr(bytes[offset+i])
-                else:
-                    line[apos] = '.'
-                apos += 1
-                i += 1
-            offset += 0x10
-
-            #print (line)
-            line = "".join(line)
-            print (line)
+    _on_receive_monitor(frame)
 
 
 
-        print ()
+
+
+
+
+
 
 
 
@@ -600,12 +835,15 @@ def init():
     # First, process defaults
     for o in completer.options:
         if 'Default' in completer.options[o]:
+            #print (o)
             line = o + ' ' + completer.options[o]['Default']
             input_process (line, display=False)
+    #print (completer.options['LCALLS'])
+    #print (completer.options['MCOM'])
 
 
     # Custom startup for debugging...
-    for custom in ('TRACE ON', ''):
+    for custom in ('TRACE ON', 'DAYUSA OFF'):
         input_process (custom, display=True)
 
 

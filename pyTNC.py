@@ -46,6 +46,7 @@ from threading import Thread
 import commands 
 
 import re
+import eliza # for testing
 
 
 
@@ -65,17 +66,7 @@ class BufferAwareCompleter:
 
     def __init__(self, options):
         self.options = options
-        #self.UC = {}
-        #for o in self.options:
-        #    self.UC[o.upper()] = o 
-        #self.options['HELP'] = {}
-        #self.options['HELP']['Commands'] = list(self.options)
-
-        #self.options['HELP']['Help'] = 'Get help on commands'
-        #self.UC['HELP'] = 'Help'
-
         self.current_candidates = []
-
 
 
     def complete(self, text, state):
@@ -173,12 +164,47 @@ class connection:
         self.callFrom = callFrom
         self.callTo = callTo
         self.callDigi = callDigi
+        self.therapist = None
+        self.connectedSession = False
+
+        self.cbConnected = None
+        self.cbDisconnected = None
+        self.cbSent = None
+        self.cbReceived = None
 
         print ('Manage a connection from %s to %s via %s' % (callFrom, callTo, callDigi))
 
+
+    def connect(self):
+        if self.callTo == 'ELIZA': 
+            self.therapist = eliza.Eliza()
+            self.connected = True
+
     @property
     def connected(self):
-        return False
+        return self.connectedSession
+    
+    @connected.setter
+    def connected(self, status):
+        self.connectedSession = status
+        if status == True:
+            if self.cbConnected:
+                self.cbConnected()
+        elif status == False:
+            if self.cbDisconnected:
+                self.cbDisconnected()
+
+    def send(self, text):
+        if self.callTo == 'ELIZA':
+            reply = self.therapist.respond(text)
+            if self.cbSent:
+                self.cbSent(text)
+            if self.cbReceived:
+                self.cbReceived(reply)
+
+
+
+
 
 def input_cleanup (words):
     global completer
@@ -191,7 +217,6 @@ def input_cleanup (words):
         for o in completer.options:
             if completer.options[o]['Shorter'] == words[0]:
                 words[0] = o
-                print ('Found %s' % (o))
     if not words[0] in completer.options:
         #ToDo: Remove one character at a time to see if there is a match            
         True
@@ -225,7 +250,7 @@ def input_cleanup (words):
             if words[2] == 'VIA' or words[2] == 'V':
                 words[2] = 'VIA'
 
-    print (words)
+    #print (words)
     return words
 
 
@@ -306,7 +331,6 @@ def input_process (line, display=True):
         words = " ".join(words).upper()
         calls = re.split (r"[ ,]", words)
         calls = [value for value in calls if value != '']
-        print (calls)
         callFrom = completer.options['MYCALL']['Value']
         callTo = calls[1]
         callDigi = []
@@ -314,15 +338,17 @@ def input_process (line, display=True):
             if calls[2] == 'VIA':
                 callDigi = calls[3:]
             else:
-                print ('No Via')
-                print (calls[2])
                 # The third word *MUST* be 'VIA' of there are digipeaters
                 return returns.Eh    
             if len(calls) == 3:
-                print ('Three words')
                 # We need digipeaters if there is a 'Via'
                 return returns.Eh    
         streams['A'] = connection (callFrom, callTo, callDigi)
+        streams['A'].cbConnected = tncConnected
+        streams['A'].cbDisconnected = tncDisconnected
+        streams['A'].cbReceived = tncReceived
+        streams['A'].cbSent = tncSend
+        streams['A'].connect() # Fake it till you make it
         return returns.Ok
     elif words[0] == 'RECONNECT':
         return returns.NotImplemented
@@ -349,7 +375,7 @@ def input_process (line, display=True):
                             scalls += "," + ",".join(streams[s].callDigi)
                     else:
                         scalls = 'NO CONNECTION'
-                    print ('%s stream    State %s\t\t%s' %(s, sstate, scalls))
+                    if display == True: print ('%s stream    State %s\t\t%s' %(s, sstate, scalls))
                 return returns.Ok
             elif words[0] == 'CALIBRA':
                 return returns.NotImplemented
@@ -358,7 +384,8 @@ def input_process (line, display=True):
             elif words[0] == 'CSTATUS':
                 return returns.NotImplemented
             elif words[0] == 'CONVERS':
-                return returns.NotImplemented
+                tnc.mode = tnc.modeConverse
+                return returns.Ok
             elif words[0] == 'DISCONNE':
                 return returns.NotImplemented
             elif words[0] == 'ID':
@@ -370,7 +397,8 @@ def input_process (line, display=True):
             elif words[0] == 'RESTART':
                 return returns.NotImplemented
             elif words[0] == 'TRANS':
-                return returns.NotImplemented
+                tnc.mode = tnc.modeTrans
+                return returns.Ok
             elif words[0] == 'STATUS':
                 return returns.NotImplemented
 
@@ -450,7 +478,6 @@ def input_process (line, display=True):
 def _on_receive_trace (frame): 
     bytes = frame.__bytes__() 
     paclen = len(bytes)
-    print (paclen)
     print (    'byte  ------------hex display------------ -shifted ASCII-- -----ASCII------')
     offset = 0
     #6, 42, 59
@@ -463,9 +490,7 @@ def _on_receive_trace (frame):
         sapos = 42
         apos = 59
         hexcount = 0 
-        #print ('Offset %s' % (offset))
         while (offset + i < paclen) and (i < 16):
-            #print ('Offset %s %s' % (offset, i))
             ascii = bytes[offset+i]
             hex = "{:02x}".format(ascii)
             line [hpos] = hex[0]
@@ -482,7 +507,6 @@ def _on_receive_trace (frame):
                 line[sapos] = '.'
             sapos += 1
 
-            #print ('apos %s' %(apos))
             if chr(bytes[offset+i]).isprintable():
                 line [apos] = chr(bytes[offset+i])
             else:
@@ -491,25 +515,53 @@ def _on_receive_trace (frame):
             i += 1
         offset += 0x10
 
-        #print (line)
         line = "".join(line)
         print (line)
 
-modeConverse = 0
-modeTransparent = 1
-modeCommand = 2
-
-
-tnc = {}
-tnc['Mode'] = modeConverse
-tnc['Connected'] = False
 
 
 
+class TNC:
+
+
+    def __init__(self):
+        self.modeConverse = 0
+        self.modeTransparent = 1
+        self.modeCommand = 2
+        self.tncMode = self.modeCommand
+
+        self.tncConnected = False
+
+    @property
+    def mode(self):
+        return self.tncMode 
+    @mode.setter
+    def mode (self, m):
+        if m == self.modeCommand:
+            self.tncMode = m
+            readline.parse_and_bind('tab: complete')
+        elif m == self.modeTransparent:
+            self.tncMode = m
+            readline.parse_and_bind('tab: self-insert')
+        elif m == self.modeConverse:
+            self.tncMode = m
+            readline.parse_and_bind('tab: self-insert')
+
+    @property
+    def connected (self):
+        return self.tncConnected
+    
+    @connected.setter
+    def connected (self, v):
+        self.tncConnected = v
+
+
+tnc = TNC() 
 
 
 
 def _on_receive_monitor (frame):
+    global tnc
 
     calls = re.split (r"[*>,]", str(frame.header))
     calls = [value for value in calls if value != '']
@@ -523,13 +575,13 @@ def _on_receive_monitor (frame):
     trace = completer.options['TRACE']['Value']
 
 
-    if tnc['Mode'] == modeTransparent:
+    if tnc.mode == tnc.modeTransparent:
         # No Monitoring
         return False
 
     displayPacket = False
 
-    if tnc['Connected']:
+    if tnc.connected:
         if mcon == False:
             # do not display in Connected mode if mcon = False
             return
@@ -703,8 +755,6 @@ def _on_receive_monitor (frame):
 
 
 
-
-
 def _on_receive(interface, frame, match=None):
     # NOTE: Make sure the kissdevice lines up with the one you wnat to listen too
 
@@ -782,22 +832,7 @@ def start_ax25():
 
 
 
-def input_loop():
-        return
-        # DONT USE THIS ANY MORE
-        line = ''
-        while line != 'stop':
-            #line = input('Prompt ("stop" to quit): ')
-            line = input('cmd: ')
-            print('Dispatch {}'.format(line))
-            r = input_process(line, display=True)
-            print (r)
-            if r == returns.Eh:
-                print ('?EH')
-            elif r == returns.Bad:
-                print ('?BAD')
-            else:
-                print ("?No Return Value")
+
 
 
 TNC2 = {}
@@ -812,8 +847,6 @@ def init():
         TNC2[index.upper()] = commands.TNC2_ROM[index]
         TNC2[index.upper()]['Display'] = index
 
-
-
     # Register our completer function
     completer = BufferAwareCompleter(TNC2)
 
@@ -825,24 +858,14 @@ def init():
     # First, process defaults
     for o in completer.options:
         if 'Default' in completer.options[o]:
-            #print (o)
             line = o + ' ' + completer.options[o]['Default']
             input_process (line, display=False)
         # Only the upper case letters are an alternative
         completer.options[o]['Shorter'] = ''.join(filter(str.isupper, completer.options[o]['Display']))
-    #print (completer.options['LCALLS'])
-    #print (completer.options['MCOM'])
-
 
     # Custom startup for debugging...
     for custom in ('TRACE ON', 'DAYUSA OFF'):
         input_process (custom, display=True)
-
-
-
-
-    # Prompt the user for text
-
 
     start_ax25()
 
@@ -852,19 +875,39 @@ init()
 streaming_queue = asyncio.Queue()
 
 
+def tncReceived(text):
+    print ('R> %s' % (text))
+
+def tncConnected():
+    print ('Connected')
+    tnc.mode = tnc.modeConverse # Automatically go into CONVERSE mode
+
+
+def tncDisconnected():
+    print ('Disconnected')
+
+def tncSend(text):
+    True
+    #print ('Sent')
+
+
 async def main_async():
     while True:
         chunk = await streaming_queue.get()
-        r = input_process(chunk)
-        if r == returns.Eh:
-            print ('?EH')
-        elif r == returns.Bad:
-            print ('?BAD')
-        elif r == returns.NotImplemented:
-            print ('?Not Implemented')
-
-
-        #print("got chunk: ", chunk)
+        if tnc.mode == tnc.modeCommand:
+            
+            r = input_process(chunk)
+            if r == returns.Eh:
+                print ('?EH')
+            elif r == returns.Bad:
+                print ('?BAD')
+            elif r == returns.NotImplemented:
+                print ('?Not Implemented')
+        elif tnc.mode == tnc.modeConverse:
+            streams['A'].send(chunk)
+            True
+        elif tnc.mode == tnc.modeTrans:
+            True
 
 
 def event_loop(loop):
@@ -897,9 +940,18 @@ if __name__ == "__main__":
     if True: 
             chunk = ''
             while chunk != 'stop':
-                #line = input('Prompt ("stop" to quit): ')
-                chunk = input('cmd: ')
+                # GNU readline overloads input() 
+
+                if tnc.mode == tnc.modeCommand:
+                    chunk = input('cmd: ')
+                elif tnc.mode == tnc.modeConverse:
+                    chunk = input('> ')
+                elif tnc.mode == tnc.modeTrans:
+                    chunk = input('> ')
+
                 loop.call_soon_threadsafe(send_chunk, chunk)
+
+
                 
                 
                 #print('Dispatch {}'.format(line))

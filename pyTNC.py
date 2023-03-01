@@ -42,6 +42,7 @@ from aioax25.signal import Signal
 from aioax25.interface import AX25Interface
 from aioax25.frame import AX25UnnumberedInformationFrame
 from threading import Thread
+from datetime import datetime
 
 import commands 
 
@@ -180,12 +181,16 @@ class connection:
             self.therapist = eliza.Eliza()
             self.connected = True
 
+    def disconnect(self):
+        self.connected = False
+
     @property
     def connected(self):
         return self.connectedSession
     
     @connected.setter
     def connected(self, status):
+        # Shouldnt use this function
         self.connectedSession = status
         if status == True:
             if self.cbConnected:
@@ -252,6 +257,19 @@ def input_cleanup (words):
 
     #print (words)
     return words
+
+def displaydatetime (dt):
+    if completer.options['DAYUSA']['Value']:
+        if completer.options['AMONTH']['Value']:
+            return dt.strftime ('%d-%b-%Y %H:%M:%S')
+        else:
+            return dt.strftime ('%m/%d/%Y %H:%M:%S')
+    else:
+        if completer.options['AMONTH']['Value']:
+            return dt.strftime ('%d-%b-%Y %H:%M:%S')
+        else:
+            return dt.strftime ('%d/%m/%Y %H:%M:%S')
+
 
 
 
@@ -387,13 +405,17 @@ def input_process (line, display=True):
                 tnc.mode = tnc.modeConverse
                 return returns.Ok
             elif words[0] == 'DISCONNE':
-                return returns.NotImplemented
+                streams['A'].disconnect()
+                return returns.Ok
             elif words[0] == 'ID':
                 return returns.NotImplemented
             elif words[0] == 'MHCLEAR':
-                return returns.NotImplemented
+                tnc.mheard = []
+                return returns.Ok
             elif words[0] == 'MHEARD':
-                return returns.NotImplemented 
+                for c in tnc.mheard:
+                    print ('%s\t\t\t%s' % (c, displaydatetime(tnc.mheard[c])))
+                return returns.Ok 
             elif words[0] == 'RESTART':
                 return returns.NotImplemented
             elif words[0] == 'TRANS':
@@ -531,6 +553,7 @@ class TNC:
         self.tncMode = self.modeCommand
 
         self.tncConnected = False
+        self.mheard = {}
 
     @property
     def mode(self):
@@ -778,7 +801,13 @@ def _on_receive(interface, frame, match=None):
     #https://stackoverflow.com/questions/70181515/how-to-have-a-comfortable-e-g-gnu-readline-style-input-line-in-an-asyncio-tas
 
 
+
+    tnc.mheard[str(frame.header.source)] = datetime.now()
+    #tnc.mheard['VK2TDS-1'] = datetime.now
     _on_receive_monitor(frame)
+
+
+
 
 
 
@@ -820,7 +849,7 @@ def start_ax25():
 
 
     ax25int = aioax25.interface.AX25Interface(
-    kissport=kissdevice[0],         # 0 = HF; 2 = USB
+    kissport=kissdevice[1],         # 0 = HF; 2 = USB
     loop=loop, log=logging.getLogger('ax25.interface')
     )
 
@@ -885,6 +914,8 @@ def tncConnected():
 
 def tncDisconnected():
     print ('Disconnected')
+    tnc.mode = tnc.modeCommand
+    streams['A'] = None
 
 def tncSend(text):
     True
@@ -904,7 +935,10 @@ async def main_async():
             elif r == returns.NotImplemented:
                 print ('?Not Implemented')
         elif tnc.mode == tnc.modeConverse:
-            streams['A'].send(chunk)
+            if chunk[:3].upper() == 'BYE':
+                streams['A'].disconnect()
+            else:
+                streams['A'].send(chunk)
             True
         elif tnc.mode == tnc.modeTrans:
             True

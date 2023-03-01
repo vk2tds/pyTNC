@@ -133,53 +133,26 @@ class TNC:
 
 
     #MFILTER Comma separated characters to totally ignore
-
     #MSTAMP WB9FLW>AD7I,K9NG*,N2WX-71 05/24/97 16:53:19]:Hi Paul.
     #UTC - display in UTC. Default OFF
 
-    #MTRANS Monitoring enabled in TRANS mode *****
-
     #MONITOR - 1 = No characters > 0x7F; 2 = MONITOR ON
-
-    #ADRdisp - default ON - N4UQQ>N4UQR,TPA5* <UI R>:This is a monitored frame.
 
     #AMONTH - Default On - All months = three letter alpha
 
     #CONRPT - if on, LTEXT -> L3TEXT, STEXT, CTEXT (if CMSG = On) sent on connection
     #    break if CMSGDISC????
 
-    #CONStamp - Connection messages are time stamped
-    #    *** CONNECTED to KL7EV 105128/97 16:28:31J
-
-
     #CPOLL?
-
     #CSTATUS - Status of connection streams
-
     #CTEXT
-
     #DGPscall
-
     #Digipeat - Complex
-
     #EBEACON - Default OFF - BTEXT echoed to terminal on transmission
-
     #ENCRYPT, ENSHIFT
-
-    #FSCreen - Display command generates 4 columns - default ON
-
     #Group - default Off - group monitoring (MASTERM) - Ignore this command
 
     #STATUS
-
-
-
-
-
-
-
-
-
 
 
 
@@ -194,35 +167,29 @@ def _on_receive(interface, frame, match=None):
     # frame = the incoming UI frame (aioax25.frame.AX25UnnumberedInformationFrame)
     # match = Regular expression Match object, if regular expressions were used in
     #         the bind() call.
-    print ('_on_receive')
-    print (frame.header)
-    print (frame.header.destination)
-    print (frame.header.source)
-    print (frame.header.repeaters)
-    print (frame.header.cr)     # cd = Command Response bit
-    print (frame.header.src_cr)
-    print ('Control %x' %(frame.control))
-    print (frame.pid)
-    print (frame.frame_payload)
-    print (frame)
-    print (str(type(frame)))
-    print (type(frame) is aioax25.frame.AX25UnnumberedInformationFrame)
+    #print ('_on_receive')
+    #print (frame.header)
+    #print (frame.header.destination)
+    #print (frame.header.source)
+    #print (frame.header.repeaters)
+    #print (frame.header.cr)     # cd = Command Response bit
+    #print (frame.header.src_cr)
+    #print ('Control %x' %(frame.control))
+    #print (frame.pid)
+    #print (frame.frame_payload)
+    #print (frame)
+    #print (str(type(frame)))
+    #print (type(frame) is aioax25.frame.AX25UnnumberedInformationFrame)
     #https://stackoverflow.com/questions/70181515/how-to-have-a-comfortable-e-g-gnu-readline-style-input-line-in-an-asyncio-tas
 
 
+    if 'UTC' in completer.options and completer.options['UTC']['Value']:
+        tnc.mheard[str(frame.header.source)] = datetime.utcnow()
+    else:
+        tnc.mheard[str(frame.header.source)] = datetime.now()
 
-    tnc.mheard[str(frame.header.source)] = datetime.now()
     #tnc.mheard['VK2TDS-1'] = datetime.now
     commands._on_receive_monitor(frame, completer, tnc)
-
-
-
-
-
-
-
-
-
 
 
 
@@ -287,8 +254,14 @@ def tncReceived(text, ax):
 
 def tncConnected(ax):
 
+    if 'UTC' in completer.options and completer.options['UTC']['Value']:
+        t = datetime.utcnow()
+    else:
+        t = datetime.now()
+
+
     if completer.options['CONSTAMP']['Value']:
-        print ('*** CONNECTED to %s %s' % (tnc.streams[ax]['Connection'].callTo, datetime.now()))
+        print ('*** CONNECTED to %s %s' % (tnc.streams[ax]['Connection'].callTo, ip.displaydatetime(t)))
     else:
         print ('*** CONNECTED to %s' % (ax.callTo))
     tnc.mode = tnc.modeConverse # Automatically go into CONVERSE mode

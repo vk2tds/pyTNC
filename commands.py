@@ -34,9 +34,6 @@ returns = SimpleNamespace(**{'Ok':0, 'Eh': 1, 'Bad': 2, 'NotImplemented': 3})
 
 
 TNC2_ROM = {
-    'list': {'Commands': ['files', 'directories']},
-    'print': {'Commands': ['byname', 'bysize']}, 
-    'stop': {'Commands': []}, 
     'Help': {'Commands': ['All'], 'Help':'Get help on commands'},
     '8bitconv': {'Commands': ['On', 'Off'], 'Group': 'A', 'Default': 'Off', 'Help': 'Strip high-order bit when in convers mode'},
     'ANSWRQRA': {'Commands': ['On', 'Off'], 'Group': 'A', 'Default': 'On', 'Help': 'Setting ANSWRQRA  to OFF  disables the TNC\'s  ping-response function'},
@@ -94,6 +91,7 @@ TNC2_ROM = {
     'Escape': {'Commands': ['On', 'Off'], 'Group': 'A', 'Default': 'Off', 'Help': 'Don\'t translate ES@ character ($lB) to $ ($24:)'},
     'Flow': {'Commands': ['On', 'Off'], 'Group': 'A', 'Default': 'On', 'Help': 'Don\'t print to terminal while user is typing'},
     'FIRMRNR': {'Commands': ['On', 'Off'], 'Group': 'L', 'Default': 'On', 'Help': 'When this TNC\'s buffers fill, an RNR is sent'},
+    'FSCreen': {'Commands': ['On', 'Off'], 'Group': 'L', 'Default': 'On', 'Help': 'Display command generates 4 columns - default ON'},
     'FRack': {'Commands': [], 'Group': 'T', 'Default': '3', 'Min': 1, 'Max': 15, 'Help': '(l-15 set) Time needed to ack a packet per station'},
     'FUlldup': {'Commands': ['On', 'Off'], 'Group': 'L', 'Default': 'Off', 'Help': 'Operate in Simplex mode'},
     'HEaderln': {'Commands': ['On', 'Off'], 'Group': 'M', 'Default': 'Off', 'Help': 'Print the frame header and text on the same line'},
@@ -158,6 +156,7 @@ TNC2_ROM = {
     'Users': {'Commands': [], 'Group': 'L', 'Default': '1', 'Min': 1, 'Max': 16, 'Help': 'Sets the number of streams (links) allowed'},
     'Xflow': {'Commands': ['On', 'Off'], 'Group': 'A', 'Default': 'On', 'Help': 'XON/XOFF Flow control enabled instead of hardware'},
     'XMitok': {'Commands': ['On', 'Off'], 'Group': 'L', 'Default': 'On', 'Help': 'Allow transmitter to come on'},
+    'UTC': {'Commands': ['On', 'Off'], 'Group': 'M', 'Default': 'Off', 'Help': 'Display times in UTC'},
     'XOff': {'Commands': [], 'Group': 'C', 'Default': '$13', 'Help': '(CTRL-S) Character to stop data from terminal'},
     'XON': {'Commands': [], 'Group': 'C', 'Default': '$11', 'Help': '(CTRL-Q) Character to start data from terminal'},
 }
@@ -303,7 +302,7 @@ def to_user (command, old, new):
             new = 'On'
         if new is False:
             new = 'Off'
-        print ('%s\t%s' % (command, new))
+        return ('%s%s' % (command.ljust(13), str(new).ljust(10)))
     else:
         # old is NOT None
         if new is True:
@@ -314,7 +313,7 @@ def to_user (command, old, new):
             old = 'On'
         if old is False:
             old = 'Off'
-        print ('%s was %s' % (command, old))
+        return ('%s was %s' % (command, old))
 
 
 
@@ -385,9 +384,7 @@ class process:
                 if words[2] == 'VIA' or words[2] == 'V':
                     words[2] = 'VIA'
 
-        #print (words)
         return words
-
 
 
     def input_process (self, line, display=True):
@@ -426,20 +423,48 @@ class process:
             return returns.Bad
         elif words[0] == 'DISPLAY':
             if len(words) == 1:
+                cols = 0
+                message = ''
                 for o in self.completer.options:
                     if 'Value' in self.completer.options[o]:
-                        #ToDo: Print True as On
-                        if display == True: to_user (o, None, self.completer.options[o]['Value'])
-                        # print (('%s = %s') % ( o, ))
+                                if len(message) > 0:
+                                    message = message + '\t\t' + to_user (o, None, self.completer.options[o]['Value'])
+                                else:
+                                    message = to_user (o, None, self.completer.options[o]['Value'])
+                                cols += 1
+                                if 'FSCREEN' in self.completer.options:
+                                    if not self.completer.options['FSCREEN']['Value']:
+                                        # If we are not in FSCREEN, we only want one column
+                                        cols = 4
+                                if cols == 4:
+                                    if display: print (message)
+                                    cols = 0
+                                    message = ''
+                                        
                 return returns.Ok
             if len(words) > 1:
                 group = words[1][0]
+                cols = 0
+                message = ''
                 for o in self.completer.options:
                     if 'Group' in self.completer.options[o]:
                         if self.completer.options[o]['Group'] == group: 
                             if 'Value' in self.completer.options[o]:
-                                #ToDo: Print True as On
-                                if display == True: to_user (o, None, self.completer.options[o]['Value'])
+                                if len(message) > 0:
+                                    message = message + '\t\t' + to_user (o, None, self.completer.options[o]['Value'])
+                                else:
+                                    message = to_user (o, None, self.completer.options[o]['Value'])
+                                cols += 1
+                                if 'FSCREEN' in self.completer.options:
+                                    if not self.completer.options['FSCREEN']['Value']:
+                                        # If we are not in FSCREEN, we only want one column
+                                        cols = 4
+                                if cols == 4:
+                                    if display == True: 
+                                        print (message)
+                                        cols = 0
+                                        message = ''
+
                 return returns.Ok
             return returns.Bad
         elif words[0] == 'LCALLS':
@@ -489,7 +514,7 @@ class process:
         if len(words) == 1 and words[0].upper() in self.completer.options:        # If a single word only, and it has a value,
             if 'Value' in self.completer.options[words[0].upper()]:       # then print the value
                 #ToDo: Print True as 'On'
-                if display == True: to_user (words[0], None, self.completer.options[words[0].upper()]['Value'])
+                if display == True: print (to_user (words[0], None, self.completer.options[words[0].upper()]['Value']))
                 return returns.Ok
         
             if not 'Default' in self.completer.options[words[0].upper()]:   # We are a command
@@ -548,7 +573,7 @@ class process:
                     new_words = words # Make a new list
                     new_words.pop(0) # remove the first item
                     new_words = " ".join(new_words)
-                    if display == True: to_user (uc, self.completer.options[uc]['Value'], new_words)
+                    if display == True: print (to_user (uc, self.completer.options[uc]['Value'], new_words))
                     self.completer.options[uc]['Value'] = new_words
                     return returns.Ok
                 return returns.Bad
@@ -566,17 +591,17 @@ class process:
                 if not 'Value' in self.completer.options[uc]:
                     self.completer.options[uc]['Value'] = default #init
                 if words[1].upper() == 'ON' and 'On' in self.completer.options[uc]['Commands']:
-                    if display == True: to_user (uc, self.completer.options[uc]['Value'], True)
+                    if display == True: print( to_user (uc, self.completer.options[uc]['Value'], True))
                     self.completer.options[uc]['Value'] = True
                     return returns.Ok
                 if words[1].upper() == 'OFF' and 'Off' in self.completer.options[uc]['Commands']:
-                    if display == True: to_user (uc, self.completer.options[uc]['Value'], False)
+                    if display == True: print (to_user (uc, self.completer.options[uc]['Value'], False))
                     self.completer.options[uc]['Value'] = False
                     return returns.Ok
                 if len(default) == 3 and default[0] == '$' and len(words[1]) == 3:
                     # We need to enter a HEX value, of the form $NN
                     if words[1][0] == '$' and is_hex(words[1][1:]):
-                        if display == True: to_user (uc, self.completer.options[uc]['Value'], words[1])
+                        if display == True: print (to_user (uc, self.completer.options[uc]['Value'], words[1]))
                         self.completer.options[uc]['Value'] = words[1]
                         return returns.Ok                    
 
@@ -591,7 +616,7 @@ class process:
                         return returns.Bad
                     if number > self.completer.options[uc]['Max']: 
                         return returns.Bad
-                    if display == True: to_user (uc, self.completer.options[uc]['Value'], number)
+                    if display == True: print (to_user (uc, self.completer.options[uc]['Value'], number))
                     self.completer.options[uc]['Value'] = number   
                     return returns.Ok
 
@@ -680,21 +705,19 @@ def _on_receive_monitor (frame, completer, tnc):
             # do not display in Connected mode if mcon = False
             return
 
-    print (calls)
-    print (lcalls)
-    print (budlist)
+    #print (calls)
+    #print (lcalls)
+    #print (budlist)
     if set(calls).intersection(lcalls):
         if budlist == True:
             # Monitor these
             True
         else:
             # Ignore these
-            print ('Ignore BUDLIST')
             return
     else:
         if budlist == True:
             # Ignore these
-            print ('Ignore BUDLIST')
             return
         else:
             # Monitor these

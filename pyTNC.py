@@ -43,6 +43,10 @@ from aioax25.interface import AX25Interface
 from aioax25.frame import AX25UnnumberedInformationFrame
 from threading import Thread
 from datetime import datetime
+from datetime import timezone
+
+import eliza
+
 
 import commands 
 
@@ -81,29 +85,66 @@ class TNC:
 
         self.tncConnected = False
         self.mheard = {}
-        self.streams = {'A': {'Stream': 'A', 'Connection': None, 'cbDisconnect': [], 'cbReceived': [], 'cbSent': [], 'cbConnect': []}, 
-                        'B': {'Stream': 'B', 'Connection': None, 'cbDisconnect': [], 'cbReceived': [], 'cbSent': [], 'cbConnect': []},  
-                        'C': {'Stream': 'C', 'Connection': None, 'cbDisconnect': [], 'cbReceived': [], 'cbSent': [], 'cbConnect': []}, 
-                        'D': {'Stream': 'D', 'Connection': None, 'cbDisconnect': [], 'cbReceived': [], 'cbSent': [], 'cbConnect': []}, 
-                        'E': {'Stream': 'E', 'Connection': None, 'cbDisconnect': [], 'cbReceived': [], 'cbSent': [], 'cbConnect': []} }
+
+        self.streams = {}
+        for s in commands.streamlist:
+            self.streams[s] = {'Stream': s, 
+                               'Connection': None, 
+                               'cbDisconnect': [], # User callbacks
+                               'cbReceived': [], 
+                               'cbSent': [], 
+                               'cbConnect': [],
+                               'cbInit': [],
+                               'axDisconnect': [], # ax25 callbacks
+                               'axReceived': [], 
+                               'axSent': [], 
+                               'axConnect': [],
+                               'axInit': [],
+                               } 
+
 
 
     def on_Disconnect (self, cb):
-        for s in ('A', 'B', 'C', 'D'):
+        for s in commands.streamlist:
             self.streams[s]['cbDisconnect'].append (cb)
 
     def on_Received (self, cb):
-        for s in ('A', 'B', 'C', 'D'):
+        for s in commands.streamlist:
             self.streams[s]['cbReceived'].append (cb)
             
     def on_Sent (self, cb):
-        for s in ('A', 'B', 'C', 'D'):
+        for s in commands.streamlist:
             self.streams[s]['cbSent'].append (cb)
             
     def on_Connect (self, cb):
-        for s in ('A', 'B', 'C', 'D'):
+        for s in commands.streamlist:
             self.streams[s]['cbConnect'].append (cb)
-        
+
+    def on_Init (self, cb):
+        for s in commands.streamlist:
+            self.streams[s]['cbInit'].append (cb)
+
+    def on_axDisconnect (self, cb):
+        for s in commands.streamlist:
+            self.streams[s]['axDisconnect'].append (cb)
+
+    def on_axReceived (self, cb):
+        for s in commands.streamlist:
+            self.streams[s]['axReceived'].append (cb)
+            
+    def on_axSent (self, cb):
+        for s in commands.streamlist:
+            self.streams[s]['axSent'].append (cb)
+            
+    def on_axConnect (self, cb):
+        for s in commands.streamlist:
+            self.streams[s]['axConnect'].append (cb)
+
+    def on_axInit (self, cb):
+        for s in commands.streamlist:
+            self.streams[s]['axInit'].append (cb)
+
+
 
     @property
     def mode(self):
@@ -249,11 +290,20 @@ tnc = TNC()
 streaming_queue = asyncio.Queue()
 
 
+def axReceived(text, ax):
+    c = tnc.streams[ax]['Connection']
+    print ('AX%s> %s' % (ax, text))
+
 def tncReceived(text, ax):
-    print ('R> %s' % (text))
+    c = tnc.streams[ax]['Connection']
+    print ('%s> %s' % (ax, text))
+
+def axConnected(ax):
+    c = tnc.streams[ax]['Connection']
+    print ('AxConnected')
 
 def tncConnected(ax):
-
+    c = tnc.streams[ax]['Connection']
     if 'UTC' in completer.options and completer.options['UTC']['Value']:
         t = datetime.utcnow()
     else:
@@ -261,20 +311,49 @@ def tncConnected(ax):
 
 
     if completer.options['CONSTAMP']['Value']:
-        print ('*** CONNECTED to %s %s' % (tnc.streams[ax]['Connection'].callTo, ip.displaydatetime(t)))
+        print ('*** CONNECTED to %s %s' % (c.callTo, ip.displaydatetime(t)))
     else:
-        print ('*** CONNECTED to %s' % (ax.callTo))
+        print ('*** CONNECTED to %s' % (c.callTo))
     tnc.mode = tnc.modeConverse # Automatically go into CONVERSE mode
 
+def axDisconnected(ax):
+    c = tnc.streams[ax]['Connection']
+    print ('*** DISCONNECTED')
 
 def tncDisconnected(ax):
+    c = tnc.streams[ax]['Connection']
     print ('*** DISCONNECTED')
     tnc.mode = tnc.modeCommand
-    tnc.streams['A'] = None
+    tnc.streams[ax] = None
+
+def axSend(text, ax):
+    c = tnc.streams[ax]['Connection']
+    True
 
 def tncSend(text, ax):
+    c = tnc.streams[ax]['Connection']
     True
     #print ('Sent')
+
+def axInit(ax):
+    c = tnc.streams[ax]['Connection']
+    True
+
+therapist = None
+def tncInit(ax):
+    c = tnc.streams[ax]['Connection']
+    global therapist
+    if c.callTo == 'ELIZA': 
+        therapist = eliza.Eliza()
+        c.connected = True
+
+
+
+
+
+
+
+
 
 
 async def main_async():
@@ -329,6 +408,14 @@ def init():
     tnc.on_Disconnect (tncDisconnected)
     tnc.on_Received (tncReceived)
     tnc.on_Sent (tncSend)
+    tnc.on_Init (tncInit)
+
+    tnc.on_axConnect (axConnected)
+    tnc.on_axDisconnect (axDisconnected)
+    tnc.on_axReceived (axReceived)
+    tnc.on_axSent (axSend)
+    tnc.on_axInit (axInit)
+
 
 
     for index in commands.TNC2_ROM:
@@ -355,7 +442,7 @@ def init():
         completer.options[o]['Shorter'] = ''.join(filter(str.isupper, completer.options[o]['Display']))
 
     # Custom startup for debugging...
-    for custom in ('TRACE ON', 'DAYUSA OFF', 'CONSTAMP ON'):
+    for custom in ('TRACE ON', 'DAYUSA OFF', 'CONSTAMP ON', 'TRACE OFF'):
         ip.input_process (custom, display=True)
 
     start_ax25()

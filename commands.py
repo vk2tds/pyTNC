@@ -26,8 +26,10 @@ import string
 from types import SimpleNamespace
 import re
 import eliza # for testing
+from datetime import timezone
+import datetime
 
-
+streamlist = ('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J')
 
 
 returns = SimpleNamespace(**{'Ok':0, 'Eh': 1, 'Bad': 2, 'NotImplemented': 3})
@@ -250,42 +252,67 @@ class connection:
         self.stream = stream
 
         print ('Manage a connection from %s to %s via %s' % (callFrom, callTo, callDigi))
+        if self.stream['axInit']:
+            for callback in self.stream['axInit']:
+                callback (self.stream['Stream'])
+        if self.stream['cbInit']:
+            for callback in self.stream['cbInit']:
+                callback (self.stream['Stream'])
 
 
     def connect(self):
-        if self.callTo == 'ELIZA': 
-            self.therapist = eliza.Eliza()
-            self.connected = True
+        self.axConnected = True
+        #if self.stream['cbInit']:
+        #    for callback in self.stream['cbInit']:
+        #        callback (self.stream['Stream'])
 
     def disconnect(self):
-        self.connected = False
+        self.axConnected = False
 
     @property
-    def connected(self):
+    def axConnected(self):
         return self.connectedSession
     
-    @connected.setter
-    def connected(self, status):
+    @axConnected.setter
+    def axConnected(self, status):
         # Shouldnt use this function
         self.connectedSession = status
         if status == True:
+            if self.stream['axConnect']:
+                for callback in self.stream['axConnect']:
+                    callback (self.stream['Stream'])
             if self.stream['cbConnect']:
                 for callback in self.stream['cbConnect']:
                     callback (self.stream['Stream'])
         elif status == False:
+            if self.stream['axDisconnect']:
+                for callback in self.stream['axDisconnect']:
+                    callback (self.stream['Stream'])
             if self.stream['cbDisconnect']:
                 for callback in self.stream['cbDisconnect']:
                     callback (self.stream['Stream'])
 
-    def send(self, text):
-        if self.callTo == 'ELIZA':
-            reply = self.therapist.respond(text)
-            if self.stream['cbSent']:
-                for callback in self.stream['cbSent']:
-                    callback (text, self.stream['Stream'])
-            if self.stream['cbReceived']:
-                for callback in self.stream['cbReceived']:
-                    callback (reply, self.stream['Stream'])
+    def axSend(self, text):
+        if self.stream['axSent']:
+            for callback in self.stream['axSent']:
+                callback (text, self.stream['Stream'])
+        if self.stream['cbSent']:
+            for callback in self.stream['cbSent']:
+                callback (text, self.stream['Stream'])
+
+    def axReceived (self, text):
+        if self.stream['axReceived']:
+            for callback in self.stream['axReceived']:
+                callback (text, self.stream['Stream'])
+        if self.stream['cbReceived']:
+            for callback in self.stream['cbReceived']:
+                callback (text, self.stream['Stream'])
+
+        #if self.callTo == 'ELIZA':
+        #    reply = self.therapist.respond(text)
+        #    if self.stream['cbReceived']:
+        #        for callback in self.stream['cbReceived']:
+        #            callback (reply, self.stream['Stream'])
 
 
 
@@ -521,12 +548,12 @@ class process:
                 if False:
                     True
                 elif words[0] == 'CSTATUS':
-                    for s in ('A', 'B', 'C', 'D', 'E'):
-                        sstate = 'CONNECTED' if not tnc.streams[s] is None and tnc.streams[s].connected else 'DISCONNECTED'
-                        if not self.tnc.streams[s] is None:
-                            scalls = ('%s>%s' % (self.tnc.streams[s].callFrom, self.tnc.streams[s].callTo))
-                            if not self.tnc.streams[s].callDigi == '':
-                                scalls += "," + ",".join(self.tnc.streams[s].callDigi)
+                    for s in streamlist:
+                        sstate = 'CONNECTED' if ((not self.tnc.streams[s] is None) and (not self.tnc.streams[s]['Connection'] is None)) else 'DISCONNECTED'
+                        if sstate == 'CONNECTED':
+                            scalls = ('%s>%s' % (self.tnc.streams[s]['Connection'].callFrom, self.tnc.streams[s]['Connection'].callTo))
+                            if not self.tnc.streams[s]['Connection'].callDigi == '':
+                                scalls += "," + ",".join(self.tnc.streams[s]['Connection'].callDigi)
                         else:
                             scalls = 'NO CONNECTION'
                         if display == True: print ('%s stream    State %s\t\t%s' %(s, sstate, scalls))
@@ -534,8 +561,6 @@ class process:
                 elif words[0] == 'CALIBRA':
                     return returns.NotImplemented
                 elif words[0] == 'CALSET':
-                    return returns.NotImplemented
-                elif words[0] == 'CSTATUS':
                     return returns.NotImplemented
                 elif words[0] == 'CONVERS':
                     self.tnc.mode = self.tnc.modeConverse
@@ -550,6 +575,8 @@ class process:
                     return returns.Ok
                 elif words[0] == 'MHEARD':
                     for c in self.tnc.mheard:
+                        #print (c)
+                        #dt.replace(tzinfo=timezone.utc)
                         print ('%s\t\t\t%s' % (c, self.displaydatetime(self.tnc.mheard[c])))
                     return returns.Ok 
                 elif words[0] == 'RESTART':

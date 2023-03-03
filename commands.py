@@ -28,6 +28,7 @@ import re
 import eliza # for testing
 from datetime import timezone
 import datetime
+import gnureadline as readline
 
 streamlist = ('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J')
 
@@ -250,6 +251,7 @@ class connection:
         self.therapist = None
         self.connectedSession = False
         self.stream = stream
+        self.stream['Connection'] = self
 
         print ('Manage a connection from %s to %s via %s' % (callFrom, callTo, callDigi))
         if self.stream['axInit']:
@@ -261,6 +263,7 @@ class connection:
 
 
     def connect(self):
+        print ('connection connect')
         self.axConnected = True
         #if self.stream['cbInit']:
         #    for callback in self.stream['cbInit']:
@@ -291,8 +294,12 @@ class connection:
             if self.stream['cbDisconnect']:
                 for callback in self.stream['cbDisconnect']:
                     callback (self.stream['Stream'])
+            self.callFrom = None
+            self.callTo = None
+            self.callDigi = None
 
     def axSend(self, text):
+        print ('axSend %s' % (text))
         if self.stream['axSent']:
             for callback in self.stream['axSent']:
                 callback (text, self.stream['Stream'])
@@ -307,13 +314,6 @@ class connection:
         if self.stream['cbReceived']:
             for callback in self.stream['cbReceived']:
                 callback (text, self.stream['Stream'])
-
-        #if self.callTo == 'ELIZA':
-        #    reply = self.therapist.respond(text)
-        #    if self.stream['cbReceived']:
-        #        for callback in self.stream['cbReceived']:
-        #            callback (reply, self.stream['Stream'])
-
 
 
 
@@ -351,8 +351,6 @@ class process:
     def __init__ (self, completer, tnc):
         self.completer = completer
         self.tnc = tnc
-
-
 
 
     def displaydatetime (self, dt):
@@ -431,21 +429,21 @@ class process:
             True
         elif words[0] == 'HELP':
             if len(words) == 1:
-                if display == True: print (self.completer.options['HELP']['Help'])
+                if display == True: output (self.completer.options['HELP']['Help'])
                 return returns.Ok
             if len(words) >= 2:
                 if words[1].upper() == 'ALL':
                     for uc in self.completer.options:
                         if 'Help' in self.completer.options[uc]:
-                            if display == True: print ('%s\t%s' % (uc, self.completer.options[uc]['Help']))
+                            if display == True: output ('%s\t%s' % (uc, self.completer.options[uc]['Help']))
                     return returns.Ok
                 if words[1] in self.completer.options:
                     uc = words[1].upper()
                     if 'Help' in self.completer.options[uc]:
-                        if display == True: print (self.completer.options[uc]['Help'])
+                        if display == True: output (self.completer.options[uc]['Help'])
                         return returns.Ok
                     else:
-                        if display == True: print ('No help available')
+                        if display == True: output ('No help available')
                         return returns.Ok
             return returns.Bad
         elif words[0] == 'DISPLAY':
@@ -464,7 +462,7 @@ class process:
                                         # If we are not in FSCREEN, we only want one column
                                         cols = 4
                                 if cols == 4:
-                                    if display: print (message)
+                                    if display: output (message)
                                     cols = 0
                                     message = ''
                                         
@@ -528,15 +526,13 @@ class process:
                 if len(calls) == 3:
                     # We need digipeaters if there is a 'Via'
                     return returns.Eh    
-            self.tnc.streams['A']['Connection'] = connection (callFrom, callTo, callDigi, self.tnc.streams['A'])
+            #self.tnc.streams['A']['Connection'] = 
+            connection (callFrom, callTo, callDigi, self.tnc.streams['A'])
             self.tnc.streams['A']['Connection'].connect()
             return returns.Ok
         elif words[0] == 'RECONNECT':
             return returns.NotImplemented
 
-                
-
-        
 
         if len(words) == 1 and words[0].upper() in self.completer.options:        # If a single word only, and it has a value,
             if 'Value' in self.completer.options[words[0].upper()]:       # then print the value
@@ -552,7 +548,8 @@ class process:
                         sstate = 'CONNECTED' if ((not self.tnc.streams[s] is None) and (not self.tnc.streams[s]['Connection'] is None)) else 'DISCONNECTED'
                         if sstate == 'CONNECTED':
                             scalls = ('%s>%s' % (self.tnc.streams[s]['Connection'].callFrom, self.tnc.streams[s]['Connection'].callTo))
-                            if not self.tnc.streams[s]['Connection'].callDigi == '':
+                            if not self.tnc.streams[s]['Connection'].callDigi == '' and not self.tnc.streams[s]['Connection'].callDigi is None :
+                                print (self.tnc.streams[s]['Connection'].callDigi)
                                 scalls += "," + ",".join(self.tnc.streams[s]['Connection'].callDigi)
                         else:
                             scalls = 'NO CONNECTION'
@@ -663,7 +660,7 @@ class process:
 def _on_receive_trace (frame): 
     bytes = frame.__bytes__() 
     paclen = len(bytes)
-    print (    'byte  ------------hex display------------ -shifted ASCII-- -----ASCII------')
+    output (    'byte  ------------hex display------------ -shifted ASCII-- -----ASCII------')
     offset = 0
     #6, 42, 59
 
@@ -701,7 +698,7 @@ def _on_receive_trace (frame):
         offset += 0x10
 
         line = "".join(line)
-        print (line)
+        output (line)
 
 
 
@@ -826,16 +823,23 @@ def _on_receive_monitor (frame, completer, tnc):
     if headerln:
         #HEADERLN On: KV7D>N2WX: Go ahead and transfer the file.
         if adrdisp:
-            print (callsigns + control)
-        print (frame.payload)
+            output (callsigns + control)
+        output (frame.payload)
     else:
         #HEADERLN Off: N2WX>KV7D:
         #           Sorry, I'm not quite ready yet.
         if adrdisp:
-            print (callsigns + control + str(frame.payload.decode()))
+            output (callsigns + control + str(frame.payload.decode()))
         else:
-            print (frame.payload)
+            output (frame.payload)
 
     if trace:
         # Trace mode enabled.
         _on_receive_trace (frame)
+
+
+
+
+def output(line):
+    # So I can abstract print
+    print (line)

@@ -30,13 +30,14 @@
 #try:
 import gnureadline as readline
 #except ImportError:
-#    import readline
+#import readline
 import logging
 import string
 from types import SimpleNamespace
 import asyncio
 from aioax25.kiss import make_device
 import aioax25
+import sys
 
 from aioax25.signal import Signal
 from aioax25.interface import AX25Interface
@@ -45,9 +46,11 @@ from threading import Thread
 from datetime import datetime
 from datetime import timezone
 
+from pynput import keyboard
+
 import eliza
 
-
+#local
 import commands 
 
 import re
@@ -62,6 +65,13 @@ logging.basicConfig(
 )
 
 
+console = logging.StreamHandler(sys.stdout)
+console.setLevel(logging.DEBUG)
+formater = logging.Formatter('%(name)-13s: %(levelname)-8s %(message)s')
+console.setFormatter(formater)
+logging.getLogger('console').addHandler(console)
+
+loggerscreen = logging.getLogger ('console')
 
 
 
@@ -200,7 +210,6 @@ class TNC:
 
 
 
-
 def _on_receive(interface, frame, match=None):
     # NOTE: Make sure the kissdevice lines up with the one you wnat to listen too
 
@@ -208,19 +217,19 @@ def _on_receive(interface, frame, match=None):
     # frame = the incoming UI frame (aioax25.frame.AX25UnnumberedInformationFrame)
     # match = Regular expression Match object, if regular expressions were used in
     #         the bind() call.
-    #print ('_on_receive')
-    #print (frame.header)
-    #print (frame.header.destination)
-    #print (frame.header.source)
-    #print (frame.header.repeaters)
-    #print (frame.header.cr)     # cd = Command Response bit
-    #print (frame.header.src_cr)
-    #print ('Control %x' %(frame.control))
-    #print (frame.pid)
-    #print (frame.frame_payload)
-    #print (frame)
-    #print (str(type(frame)))
-    #print (type(frame) is aioax25.frame.AX25UnnumberedInformationFrame)
+    #p ('_on_receive')
+    #p (frame.header)
+    #p (frame.header.destination)
+    #p (frame.header.source)
+    #p (frame.header.repeaters)
+    #p (frame.header.cr)     # cd = Command Response bit
+    #p (frame.header.src_cr)
+    #p ('Control %x' %(frame.control))
+    #p (frame.pid)
+    #p (frame.frame_payload)
+    #p (frame)
+    #p (str(type(frame)))
+    #p (type(frame) is aioax25.frame.AX25UnnumberedInformationFrame)
     #https://stackoverflow.com/questions/70181515/how-to-have-a-comfortable-e-g-gnu-readline-style-input-line-in-an-asyncio-tas
 
 
@@ -290,19 +299,40 @@ tnc = TNC()
 streaming_queue = asyncio.Queue()
 
 
+myeliza = {'Stream': 'H', 'Therapist': None}
+
+
 def axReceived(text, ax):
     c = tnc.streams[ax]['Connection']
-    print ('AX%s> %s' % (ax, text))
+
+    cA = tnc.streams['A']['Connection'] 
+    cEliza = tnc.streams[myeliza['Stream']]['Connection'] 
+    if not cA is None and not cEliza is None:
+        # now check if our end is connected...
+        # we must assume the other end is connected
+        if c.axConnected:
+            #c.axSend (text)
+            True
+
+    commands.output ('AX%s> %s' % (ax, text))
+    
+
 
 def tncReceived(text, ax):
     c = tnc.streams[ax]['Connection']
-    print ('%s> %s' % (ax, text))
+
+        #c.axSend (myeliza['Therapist'].respond (text))
+    if ax == myeliza['Stream']:
+        c.axSend (myeliza['Therapist'].respond (text))
+    else:
+        commands.output ('%s> %s' % (ax, text))
 
 def axConnected(ax):
+    loggerscreen.debug ('# axConnected %s ' % (ax))
     c = tnc.streams[ax]['Connection']
-    print ('AxConnected')
 
 def tncConnected(ax):
+    loggerscreen.debug ('# tncConencted %s' % (ax))
     c = tnc.streams[ax]['Connection']
     if 'UTC' in completer.options and completer.options['UTC']['Value']:
         t = datetime.utcnow()
@@ -311,46 +341,95 @@ def tncConnected(ax):
 
 
     if completer.options['CONSTAMP']['Value']:
-        print ('*** CONNECTED to %s %s' % (c.callTo, ip.displaydatetime(t)))
+        commands.output ('*** CONNECTED to %s %s' % (c.callTo, ip.displaydatetime(t)))
     else:
-        print ('*** CONNECTED to %s' % (c.callTo))
+        commands.output ('*** CONNECTED to %s' % (c.callTo))
     tnc.mode = tnc.modeConverse # Automatically go into CONVERSE mode
 
 def axDisconnected(ax):
     c = tnc.streams[ax]['Connection']
-    print ('*** DISCONNECTED')
+    commands.output ('*** AXDISCONNECTED')
 
 def tncDisconnected(ax):
     c = tnc.streams[ax]['Connection']
-    print ('*** DISCONNECTED')
+    commands.output ('*** DISCONNECTED %s' % (ax))
     tnc.mode = tnc.modeCommand
-    tnc.streams[ax] = None
+    # tnc.streams[ax] = None
+    if ax == 'A':
+        # also disconnect the far end if needed
+        cEliza = tnc.streams[myeliza['Stream']]['Connection']
+        cEliza.disconnect()
+
 
 def axSend(text, ax):
+    loggerscreen.debug ('# axSend %s %s ' %(text, ax))
     c = tnc.streams[ax]['Connection']
+
+    cA = tnc.streams['A']['Connection'] # Assume A
+    cEliza = tnc.streams[myeliza['Stream']]['Connection'] 
+
+
+    if ax == 'A':
+        cEliza.axReceived (text)
+    if ax == myeliza['Stream']:
+        cA.axReceived (text)
+
+
+        #c.axSend (myeliza['Therapist'].respond (text))
+
     True
 
 def tncSend(text, ax):
+    loggerscreen.debug ('# tncSend %s ' % (ax))
     c = tnc.streams[ax]['Connection']
     True
-    #print ('Sent')
+
+
+
+
 
 def axInit(ax):
-    c = tnc.streams[ax]['Connection']
-    True
+    global myeliza
+    loggerscreen.debug ('# axInit %s ' % (ax))
 
-therapist = None
+    c = tnc.streams[ax]['Connection']
+    if not c is None: # Should never be none... But...
+        if c.callTo == 'ELIZA':
+            # we need to init another stream and connection. Lets call it H or Hell..
+            # swap the callsigns
+            callFrom = c.callTo
+            callTo = c.callFrom
+            callDigi = c.callDigi.reverse()
+            myeliza['Therapist'] = eliza.Eliza()
+            commands.connection (callFrom, callTo, callDigi, tnc.streams[myeliza['Stream']])
+
+
 def tncInit(ax):
+    loggerscreen.debug ('# tncInit %s ' % (ax))
     c = tnc.streams[ax]['Connection']
-    global therapist
     if c.callTo == 'ELIZA': 
-        therapist = eliza.Eliza()
-        c.connected = True
+        cEliza = tnc.streams[myeliza['Stream']]['Connection']
+        cEliza.connect = True
 
 
 
+async def periodic():
+    while True:
+        if True:
+            # Eliza functionality
+            cA = tnc.streams['A']['Connection'] # Assume A
+            cEliza = tnc.streams[eliza['Stream']]['Connection'] 
+            if not cA is None and not cEliza is None:
+                # we have connection objects on both
+                if not cA.connected and not cEliza.connected:
+                    # neither end is connected
+                    if cA['callTo'] == cEliza['callFrom'] and cA['callFrom'] == cEliza['callTo']:
+                        # we are trying to connect to each other definitely...
+                        cA.connected = True
+                        cEliza.connected = True
 
 
+        await asyncio.sleep(1)
 
 
 
@@ -363,22 +442,24 @@ async def main_async():
             
             r = ip.input_process(chunk)
             if r == commands.returns.Eh:
-                print ('?EH')
+                commands.output ('?EH')
             elif r == commands.returns.Bad:
-                print ('?BAD')
+                commands.output ('?BAD')
             elif r == commands.returns.NotImplemented:
-                print ('?Not Implemented')
+                commands.output ('?Not Implemented')
         elif tnc.mode == tnc.modeConverse:
             if chunk[:3].upper() == 'BYE':
                 tnc.streams['A']['Connection'].disconnect()
             else:
-                tnc.streams['A']['Connection'].send(chunk)
+                tnc.streams['A']['Connection'].axSend(chunk)
             True
         elif tnc.mode == tnc.modeTrans:
             True
 
 
 def event_loop(loop):
+    #Remove comments in production
+
     #try:
         loop.run_until_complete(main_async())
     #except asyncio.CancelledError:
@@ -398,10 +479,13 @@ def cancel_all():
 def init():
     global completer
     global ip 
+    global console
 
-    print ('TAPR TNC2 Clone')
-    print ('Copyright 2023 Darryl Smith, VK2TDS')
-    print ('')
+    commands.output ('TAPR TNC2 Clone')
+    commands.output ('Copyright 2023 Darryl Smith, VK2TDS')
+    commands.output ('')
+
+    
 
 
     tnc.on_Connect (tncConnected)
@@ -430,7 +514,6 @@ def init():
     # Use the tab key for completion
     readline.parse_and_bind('tab: complete')
 
-
     ip = commands.process (completer, tnc)
 
     # First, process defaults
@@ -449,14 +532,26 @@ def init():
 
 init()
 
+#def on_activate():
+#    print('Global hotkey activated!')#
+#
+#def for_canonical(f):
+#    return lambda k: f(l.canonical(k))
+
+#hotkey = keyboard.HotKey(
+#    keyboard.HotKey.parse('<ctrl>+<alt>+h'),
+#    on_activate)
+#with keyboard.Listener(
+##        on_press=for_canonical(hotkey.press),
+#        on_release=for_canonical(hotkey.release)) as l:
+#    l.join()
+
+
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
     event_thread = Thread(target=event_loop, args=(loop,))
     event_thread.start()
-    #try:
-#        while True:
-#            chunk = input()
-#            loop.call_soon_threadsafe(send_chunk, chunk)
+    task = loop.create_task(periodic()) # every second 
     if True: 
             chunk = ''
             while chunk != 'stop':
@@ -471,13 +566,3 @@ if __name__ == "__main__":
 
                 loop.call_soon_threadsafe(send_chunk, chunk)
 
-
-                
-                
-                #print('Dispatch {}'.format(line))
-    #except KeyboardInterrupt:
-    #    print("cancelling all tasks")
-    #    loop.call_soon_threadsafe(cancel_all)
-    #    print("joining thread")
-    #    event_thread.join()
-    #    print("done")

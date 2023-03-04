@@ -46,14 +46,14 @@ from threading import Thread
 from datetime import datetime
 from datetime import timezone
 
-from pynput import keyboard
-
 import eliza
+import re
+
 
 #local
 import commands 
+import connect 
 
-import re
 
 
 
@@ -95,6 +95,8 @@ class TNC:
 
         self.tncConnected = False
         self.mheard = {}
+        self.kissinterface = None
+        self.exitToCommandMode = '*** COMMAND MODE ***'
 
         self.streams = {}
         for s in commands.streamlist:
@@ -242,48 +244,7 @@ def _on_receive(interface, frame, match=None):
     commands._on_receive_monitor(frame, completer, tnc)
 
 
-
-
-
-
-
     pass
-
-
-
-
-def start_ax25():
-    global logging
-    global ax25int
-
-    loop = asyncio.get_event_loop()
-
-    kissdevice = make_device(
-    type="tcp", host="localhost", port=8001,
-    log=logging.getLogger("ax25.kiss"),
-    loop=loop
-    )
-    kissdevice.open() # happens in background asynchronously
-
-
-    #That `KISSDevice` class represents all the ports on the KISS interface
-    #-- for Direwolf; there can be multiple ports (e.g. on my UDRC-II board,
-    #the DIN-6 connector is port 1 and the DB15HD is port 0.).  Most
-    #single-port TNCs only implement port 0:
-
-    #kissport = kissdevice[0] # first KISS port on device
-
-
-    ax25int = aioax25.interface.AX25Interface(
-    kissport=kissdevice[1],         # 0 = HF; 2 = USB
-    loop=loop, log=logging.getLogger('ax25.interface')
-    )
-
-    ax25int.bind (_on_receive, '(.*?)', ssid=None, regex=True)
-
-
-
-
 
 
 
@@ -292,6 +253,8 @@ ip = {}
 
 TNC2 = {}
 tnc = TNC() 
+tnc.kiss_interface = connect.kiss_interface (_on_receive, logging)
+
 
 
 #input_loop()
@@ -448,7 +411,9 @@ async def main_async():
             elif r == commands.returns.NotImplemented:
                 commands.output ('?Not Implemented')
         elif tnc.mode == tnc.modeConverse:
-            if chunk[:3].upper() == 'BYE':
+            if tnc.exitToCommandMode in chunk:
+                tnc.mode = tnc.modeCommand
+            elif chunk[:3].upper() == 'BYE' :
                 tnc.streams['A']['Connection'].disconnect()
             else:
                 tnc.streams['A']['Connection'].axSend(chunk)
@@ -513,7 +478,8 @@ def init():
 
     # Use the tab key for completion
     readline.parse_and_bind('tab: complete')
-
+    readline.parse_and_bind('"ç": "%s\n"' % (tnc.exitToCommandMode))
+ 
     ip = commands.process (completer, tnc)
 
     # First, process defaults
@@ -525,26 +491,17 @@ def init():
         completer.options[o]['Shorter'] = ''.join(filter(str.isupper, completer.options[o]['Display']))
 
     # Custom startup for debugging...
-    for custom in ('TRACE ON', 'DAYUSA OFF', 'CONSTAMP ON', 'TRACE OFF'):
+    for custom in ('TRACE ON', 
+                   'DAYUSA OFF', 
+                   'CONSTAMP ON', 
+                   'TRACE OFF',
+                   'KISSdev 1 tcp localhost 8001',
+                   'KISSPort 1 1'
+                   ):
         ip.input_process (custom, display=True)
 
-    start_ax25()
 
 init()
-
-#def on_activate():
-#    print('Global hotkey activated!')#
-#
-#def for_canonical(f):
-#    return lambda k: f(l.canonical(k))
-
-#hotkey = keyboard.HotKey(
-#    keyboard.HotKey.parse('<ctrl>+<alt>+h'),
-#    on_activate)
-#with keyboard.Listener(
-##        on_press=for_canonical(hotkey.press),
-#        on_release=for_canonical(hotkey.release)) as l:
-#    l.join()
 
 
 if __name__ == "__main__":

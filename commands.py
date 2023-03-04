@@ -105,6 +105,8 @@ TNC2_ROM = {
     'LCSTREAM': {'Commands': ['On', 'Off'], 'Group': 'C', 'Default': 'On', 'Help': 'Convert the stream select specifer to Upper case'},
     'LFIGNORE': {'Commands': ['On', 'Off'], 'Group': 'L', 'Default': 'Off', 'Help': 'TNC will ignore <LF> characters'},
     'LFadd': {'Commands': ['On', 'Off'], 'Group': 'L', 'Default': 'Off', 'Help': 'Add a Line Feed after each CR send to the terminal'},
+    'KISSdev': {'Commands': [], 'Group': 'M', 'Default': 'KISSdev 1  tcp localhost 8001', 'Minimum': -1, 'Help': 'Open a KISS Device in aioax25. First number is the Kiss Device number'},
+    'KISSPort': {'Commands': [], 'Group': 'M', 'Default': 'KISSport 1 1', 'Minimum': -1, 'Help': 'Definces the Kissport for a device. First number is device number and then port number'},
     'MAll': {'Commands': ['On', 'Off'], 'Group': 'M', 'Default': 'On', 'Help': 'Monitor data frames as well as beacons'},
     'MAXframe': {'Commands': [], 'Group': 'L', 'Default': '4', 'Min': 1, 'Max': 7, 'Help': 'The window size for outstanding frames'},
     'MCOM': {'Commands': ['On', 'Off'], 'Group': 'M', 'Default': 'Off', 'Help': 'Monitor only data frames instead of all types'},
@@ -347,7 +349,7 @@ def to_user (command, old, new):
 
 
 class process:
-
+    # Process commands
     def __init__ (self, completer, tnc):
         self.completer = completer
         self.tnc = tnc
@@ -530,6 +532,25 @@ class process:
             connection (callFrom, callTo, callDigi, self.tnc.streams['A'])
             self.tnc.streams['A']['Connection'].connect()
             return returns.Ok
+        elif words[0] == 'KISSDEV':
+            # KISSdev 1 tcp localhost 8001
+            if len(words) == 5 and not self.tnc.kiss_interface is None:
+                print (words[2].upper())
+                if words[2].upper() == 'TCP':
+                    self.tnc.kiss_interface.kissDeviceTCP (int (words[1]), words[3], int (words[4]))
+                    return returns.Ok
+                else: 
+                    return returns.Eh    
+            else: 
+                return returns.Eh
+        elif words[0] == 'KISSPORT':
+            # KISSport 1 1
+            if len(words) == 3 and not self.tnc.kiss_interface is None:
+                print ('Port')
+                self.tnc.kiss_interface.kissPort (int (words[1]), int (words[2]))
+                return returns.Ok
+            else:
+                return returns.Eh
         elif words[0] == 'RECONNECT':
             return returns.NotImplemented
 
@@ -563,7 +584,7 @@ class process:
                     self.tnc.mode = self.tnc.modeConverse
                     return returns.Ok
                 elif words[0] == 'DISCONNE':
-                    self.tnc.streams['A'].disconnect()
+                    self.tnc.streams['A']['Connection'].disconnect()
                     return returns.Ok
                 elif words[0] == 'ID':
                     return returns.NotImplemented

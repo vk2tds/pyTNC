@@ -13,18 +13,32 @@
 # Darryl Smith, VK2TDS. darryl@radio-active.net.au Copyright 2023
 
 
-
+import asyncio
+from aioax25.kiss import make_device
+import aioax25
+from aioax25.version import AX25Version
 
 
 
 class kiss_interface():
+    #ToDo: Split call from kiss_interface
     def __init__ (self, on_rx, logging):
         self.kissDevices = {}
         #self.ax25int = ax25int
         self.logging = logging
         self.loop = asyncio.get_event_loop()
         self.on_rx = on_rx
+        self.call = ""
+        self.ssid = 0
 
+    def callsign(self, call):
+        if '-' in call:
+            (c,s) = call.split ('-')
+            self.call = c
+            self.ssid = int(s)
+        else:
+            self.call = c
+            self.ssid = 0
 
     def kissDeviceTCP (self, device, host, port):
         dev = str(int(device))
@@ -39,7 +53,8 @@ class kiss_interface():
             print ('Here')
             print (self.kissDevices[dev]['KissDevice'])
             axint = self.start_ax25_port (self.kissDevices[dev]['KissDevice'], kissPort)
-            self.kissDevices[dev][str(kissPort)] = axint
+            self.kissDevices[dev][str(kissPort)] = {'AX25Interface': axint,
+                                                        'Station': None}
 
     def start_ax25_device(self, host, port, phy):
 
@@ -64,8 +79,6 @@ class kiss_interface():
 
         #kissport = kissdevice[0] # first KISS port on device
 
-        print ('Start AX25 port')
-        print (kissdevice[int(kissPort)])
         ax25int = aioax25.interface.AX25Interface(
             kissport=kissdevice[int(kissPort)],         # 0 = HF; 2 = USB
             loop=self.loop, 
@@ -74,4 +87,21 @@ class kiss_interface():
 
         ax25int.bind (self.on_rx, '(.*?)', ssid=None, regex=True)
         return ax25int
+
+
+    def start_ax25_station(self, device, kissPort):
+
+        #AX25Station takes AX25Interface as a constructor. [SSID on network]
+        #attach interface via .attach() - links it up to an interface so it can send/receive S and I frames
+        dev = str(int(device))
+        axint = self.kissDevices[dev][str(kissPort)]
+
+
+        station = aioax25.station.AX25Station (axint, self.call, 
+                                            self.ssid, 
+                                            protocol=AX25Version.AX25_20, 
+                                            log=self.logging, 
+                                            loop=self.loop)
+
+        station.attach() # Connect the station to the interface
 

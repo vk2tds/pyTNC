@@ -6,6 +6,7 @@ format they were in until refreshed
 * If TAB completion is NOT working, GNU Readline may not be working. It may not be needed, depending on the system
 * cannot work out an escape command in readline in CONV mode. Hacked by doing Alt-C which sends ç
 * Redline - https://pypi.org/project/gnureadline/
+* split callsign storage from conect.kiss_interface() such that you can have a dedicated call per interface
 
 
 

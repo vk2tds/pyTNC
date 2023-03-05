@@ -78,117 +78,6 @@ loggerscreen = logging.getLogger ('console')
 
 
 
-class Stream:
-    def __init__(self, stream):
-        self._stream = stream 
-        self._connection = None
-        self._cbDisconnect = []
-        self._cbReceived = []
-        self._cbSent = []
-        self._cbConnect = []
-        self._cbInit = []
-        self._axDisconnect = []
-        self._axReceived = []
-        self._axSent = []
-        self._axConnect = []
-        self._axInit = []
-        True
-    
-    @property
-    def stream(self):
-        return self._stream
-
-    @property
-    def connection(self):
-        return self._connection
-    
-    @connection.settter
-    def connection(self, connection):
-        self._connection = connection
-
-    @property
-    def cbDisconnect(self):
-        return self._cbDisconnect
-    
-    @cbDisconnect.setter
-    def cbDisconnect(self, cb):
-        self._cbDisconnect.append (cb)
-
-    @property
-    def cbReceived(self):
-        return self._cbReceived
-    
-    @cbReceived.setter
-    def cbReceived(self, cb):
-        self._cbReceived.append (cb)
-
-    @property
-    def cbSent(self):
-        return self._cbSent
-    
-    @cbSent.setter
-    def cbSent(self, cb):
-        self._cbSent.append (cb)
-
-    @property
-    def cbConnect(self):
-        return self._cbConnect
-    
-    @cbConnect.setter
-    def cbConnect(self, cb):
-        self._cbConnect.append (cb)
-
-    @property
-    def cbInit(self):
-        return self._cbInit
-    
-    @cbInit.setter
-    def cbInit(self, cb):
-        self._cbInit.append (cb)
-
-    @property
-    def axDisconnect(self):
-        return self._axDisconnect
-    
-    @axDisconnect.setter
-    def axDisconnect(self, cb):
-        self._axDisconnect.append (cb)
-
-    @property
-    def axReceived(self):
-        return self._axReceived
-    
-    @axReceived.setter
-    def axReceived(self, cb):
-        self._axReceived.append (cb)
-
-    @property
-    def axSent(self):
-        return self._axSent
-    
-    @axSent.setter
-    def axSent(self, cb):
-        self._axSent.append (cb)
-
-    @property
-    def axConnect(self):
-        return self._axConnect
-    
-    @axConnect.setter
-    def axConnect(self, cb):
-        self._axConnect.append (cb)
-
-    @property
-    def axInit(self):
-        return self._axInit
-    
-    @axInit.setter
-    def axInit(self, cb):
-        self._axInit.append (cb)
-
-
-
-
 
 
 
@@ -208,61 +97,48 @@ class TNC:
 
         self.streams = {}
         for s in commands.streamlist:
-            self.streams[s] = {'Stream': s, 
-                               'Connection': None, 
-                               'cbDisconnect': [], # User callbacks
-                               'cbReceived': [], 
-                               'cbSent': [], 
-                               'cbConnect': [],
-                               'cbInit': [],
-                               'axDisconnect': [], # ax25 callbacks
-                               'axReceived': [], 
-                               'axSent': [], 
-                               'axConnect': [],
-                               'axInit': [],
-                               } 
-
+            self.streams[s] = connect.Stream(s)
 
 
     def on_Disconnect (self, cb):
         for s in commands.streamlist:
-            self.streams[s]['cbDisconnect'].append (cb)
+            self.streams[s].cbDisconnect = cb
 
     def on_Received (self, cb):
         for s in commands.streamlist:
-            self.streams[s]['cbReceived'].append (cb)
+            self.streams[s].cbReceived = cb
             
     def on_Sent (self, cb):
         for s in commands.streamlist:
-            self.streams[s]['cbSent'].append (cb)
+            self.streams[s].cbSent = cb
             
     def on_Connect (self, cb):
         for s in commands.streamlist:
-            self.streams[s]['cbConnect'].append (cb)
+            self.streams[s].cbConnect = cb
 
     def on_Init (self, cb):
         for s in commands.streamlist:
-            self.streams[s]['cbInit'].append (cb)
+            self.streams[s].cbInit = cb
 
     def on_axDisconnect (self, cb):
         for s in commands.streamlist:
-            self.streams[s]['axDisconnect'].append (cb)
+            self.streams[s].axDisconnect = cb
 
     def on_axReceived (self, cb):
         for s in commands.streamlist:
-            self.streams[s]['axReceived'].append (cb)
+            self.streams[s].axReceived = cb
             
     def on_axSent (self, cb):
         for s in commands.streamlist:
-            self.streams[s]['axSent'].append (cb)
+            self.streams[s].axSent = cb
             
     def on_axConnect (self, cb):
         for s in commands.streamlist:
-            self.streams[s]['axConnect'].append (cb)
+            self.streams[s].axConnect = cb
 
     def on_axInit (self, cb):
         for s in commands.streamlist:
-            self.streams[s]['axInit'].append (cb)
+            self.streams[s].axInit = cb
 
 
 
@@ -374,10 +250,10 @@ myeliza = {'Stream': 'H', 'Therapist': None}
 
 
 def axReceived(text, ax):
-    c = tnc.streams[ax]['Connection']
+    c = tnc.streams[ax].Connection
 
-    cA = tnc.streams['A']['Connection'] 
-    cEliza = tnc.streams[myeliza['Stream']]['Connection'] 
+    cA = tnc.streams['A'].Connection
+    cEliza = tnc.streams[myeliza['Stream']].Connection
     if not cA is None and not cEliza is None:
         # now check if our end is connected...
         # we must assume the other end is connected
@@ -390,7 +266,7 @@ def axReceived(text, ax):
 
 
 def tncReceived(text, ax):
-    c = tnc.streams[ax]['Connection']
+    c = tnc.streams[ax].Connection
 
         #c.axSend (myeliza['Therapist'].respond (text))
     if ax == myeliza['Stream']:
@@ -400,11 +276,11 @@ def tncReceived(text, ax):
 
 def axConnected(ax):
     loggerscreen.debug ('# axConnected %s ' % (ax))
-    c = tnc.streams[ax]['Connection']
+    c = tnc.streams[ax].Connection
 
 def tncConnected(ax):
     loggerscreen.debug ('# tncConencted %s' % (ax))
-    c = tnc.streams[ax]['Connection']
+    c = tnc.streams[ax].Connection
     if 'UTC' in completer.options and completer.options['UTC']['Value']:
         t = datetime.utcnow()
     else:
@@ -418,26 +294,26 @@ def tncConnected(ax):
     tnc.mode = tnc.modeConverse # Automatically go into CONVERSE mode
 
 def axDisconnected(ax):
-    c = tnc.streams[ax]['Connection']
+    c = tnc.streams[ax].Connection
     commands.output ('*** AXDISCONNECTED')
 
 def tncDisconnected(ax):
-    c = tnc.streams[ax]['Connection']
+    c = tnc.streams[ax].Connection
     commands.output ('*** DISCONNECTED %s' % (ax))
     tnc.mode = tnc.modeCommand
     # tnc.streams[ax] = None
     if ax == 'A':
         # also disconnect the far end if needed
-        cEliza = tnc.streams[myeliza['Stream']]['Connection']
+        cEliza = tnc.streams[myeliza['Stream']].Connection
         cEliza.disconnect()
 
 
 def axSend(text, ax):
     loggerscreen.debug ('# axSend %s %s ' %(text, ax))
-    c = tnc.streams[ax]['Connection']
+    c = tnc.streams[ax].Connection
 
-    cA = tnc.streams['A']['Connection'] # Assume A
-    cEliza = tnc.streams[myeliza['Stream']]['Connection'] 
+    cA = tnc.streams['A'].Connection # Assume A
+    cEliza = tnc.streams[myeliza['Stream']].Connection 
 
 
     if ax == 'A':
@@ -452,7 +328,7 @@ def axSend(text, ax):
 
 def tncSend(text, ax):
     loggerscreen.debug ('# tncSend %s ' % (ax))
-    c = tnc.streams[ax]['Connection']
+    c = tnc.streams[ax].Connection
     True
 
 
@@ -463,7 +339,7 @@ def axInit(ax):
     global myeliza
     loggerscreen.debug ('# axInit %s ' % (ax))
 
-    c = tnc.streams[ax]['Connection']
+    c = tnc.streams[ax].Connection
     if not c is None: # Should never be none... But...
         if c.callTo == 'ELIZA':
             # we need to init another stream and connection. Lets call it H or Hell..
@@ -477,9 +353,9 @@ def axInit(ax):
 
 def tncInit(ax):
     loggerscreen.debug ('# tncInit %s ' % (ax))
-    c = tnc.streams[ax]['Connection']
+    c = tnc.streams[ax].Connection
     if c.callTo == 'ELIZA': 
-        cEliza = tnc.streams[myeliza['Stream']]['Connection']
+        cEliza = tnc.streams[myeliza['Stream']].Connection
         cEliza.connect = True
 
 
@@ -488,8 +364,8 @@ async def periodic():
     while True:
         if True:
             # Eliza functionality
-            cA = tnc.streams['A']['Connection'] # Assume A
-            cEliza = tnc.streams[eliza['Stream']]['Connection'] 
+            cA = tnc.streams['A'].Connection # Assume A
+            cEliza = tnc.streams[eliza['Stream']].Connection
             if not cA is None and not cEliza is None:
                 # we have connection objects on both
                 if not cA.connected and not cEliza.connected:
@@ -522,9 +398,9 @@ async def main_async():
             if tnc.exitToCommandMode in chunk:
                 tnc.mode = tnc.modeCommand
             elif chunk[:3].upper() == 'BYE' :
-                tnc.streams['A']['Connection'].disconnect()
+                tnc.streams['A'].Connection.disconnect()
             else:
-                tnc.streams['A']['Connection'].axSend(chunk)
+                tnc.streams['A'].Connection.axSend(chunk)
             True
         elif tnc.mode == tnc.modeTrans:
             True
@@ -576,8 +452,10 @@ def init():
 
 
     for index in commands.TNC2_ROM:
-        TNC2[index.upper()] = commands.TNC2_ROM[index]
-        TNC2[index.upper()]['Display'] = index
+        c = commands.Individual_Command()
+        c.set = commands.TNC2_ROM[index]
+        c.Display = index
+        TNC2[index.upper()] = c
 
     # Register our completer function
     completer = commands.BufferAwareCompleter(TNC2, logging)
@@ -592,11 +470,11 @@ def init():
 
     # First, process defaults
     for o in completer.options:
-        if 'Default' in completer.options[o]:
-            line = o + ' ' + completer.options[o]['Default']
+        if completer.options[o].Default is not None:
+            line = o + ' ' + completer.options[o].Default
             ip.input_process (line, display=False)
         # Only the upper case letters are an alternative
-        completer.options[o]['Shorter'] = ''.join(filter(str.isupper, completer.options[o]['Display']))
+        completer.options[o].Shorter = ''.join(filter(str.isupper, completer.options[o].Display))
 
     # Custom startup for debugging...
     for custom in ('TRACE ON', 

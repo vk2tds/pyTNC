@@ -39,73 +39,7 @@ I-frames, and sends them.
 
 
 
-Hi Darryl,
 
-One thing with Python to watch out for: it is indentation sensitive.
-Somewhere in the email system, that indentation got lost.  An
-attachment might be safer in terms of preserving code formatting.
-
-On Sun, 5 Mar 2023 00:29:02 +0000
-Darryl Smith <darryl@radio-active.net.au> wrote:
-
-Hi Stuart
-
-I think I am getting somewhere with regards to understanding things.
-Can you have a look over this code and see if I am going the right
-way? Also, not sure about hooks for received_information and send. I
-know they likely Havent been implemented yet, but it would be great
-to see what I can implement
-
-Yep, I'm open to ideas here because it hasn't been implemented yet, so
-things are much more "pliable" than they would be if already written.
-:-)
-
-def start_ax25_station(self, device, kissPort):
-
-#AX25Station takes AX25Interface as a constructor. [SSID on network]
-#attach interface via .attach() - links it up to an interface so it
-can send/receive S and I frames
-
-dev = str(int(device))
-axint = self.kissDevices[dev][str(kissPort)]
-
-Took me a little while to figure what was going on here, at first I
-thought `axint` was a `KISSDevice` for a moment, but I realise now it's
-a `dict` container for some related objects.  Realistically a class
-would be better for this to "tie" the objects together, but a `dict`
-will certainly do for prototyping purposes.
-
-station = aioax25.station.AX25Station (axint['AX25Interface'],
-self.call, self.ssid,
-protocol=AX25Version.AX25_20,
-log=self.logging,
-loop=self.loop)
-
-Worth noting that `protocol` is optional here, and if not specified, it
-defaults to `UNKNOWN` which will trigger auto-negotiation -- however
-some TNCs do not handle auto-negotiation well, so forcing AX.25 2.0
-isn't a bad option. :-)
-
-station.attach() # Connect the station to the interface
-axint['Station'] = station
-
-peer = station.getpeer ('N0CALL', 0, []) # callsign, ssid, repeaters[]
-
-These will default to 0 and no digipeaters if left off, only the
-callsign is mandatory.
-
-peer.connect()
-axint['Peer'] = peer
-
-def send_ax25_station (self, device, kissPort, data):
-dev = str(int(device))
-axint = self.kissDevices[dev][str(kissPort)]
-
-peer = axint['Peer']
-
-# **************
-peer.send (data)
-# **************
 
 Now, at present there isn't a `def send(self, data):` method on
 `AX25Peer`.  I'm thinking if there was, `data` should take `bytes` as

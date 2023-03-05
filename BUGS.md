@@ -8,6 +8,7 @@ format they were in until refreshed
 * Redline - https://pypi.org/project/gnureadline/
 * split callsign storage from conect.kiss_interface() such that you can have a dedicated call per interface
 
+* At the “cmd:” prompt, type |2a and press the enter key. This would move to port 2 on stream A
 
 
 Future 

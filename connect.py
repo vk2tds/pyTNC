@@ -20,6 +20,117 @@ from aioax25.version import AX25Version
 
 
 
+class Stream:
+    def __init__(self, stream):
+        self._stream = stream 
+        self._connection = None
+        self._cbDisconnect = [] # user callbacks
+        self._cbReceived = []
+        self._cbSent = []
+        self._cbConnect = []
+        self._cbInit = []
+        self._axDisconnect = [] # ax25 callbacks
+        self._axReceived = []
+        self._axSent = []
+        self._axConnect = []
+        self._axInit = []
+        True
+    
+    @property
+    def Stream(self):
+        return self._stream
+
+    @property
+    def connection(self):
+        return self._connection
+    
+    @connection.setter
+    def connection(self, connection):
+        self._connection = connection
+
+    @property
+    def cbDisconnect(self):
+        return self._cbDisconnect
+    
+    @cbDisconnect.setter
+    def cbDisconnect(self, cb):
+        self._cbDisconnect.append (cb)
+
+    @property
+    def cbReceived(self):
+        return self._cbReceived
+    
+    @cbReceived.setter
+    def cbReceived(self, cb):
+        self._cbReceived.append (cb)
+
+    @property
+    def cbSent(self):
+        return self._cbSent
+    
+    @cbSent.setter
+    def cbSent(self, cb):
+        self._cbSent.append (cb)
+
+    @property
+    def cbConnect(self):
+        return self._cbConnect
+    
+    @cbConnect.setter
+    def cbConnect(self, cb):
+        self._cbConnect.append (cb)
+
+    @property
+    def cbInit(self):
+        return self._cbInit
+    
+    @cbInit.setter
+    def cbInit(self, cb):
+        self._cbInit.append (cb)
+
+    @property
+    def axDisconnect(self):
+        return self._axDisconnect
+    
+    @axDisconnect.setter
+    def axDisconnect(self, cb):
+        self._axDisconnect.append (cb)
+
+    @property
+    def axReceived(self):
+        return self._axReceived
+    
+    @axReceived.setter
+    def axReceived(self, cb):
+        self._axReceived.append (cb)
+
+    @property
+    def axSent(self):
+        return self._axSent
+    
+    @axSent.setter
+    def axSent(self, cb):
+        self._axSent.append (cb)
+
+    @property
+    def axConnect(self):
+        return self._axConnect
+    
+    @axConnect.setter
+    def axConnect(self, cb):
+        self._axConnect.append (cb)
+
+    @property
+    def axInit(self):
+        return self._axInit
+    
+    @axInit.setter
+    def axInit(self, cb):
+        self._axInit.append (cb)
+
+
+
+
 class kiss_interface():
     #ToDo: Split call from kiss_interface
     def __init__ (self, on_rx, logging):
@@ -54,7 +165,8 @@ class kiss_interface():
             print (self.kissDevices[dev]['KissDevice'])
             axint = self.start_ax25_port (self.kissDevices[dev]['KissDevice'], kissPort)
             self.kissDevices[dev][str(kissPort)] = {'AX25Interface': axint,
-                                                        'Station': None}
+                                                    'Station': None,
+                                                    'Peer': None}
 
     def start_ax25_device(self, host, port, phy):
 
@@ -97,11 +209,27 @@ class kiss_interface():
         axint = self.kissDevices[dev][str(kissPort)]
 
 
-        station = aioax25.station.AX25Station (axint, self.call, 
+        station = aioax25.station.AX25Station (axint['AX25Interface'], self.call, 
                                             self.ssid, 
                                             protocol=AX25Version.AX25_20, 
                                             log=self.logging, 
                                             loop=self.loop)
 
         station.attach() # Connect the station to the interface
+        axint['Station'] = station
+
+        peer = station.getpeer ('N0CALL', 0, []) # callsign, ssid, repeaters[]
+        peer.connect()
+        axint['Peer'] = peer
+
+    def send_ax25_station (self, device, kissPort, data):
+        dev = str(int(device))
+        axint = self.kissDevices[dev][str(kissPort)]
+
+        peer = axint['Peer']
+
+        # **************
+        peer.send (data)
+        # **************
+
 

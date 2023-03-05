@@ -33,7 +33,129 @@ import gnureadline as readline
 streamlist = ('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J')
 
 
-returns = SimpleNamespace(**{'Ok':0, 'Eh': 1, 'Bad': 2, 'NotImplemented': 3})
+
+
+class returns:
+    #returns = SimpleNamespace(**{'Ok':0, 'Eh': 1, 'Bad': 2, 'NotImplemented': 3})
+    def __init(self):
+        True
+
+    @property
+    def Ok(self):
+        return 0
+    
+    @property 
+    def Eh(self):
+        return 1
+
+    @property
+    def Bad(self):
+        return 2
+    
+    @property
+    def NotImplemented(self):
+        return 3
+
+    
+
+class Individual_Command:
+    def __init__ (self):
+        self._Display = None
+        self._Commands = []
+        self._Group = None
+        self._Default = None
+        self._Help = None
+        self._Min = None
+        self._Max = None
+        self._Minimum = None
+        self._Shorter = None
+        self._value = None
+
+    def set(self, ind):
+        if 'Display' in ind: 
+            self._Display = ind.Display
+        if 'Commands' in ind: 
+            self._Commands = ind.Commands
+        if 'Group' in ind: 
+            self._group = ind.Group
+        if 'Default' in ind: 
+            self._Default = ind.Default
+        if 'Help' in ind: 
+            self._Help = ind.Help
+        if 'Min' in ind: 
+            self._Min = ind.Min
+        if 'Max' in ind: 
+            self._Max = ind.Max
+        if 'Minimum' in ind: 
+            self._Minimum = ind.Minimum
+        if 'Shorter' in ind:
+            self._Shorter = ind.Shorter
+        if 'Value' in ind:
+            self._Value = ind.Value
+
+    @property
+    def Display(self):
+        return self._Display
+    
+    @Display.setter
+    def Display(self, disp):
+        self._Display = disp
+
+    @property
+    def Shorter(self):
+        return self._Shorter
+    
+    @Shorter.setter
+    def Shorter(self, short):
+        self._Shorter = short
+
+    @property
+    def Value(self):
+        return self._Value
+    
+    @Value.setter
+    def Value(self, short):
+        self._Value = short
+
+
+    @property
+    def Commands(self):
+        return self._Commands
+    
+    @property
+    def Group(self):
+        return self._Group
+    
+    @property
+    def Default(self):
+        return self._Default
+    
+    @property
+    def Help(self):
+        return self._Help
+    
+    @property 
+    def Min(self):
+        return self._Min
+    
+    @property
+    def Max(self):
+        return self._Max
+    
+    @property
+    def Minimum(self):
+        return self._Minimum
+    
+
+
+
+#    for index in commands.TNC2_ROM:
+#        TNC2[index.upper()] = commands.TNC2_ROM[index]
+#        TNC2[index.upper()]['Display'] = index
+
+
+
+
 
 
 TNC2_ROM = {
@@ -253,15 +375,15 @@ class connection:
         self.therapist = None
         self.connectedSession = False
         self.stream = stream
-        self.stream['Connection'] = self
+        self.stream.Connection = self
 
         print ('Manage a connection from %s to %s via %s' % (callFrom, callTo, callDigi))
-        if self.stream['axInit']:
-            for callback in self.stream['axInit']:
-                callback (self.stream['Stream'])
-        if self.stream['cbInit']:
-            for callback in self.stream['cbInit']:
-                callback (self.stream['Stream'])
+        if self.stream.axInit:
+            for callback in self.stream.axInit:
+                callback (self.stream.Stream)
+        if self.stream.cbInit:
+            for callback in self.stream.cbInit:
+                callback (self.stream.Stream)
 
 
     def connect(self):
@@ -283,39 +405,39 @@ class connection:
         # Shouldnt use this function
         self.connectedSession = status
         if status == True:
-            if self.stream['axConnect']:
-                for callback in self.stream['axConnect']:
-                    callback (self.stream['Stream'])
-            if self.stream['cbConnect']:
-                for callback in self.stream['cbConnect']:
-                    callback (self.stream['Stream'])
+            if self.stream.axConnect:
+                for callback in self.stream.axConnect:
+                    callback (self.stream.Stream)
+            if self.stream.cbConnect:
+                for callback in self.stream.cbConnect:
+                    callback (self.stream.Stream)
         elif status == False:
-            if self.stream['axDisconnect']:
-                for callback in self.stream['axDisconnect']:
-                    callback (self.stream['Stream'])
-            if self.stream['cbDisconnect']:
-                for callback in self.stream['cbDisconnect']:
-                    callback (self.stream['Stream'])
+            if self.stream.axDisconnect:
+                for callback in self.stream.axDisconnect:
+                    callback (self.stream.Stream)
+            if self.stream.cbDisconnect:
+                for callback in self.stream.cbDisconnect:
+                    callback (self.stream.Stream)
             self.callFrom = None
             self.callTo = None
             self.callDigi = None
 
     def axSend(self, text):
         print ('axSend %s' % (text))
-        if self.stream['axSent']:
-            for callback in self.stream['axSent']:
-                callback (text, self.stream['Stream'])
-        if self.stream['cbSent']:
-            for callback in self.stream['cbSent']:
-                callback (text, self.stream['Stream'])
+        if self.stream.axSent:
+            for callback in self.stream.axSent:
+                callback (text, self.stream.Stream)
+        if self.stream.cbSent:
+            for callback in self.stream.cbSent:
+                callback (text, self.stream.Stream)
 
     def axReceived (self, text):
-        if self.stream['axReceived']:
-            for callback in self.stream['axReceived']:
-                callback (text, self.stream['Stream'])
-        if self.stream['cbReceived']:
-            for callback in self.stream['cbReceived']:
-                callback (text, self.stream['Stream'])
+        if self.stream.axReceived:
+            for callback in self.stream.axReceived:
+                callback (text, self.stream.Stream)
+        if self.stream.cbReceived:
+            for callback in self.stream.cbReceived:
+                callback (text, self.stream.Stream)
 
 
 
@@ -530,7 +652,7 @@ class process:
                     return returns.Eh    
             #self.tnc.streams['A']['Connection'] = 
             connection (callFrom, callTo, callDigi, self.tnc.streams['A'])
-            self.tnc.streams['A']['Connection'].connect()
+            self.tnc.streams['A'].Connection.connect()
             return returns.Ok
         elif words[0] == 'KISSDEV':
             # KISSdev 1 tcp localhost 8001
@@ -566,12 +688,12 @@ class process:
                     True
                 elif words[0] == 'CSTATUS':
                     for s in streamlist:
-                        sstate = 'CONNECTED' if ((not self.tnc.streams[s] is None) and (not self.tnc.streams[s]['Connection'] is None)) else 'DISCONNECTED'
+                        sstate = 'CONNECTED' if ((not self.tnc.streams[s] is None) and (not self.tnc.streams[s].Connection is None)) else 'DISCONNECTED'
                         if sstate == 'CONNECTED':
-                            scalls = ('%s>%s' % (self.tnc.streams[s]['Connection'].callFrom, self.tnc.streams[s]['Connection'].callTo))
-                            if not self.tnc.streams[s]['Connection'].callDigi == '' and not self.tnc.streams[s]['Connection'].callDigi is None :
-                                print (self.tnc.streams[s]['Connection'].callDigi)
-                                scalls += "," + ",".join(self.tnc.streams[s]['Connection'].callDigi)
+                            scalls = ('%s>%s' % (self.tnc.streams[s].Connection.callFrom, self.tnc.streams[s].Connection.callTo))
+                            if not self.tnc.streams[s].Connection.callDigi == '' and not self.tnc.streams[s].Connection.callDigi is None :
+                                print (self.tnc.streams[s].Connection.callDigi)
+                                scalls += "," + ",".join(self.tnc.streams[s].Connection.callDigi)
                         else:
                             scalls = 'NO CONNECTION'
                         if display == True: print ('%s stream    State %s\t\t%s' %(s, sstate, scalls))
@@ -584,7 +706,7 @@ class process:
                     self.tnc.mode = self.tnc.modeConverse
                     return returns.Ok
                 elif words[0] == 'DISCONNE':
-                    self.tnc.streams['A']['Connection'].disconnect()
+                    self.tnc.streams['A'].Connection.disconnect()
                     return returns.Ok
                 elif words[0] == 'ID':
                     return returns.NotImplemented

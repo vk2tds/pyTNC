@@ -78,6 +78,114 @@ loggerscreen = logging.getLogger ('console')
 
 
 
+class Stream:
+    def __init__(self, stream):
+        self._stream = stream 
+        self._connection = None
+        self._cbDisconnect = []
+        self._cbReceived = []
+        self._cbSent = []
+        self._cbConnect = []
+        self._cbInit = []
+        self._axDisconnect = []
+        self._axReceived = []
+        self._axSent = []
+        self._axConnect = []
+        self._axInit = []
+        True
+    
+    @property
+    def stream(self):
+        return self._stream
+
+    @property
+    def connection(self):
+        return self._connection
+    
+    @connection.settter
+    def connection(self, connection):
+        self._connection = connection
+
+    @property
+    def cbDisconnect(self):
+        return self._cbDisconnect
+    
+    @cbDisconnect.setter
+    def cbDisconnect(self, cb):
+        self._cbDisconnect.append (cb)
+
+    @property
+    def cbReceived(self):
+        return self._cbReceived
+    
+    @cbReceived.setter
+    def cbReceived(self, cb):
+        self._cbReceived.append (cb)
+
+    @property
+    def cbSent(self):
+        return self._cbSent
+    
+    @cbSent.setter
+    def cbSent(self, cb):
+        self._cbSent.append (cb)
+
+    @property
+    def cbConnect(self):
+        return self._cbConnect
+    
+    @cbConnect.setter
+    def cbConnect(self, cb):
+        self._cbConnect.append (cb)
+
+    @property
+    def cbInit(self):
+        return self._cbInit
+    
+    @cbInit.setter
+    def cbInit(self, cb):
+        self._cbInit.append (cb)
+
+    @property
+    def axDisconnect(self):
+        return self._axDisconnect
+    
+    @axDisconnect.setter
+    def axDisconnect(self, cb):
+        self._axDisconnect.append (cb)
+
+    @property
+    def axReceived(self):
+        return self._axReceived
+    
+    @axReceived.setter
+    def axReceived(self, cb):
+        self._axReceived.append (cb)
+
+    @property
+    def axSent(self):
+        return self._axSent
+    
+    @axSent.setter
+    def axSent(self, cb):
+        self._axSent.append (cb)
+
+    @property
+    def axConnect(self):
+        return self._axConnect
+    
+    @axConnect.setter
+    def axConnect(self, cb):
+        self._axConnect.append (cb)
+
+    @property
+    def axInit(self):
+        return self._axInit
+    
+    @axInit.setter
+    def axInit(self, cb):
+        self._axInit.append (cb)
+
 
 
 

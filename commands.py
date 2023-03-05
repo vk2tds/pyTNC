@@ -29,6 +29,7 @@ import eliza # for testing
 from datetime import timezone
 import datetime
 import gnureadline as readline
+import aioax25
 
 streamlist = ('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J')
 
@@ -69,29 +70,30 @@ class Individual_Command:
         self._Max = None
         self._Minimum = None
         self._Shorter = None
-        self._value = None
+        self._Value = None
 
     def set(self, ind):
         if 'Display' in ind: 
-            self._Display = ind.Display
+            self._Display = ind['Display']
         if 'Commands' in ind: 
-            self._Commands = ind.Commands
+            self._Commands = ind['Commands']
         if 'Group' in ind: 
-            self._group = ind.Group
+            self._Group = ind['Group']
         if 'Default' in ind: 
-            self._Default = ind.Default
+            if len(ind['Default']) > 0:
+                self._Default = ind['Default']
         if 'Help' in ind: 
-            self._Help = ind.Help
+            self._Help = ind['Help']
         if 'Min' in ind: 
-            self._Min = ind.Min
+            self._Min = ind['Min']
         if 'Max' in ind: 
-            self._Max = ind.Max
+            self._Max = ind['Max']
         if 'Minimum' in ind: 
-            self._Minimum = ind.Minimum
+            self._Minimum = ind['Minimum']
         if 'Shorter' in ind:
-            self._Shorter = ind.Shorter
+            self._Shorter = ind['Shorter']
         if 'Value' in ind:
-            self._Value = ind.Value
+            self._Value = ind['Value']
 
     @property
     def Display(self):
@@ -329,7 +331,7 @@ class BufferAwareCompleter:
                         # later word
                         first = words[0]
                         #logging.debug (first)
-                        c = self.options[first.upper()]['Commands']
+                        c = self.options[first.upper()].Commands
                         #logging.debug (c)
                         candidates = [x.upper() for x in c]
                         #logging.debug('Xcandidates=%s',
@@ -478,13 +480,13 @@ class process:
 
 
     def displaydatetime (self, dt):
-        if self.completer.options['DAYUSA']['Value']:
-            if self.completer.options['AMONTH']['Value']:
+        if self.completer.options['DAYUSA'].Value:
+            if self.completer.options['AMONTH'].Value:
                 return dt.strftime ('%d-%b-%Y %H:%M:%S')
             else:
                 return dt.strftime ('%m/%d/%Y %H:%M:%S')
         else:
-            if self.completer.options['AMONTH']['Value']:
+            if self.completer.options['AMONTH'].Value:
                 return dt.strftime ('%d-%b-%Y %H:%M:%S')
             else:
                 return dt.strftime ('%d/%m/%Y %H:%M:%S')
@@ -498,7 +500,7 @@ class process:
         if not words[0] in self.completer.options:
             # didnt find the first word, so see if we can do a shorter version
             for o in self.completer.options:
-                if self.completer.options[o]['Shorter'] == words[0]:
+                if self.completer.options[o].Shorter == words[0]:
                     words[0] = o
         if not words[0] in self.completer.options:
             #ToDo: Remove one character at a time to see if there is a match            
@@ -509,7 +511,7 @@ class process:
 
         # We have more than one word
         if words[0] in self.completer.options:
-            c = self.completer.options[words[0]]['Commands']
+            c = self.completer.options[words[0]].Commands
             if words[1].capitalize() in c:
                 words[1] = words[1].capitalize()
             if not words[1].capitalize() in c:
@@ -553,18 +555,20 @@ class process:
             True
         elif words[0] == 'HELP':
             if len(words) == 1:
-                if display == True: output (self.completer.options['HELP']['Help'])
+                if display == True: output (self.completer.options['HELP'].Help)
                 return returns.Ok
             if len(words) >= 2:
                 if words[1].upper() == 'ALL':
+                    print ('ALL')
+                    print (self.completer.options)
                     for uc in self.completer.options:
-                        if 'Help' in self.completer.options[uc]:
-                            if display == True: output ('%s\t%s' % (uc, self.completer.options[uc]['Help']))
+                        if not self.completer.options[uc].Help is None:
+                            if display == True: output ('%s\t%s' % (uc, self.completer.options[uc].Help))
                     return returns.Ok
                 if words[1] in self.completer.options:
                     uc = words[1].upper()
-                    if 'Help' in self.completer.options[uc]:
-                        if display == True: output (self.completer.options[uc]['Help'])
+                    if not self.completer.options[uc].Help is None:
+                        if display == True: output (self.completer.options[uc].Help)
                         return returns.Ok
                     else:
                         if display == True: output ('No help available')
@@ -575,61 +579,58 @@ class process:
                 cols = 0
                 message = ''
                 for o in self.completer.options:
-                    if 'Value' in self.completer.options[o]:
+                    #if 'Value' in self.completer.options[o].Value:
                                 if len(message) > 0:
-                                    message = message + '\t\t' + to_user (o, None, self.completer.options[o]['Value'])
+                                    message = message + '\t\t' + to_user (o, None, self.completer.options[o].Value)
                                 else:
-                                    message = to_user (o, None, self.completer.options[o]['Value'])
+                                    message = to_user (o, None, self.completer.options[o].Value)
                                 cols += 1
-                                if 'FSCREEN' in self.completer.options:
-                                    if not self.completer.options['FSCREEN']['Value']:
+                                if not self.completer.options['FSCREEN'].Value:
                                         # If we are not in FSCREEN, we only want one column
                                         cols = 4
                                 if cols == 4:
-                                    if display: output (message)
+                                    message = message + '\n'
                                     cols = 0
-                                    message = ''
-                                        
+                if display: output (message)                        
                 return returns.Ok
             if len(words) > 1:
                 group = words[1][0]
                 cols = 0
                 message = ''
                 for o in self.completer.options:
-                    if 'Group' in self.completer.options[o]:
-                        if self.completer.options[o]['Group'] == group: 
-                            if 'Value' in self.completer.options[o]:
+                        if self.completer.options[o].Group == group: 
+                            if not self.completer.options[o].Value is None:
                                 if len(message) > 0:
-                                    message = message + '\t\t' + to_user (o, None, self.completer.options[o]['Value'])
+                                    message = message + '\t\t' + to_user (o, None, self.completer.options[o].Value)
                                 else:
-                                    message = to_user (o, None, self.completer.options[o]['Value'])
+                                    message = to_user (o, None, self.completer.options[o].Value)
                                 cols += 1
                                 if 'FSCREEN' in self.completer.options:
-                                    if not self.completer.options['FSCREEN']['Value']:
+                                    if not self.completer.options['FSCREEN'].Value:
                                         # If we are not in FSCREEN, we only want one column
                                         cols = 4
                                 if cols == 4:
-                                    if display == True: 
-                                        print (message)
-                                        cols = 0
-                                        message = ''
+                                    message = message + '\n'
+                                    cols = 0
+
+                if display: print (message)
 
                 return returns.Ok
             return returns.Bad
         elif words[0] == 'LCALLS':
-            # special case - blank with %
-            if len(words) > 1:
-                self.completer.options['LCALLS']['Value'] = ''
+            # special case - blank with % or just LCALLS
+            if len(words) == 1:
+                self.completer.options['LCALLS'].Value = ''
                 return returns.Ok
             else:
                 if words[1][0] == '%' or words[1][0] == '&':
-                    self.completer.options['LCALLS']['Value'] = ''
+                    self.completer.options['LCALLS'].Value = ''
                     return returns.Ok
         elif words[0] == 'CTEXT':
             # special case - blank with %
-            if len(words) > 1:
+            if len(words) == 1:
                 if words[1][0] == '%' or words[1][0] == '&':
-                    self.completer.options['CTEXT']['Value'] = ''
+                    self.completer.options['CTEXT'].Value = ''
                     return returns.Ok
         elif words[0] == 'CONNECT':
             if len(words) < 2:
@@ -638,7 +639,7 @@ class process:
             words = " ".join(words).upper()
             calls = re.split (r"[ ,]", words)
             calls = [value for value in calls if value != '']
-            callFrom = self.completer.options['MYCALL']['Value']
+            callFrom = self.completer.options['MYCALL'].Value
             callTo = calls[1]
             callDigi = []
             if len(calls) > 2:
@@ -678,12 +679,12 @@ class process:
 
 
         if len(words) == 1 and words[0].upper() in self.completer.options:        # If a single word only, and it has a value,
-            if 'Value' in self.completer.options[words[0].upper()]:       # then print the value
+            if not self.completer.options[words[0].upper()].Value is None:       # then print the value
                 #ToDo: Print True as 'On'
-                if display == True: print (to_user (words[0], None, self.completer.options[words[0].upper()]['Value']))
+                if display == True: print (to_user (words[0], None, self.completer.options[words[0].upper()].Value))
                 return returns.Ok
         
-            if not 'Default' in self.completer.options[words[0].upper()]:   # We are a command
+            if self.completer.options[words[0].upper()].Default is None:   # We are a command
                 if False:
                     True
                 elif words[0] == 'CSTATUS':
@@ -730,46 +731,42 @@ class process:
         if len(words) > 1 and words[0].upper() in self.completer.options:
             # Arbitary length strings
             uc = words[0].upper()
-            if 'Default' in self.completer.options[uc]:
-                default = self.completer.options[uc]['Default']
-                if not 'Value' in self.completer.options[uc]:
-                    self.completer.options[uc]['Value'] = default #init
-            if 'Minimum' in self.completer.options[uc]:
-                if self.completer.options[uc]['Minimum'] == -1:
+            if not self.completer.options[uc] is None:
+                default = self.completer.options[uc].Default
+                if not self.completer.options[uc].Value:
+                    self.completer.options[uc].Value = default #init
+            if not self.completer.options[uc].Minimum:
+                if self.completer.options[uc].Minimum == -1:
                     length = len(words[0]) + 1
                     new_words = words # Make a new list
                     new_words.pop(0) # remove the first item
                     new_words = " ".join(new_words)
-                    if display == True: print (to_user (uc, self.completer.options[uc]['Value'], new_words))
-                    self.completer.options[uc]['Value'] = new_words
+                    if display == True: print (to_user (uc, self.completer.options[uc].Value, new_words))
+                    self.completer.options[uc].Value = new_words
                     return returns.Ok
                 return returns.Bad
 
-
         if len(words) == 2 and words[0].upper() in self.completer.options:
             # Start with two words, and go from there 
-
             # Start with On/Off
             uc = words[0].upper()
-            if 'Default' in self.completer.options[uc]:
-                default = self.completer.options[uc]['Default']
-                if not 'Value' in self.completer.options[uc]:
-                    self.completer.options[uc]['Value'] = default #init
-                if not 'Value' in self.completer.options[uc]:
-                    self.completer.options[uc]['Value'] = default #init
-                if words[1].upper() == 'ON' and 'On' in self.completer.options[uc]['Commands']:
-                    if display == True: print( to_user (uc, self.completer.options[uc]['Value'], True))
-                    self.completer.options[uc]['Value'] = True
+            if not self.completer.options[uc] is None:
+                default = self.completer.options[uc].Default
+                if not self.completer.options[uc].Value is None:
+                    self.completer.options[uc].Value = default #init
+                if words[1].upper() == 'ON' and 'On' in self.completer.options[uc].Commands:
+                    if display == True: print( to_user (uc, self.completer.options[uc].Value, True))
+                    self.completer.options[uc].Value = True
                     return returns.Ok
-                if words[1].upper() == 'OFF' and 'Off' in self.completer.options[uc]['Commands']:
-                    if display == True: print (to_user (uc, self.completer.options[uc]['Value'], False))
-                    self.completer.options[uc]['Value'] = False
+                if words[1].upper() == 'OFF' and 'Off' in self.completer.options[uc].Commands:
+                    if display == True: print (to_user (uc, self.completer.options[uc].Value, False))
+                    self.completer.options[uc].Value = False
                     return returns.Ok
                 if len(default) == 3 and default[0] == '$' and len(words[1]) == 3:
                     # We need to enter a HEX value, of the form $NN
                     if words[1][0] == '$' and is_hex(words[1][1:]):
-                        if display == True: print (to_user (uc, self.completer.options[uc]['Value'], words[1]))
-                        self.completer.options[uc]['Value'] = words[1]
+                        if display == True: print (to_user (uc, self.completer.options[uc].Value, words[1]))
+                        self.completer.options[uc].Value = words[1]
                         return returns.Ok                    
 
     
@@ -778,13 +775,13 @@ class process:
             # Commands in the form 'TXDELAY 20'
             if words[1].isnumeric():
                 number = int (words[1])
-                if 'Min' in self.completer.options[uc] and 'Max' in self.completer.options[uc]:
-                    if number < self.completer.options[uc]['Min']: 
+                if not self.completer.options[uc] is None and not self.completer.options[uc].Max is None:
+                    if number < self.completer.options[uc].Min: 
                         return returns.Bad
-                    if number > self.completer.options[uc]['Max']: 
+                    if number > self.completer.options[uc].Max: 
                         return returns.Bad
-                    if display == True: print (to_user (uc, self.completer.options[uc]['Value'], number))
-                    self.completer.options[uc]['Value'] = number   
+                    if display == True: print (to_user (uc, self.completer.options[uc].Value, number))
+                    self.completer.options[uc].Value = number   
                     return returns.Ok
 
         return returns.Eh
@@ -849,15 +846,15 @@ def _on_receive_monitor (frame, completer, tnc):
 
     calls = re.split (r"[*>,]", str(frame.header))
     calls = [value for value in calls if value != '']
-    lcalls = completer.options['LCALLS']['Value'].split(',')
-    budlist = completer.options['BUDLIST']['Value']
-    mall = completer.options['MALL']['Value']
-    mcon = completer.options['MCON']['Value']
-    mrpt = completer.options['MRPT']['Value']
-    headerln = completer.options['HEADERLN']['Value']
-    adrdisp = completer.options['ADRDISP']['Value']
-    trace = completer.options['TRACE']['Value']
-    mtrans = completer.options['MTRANS']['Value']
+    lcalls = completer.options['LCALLS'].Value.split(',') if not completer.options['LCALLS'].Value is None else []
+    budlist = completer.options['BUDLIST'].Value
+    mall = completer.options['MALL'].Value
+    mcon = completer.options['MCON'].Value
+    mrpt = completer.options['MRPT'].Value
+    headerln = completer.options['HEADERLN'].Value
+    adrdisp = completer.options['ADRDISP'].Value
+    trace = completer.options['TRACE'].Value
+    mtrans = completer.options['MTRANS'].Value
 
 
     if tnc.mode == tnc.modeTransparent:
@@ -900,7 +897,7 @@ def _on_receive_monitor (frame, completer, tnc):
         else:
             return
 
-    if completer.options['MONITOR']['Value']: # MONITOR ON
+    if completer.options['MONITOR'].Value: # MONITOR ON
         True
     else:
         # If Monitor is OFF, Return

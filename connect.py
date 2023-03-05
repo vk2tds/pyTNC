@@ -23,7 +23,7 @@ from aioax25.version import AX25Version
 class Stream:
     def __init__(self, stream):
         self._stream = stream 
-        self._connection = None
+        self._Connection = None
         self._cbDisconnect = [] # user callbacks
         self._cbReceived = []
         self._cbSent = []
@@ -41,12 +41,12 @@ class Stream:
         return self._stream
 
     @property
-    def connection(self):
-        return self._connection
+    def Connection(self):
+        return self._Connection
     
-    @connection.setter
-    def connection(self, connection):
-        self._connection = connection
+    @Connection.setter
+    def Connection(self, connection):
+        self._Connection = Connection
 
     @property
     def cbDisconnect(self):
@@ -128,8 +128,86 @@ class Stream:
     def axInit(self, cb):
         self._axInit.append (cb)
 
+class KissDevices:
+    def __init__ (self, host, port, phy):
+        self._Host = host
+        self._Port = port
+        self._Phy = phy
+        self._KissDevice = {}
+        self._KissPorts = {}
+
+    @property
+    def Host(self):
+        return self._Host
+    
+    @Host.setter
+    def Host(self, host):
+        self._Host = host
+
+    @property
+    def Port(self):
+        return self._Port
+    
+    @Port.setter
+    def Port(self, port):
+        self._Port = port
+
+    @property
+    def Phy(self):
+        return self._Phy
+    
+    @Port.setter
+    def Phy(self, phy):
+        self._Phy = phy
+
+    @property
+    def KissDevice(self):
+        return self._KissDevice
+    
+    @KissDevice.setter
+    def KissDevice(self, kissdevice):
+        self._KissDevice = kissdevice
+
+    def setKissPorts (self, port, kissports):
+        self._KissPorts[port] = kissports
+
+    def KissPorts (self, port):
+        return self._KissPorts[port]
+        
+
+class KissPort:
+    def __init__(self, axint, station, peer):
+        self._AX25Interface = axint
+        self._Station = station
+        self._Peer = peer
+
+    @property
+    def AX25Interface (self):
+        return self._AX25Interface
+    
+    @AX25Interface.setter
+    def AX25Interface (self, axint):
+        self._AX25Interface = axint
+
+    @property
+    def Station (self):
+        return self._Station
+    
+    @Station.setter
+    def Station (self, station):
+        self._Station = station
+
+    @property
+    def Peer(self):
+        return self._Peer
+    
+    @Peer.setter
+    def Peer(self, peer):
+        self._Peer = peer
+        
 
 
+#self.kissDevices[dev] = {'Host': host, 'Port': port, 'Phy': 'tcp', 'Kiss': {} }
 
 class kiss_interface():
     #ToDo: Split call from kiss_interface
@@ -153,20 +231,17 @@ class kiss_interface():
 
     def kissDeviceTCP (self, device, host, port):
         dev = str(int(device))
-        self.kissDevices[dev] = {'Host': host, 'Port': port, 'Phy': 'tcp', 'Kiss': {} }
-        kissdevice = self.start_ax25_device (host, port, 'TCP')
-        self.kissDevices[dev]['KissDevice'] = kissdevice
+        self.kissDevices[dev] = KissDevices (host, port, 'TCP')
+        self.kissDevices[dev].KissDevice = self.start_ax25_device (host, port, 'TCP')
 
     def kissPort (self, device, kissPort):
         dev = str(int(device))
         print ('Before Here')
         if dev in self.kissDevices:
             print ('Here')
-            print (self.kissDevices[dev]['KissDevice'])
-            axint = self.start_ax25_port (self.kissDevices[dev]['KissDevice'], kissPort)
-            self.kissDevices[dev][str(kissPort)] = {'AX25Interface': axint,
-                                                    'Station': None,
-                                                    'Peer': None}
+            print (self.kissDevices[dev].KissDevice)
+            axint = self.start_ax25_port (self.kissDevices[dev].KissDevice, kissPort)
+            self.kissDevices[dev].setKissPorts (kissPort, KissPort (axint, None, None))
 
     def start_ax25_device(self, host, port, phy):
 

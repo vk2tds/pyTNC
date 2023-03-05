@@ -219,7 +219,7 @@ def _on_receive(interface, frame, match=None):
     #https://stackoverflow.com/questions/70181515/how-to-have-a-comfortable-e-g-gnu-readline-style-input-line-in-an-asyncio-tas
 
 
-    if 'UTC' in completer.options and completer.options['UTC']['Value']:
+    if 'UTC' in completer.options and completer.options['UTC'].Value:
         tnc.mheard[str(frame.header.source)] = datetime.utcnow()
     else:
         tnc.mheard[str(frame.header.source)] = datetime.now()
@@ -281,13 +281,13 @@ def axConnected(ax):
 def tncConnected(ax):
     loggerscreen.debug ('# tncConencted %s' % (ax))
     c = tnc.streams[ax].Connection
-    if 'UTC' in completer.options and completer.options['UTC']['Value']:
+    if 'UTC' in completer.options and completer.options['UTC'].Value:
         t = datetime.utcnow()
     else:
         t = datetime.now()
 
 
-    if completer.options['CONSTAMP']['Value']:
+    if completer.options['CONSTAMP'].Value:
         commands.output ('*** CONNECTED to %s %s' % (c.callTo, ip.displaydatetime(t)))
     else:
         commands.output ('*** CONNECTED to %s' % (c.callTo))
@@ -453,7 +453,7 @@ def init():
 
     for index in commands.TNC2_ROM:
         c = commands.Individual_Command()
-        c.set = commands.TNC2_ROM[index]
+        c.set (commands.TNC2_ROM[index])
         c.Display = index
         TNC2[index.upper()] = c
 

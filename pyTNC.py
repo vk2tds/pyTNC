@@ -89,15 +89,21 @@ class TNC:
         self.modeTransparent = 1
         self.modeCommand = 2
         self.tncMode = self.modeCommand
+        #self.completer = completer
 
         self.tncConnected = False
         self.mheard = {}
         self.kissinterface = None
         self.exitToCommandMode = '*** COMMAND MODE ***'
 
+        self.monitor = commands.Monitor()
+
         self.streams = {}
         for s in commands.streamlist:
             self.streams[s] = connect.Stream(s)
+
+    def output (self, line):
+        print (line)
 
 
     def on_Disconnect (self, cb):
@@ -225,7 +231,7 @@ def _on_receive(interface, frame, match=None):
         tnc.mheard[str(frame.header.source)] = datetime.now()
 
     #tnc.mheard['VK2TDS-1'] = datetime.now
-    commands._on_receive_monitor(frame, completer, tnc)
+    tnc.monitor._on_receive_monitor(frame)
 
 
     pass
@@ -261,7 +267,7 @@ def axReceived(text, ax):
             #c.axSend (text)
             True
 
-    commands.output ('AX%s> %s' % (ax, text))
+    tnc.output ('AX%s> %s' % (ax, text))
     
 
 
@@ -272,7 +278,7 @@ def tncReceived(text, ax):
     if ax == myeliza['Stream']:
         c.axSend (myeliza['Therapist'].respond (text))
     else:
-        commands.output ('%s> %s' % (ax, text))
+        tnc.output ('%s> %s' % (ax, text))
 
 def axConnected(ax):
     loggerscreen.debug ('# axConnected %s ' % (ax))
@@ -288,18 +294,18 @@ def tncConnected(ax):
 
 
     if completer.options['CONSTAMP'].Value:
-        commands.output ('*** CONNECTED to %s %s' % (c.callTo, ip.displaydatetime(t)))
+        tnc.output ('*** CONNECTED to %s %s' % (c.callTo, ip.displaydatetime(t)))
     else:
-        commands.output ('*** CONNECTED to %s' % (c.callTo))
+        tnc.output ('*** CONNECTED to %s' % (c.callTo))
     tnc.mode = tnc.modeConverse # Automatically go into CONVERSE mode
 
 def axDisconnected(ax):
     c = tnc.streams[ax].Connection
-    commands.output ('*** AXDISCONNECTED')
+    tnc.output ('*** AXDISCONNECTED')
 
 def tncDisconnected(ax):
     c = tnc.streams[ax].Connection
-    commands.output ('*** DISCONNECTED %s' % (ax))
+    tnc.output ('*** DISCONNECTED %s' % (ax))
     tnc.mode = tnc.modeCommand
     # tnc.streams[ax] = None
     if ax == 'A':
@@ -389,11 +395,11 @@ async def main_async():
             
             r = ip.input_process(chunk)
             if r == commands.returns.Eh:
-                commands.output ('?EH')
+                tnc.output ('?EH')
             elif r == commands.returns.Bad:
-                commands.output ('?BAD')
+                tnc.output ('?BAD')
             elif r == commands.returns.NotImplemented:
-                commands.output ('?Not Implemented')
+                tnc.output ('?Not Implemented')
         elif tnc.mode == tnc.modeConverse:
             if tnc.exitToCommandMode in chunk:
                 tnc.mode = tnc.modeCommand
@@ -424,15 +430,17 @@ def cancel_all():
     for task in asyncio.all_tasks():
         task.cancel()
 
+def output (line):
+    print ('%s' %(line))
 
 def init():
     global completer
     global ip 
     global console
 
-    commands.output ('TAPR TNC2 Clone')
-    commands.output ('Copyright 2023 Darryl Smith, VK2TDS')
-    commands.output ('')
+    tnc.output ('TAPR TNC2 Clone')
+    tnc.output ('Copyright 2023 Darryl Smith, VK2TDS')
+    tnc.output ('')
 
     
 
@@ -459,6 +467,10 @@ def init():
 
     # Register our completer function
     completer = commands.BufferAwareCompleter(TNC2, logging)
+
+    tnc.monitor.setCompleter(completer)
+    tnc.monitor.setOutput(output)
+    tnc.monitor.setTnc(tnc)
 
     readline.set_completer(completer.complete)
 

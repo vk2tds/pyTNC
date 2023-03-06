@@ -555,7 +555,7 @@ class process:
             True
         elif words[0] == 'HELP':
             if len(words) == 1:
-                if display == True: output (self.completer.options['HELP'].Help)
+                if display == True: self.output (self.completer.options['HELP'].Help)
                 return returns.Ok
             if len(words) >= 2:
                 if words[1].upper() == 'ALL':
@@ -563,15 +563,15 @@ class process:
                     print (self.completer.options)
                     for uc in self.completer.options:
                         if not self.completer.options[uc].Help is None:
-                            if display == True: output ('%s\t%s' % (uc, self.completer.options[uc].Help))
+                            if display == True: self.output ('%s\t%s' % (uc, self.completer.options[uc].Help))
                     return returns.Ok
                 if words[1] in self.completer.options:
                     uc = words[1].upper()
                     if not self.completer.options[uc].Help is None:
-                        if display == True: output (self.completer.options[uc].Help)
+                        if display == True: self.output (self.completer.options[uc].Help)
                         return returns.Ok
                     else:
-                        if display == True: output ('No help available')
+                        if display == True: self.output ('No help available')
                         return returns.Ok
             return returns.Bad
         elif words[0] == 'DISPLAY':
@@ -591,7 +591,7 @@ class process:
                                 if cols == 4:
                                     message = message + '\n'
                                     cols = 0
-                if display: output (message)                        
+                if display: self.output (message)                        
                 return returns.Ok
             if len(words) > 1:
                 group = words[1][0]
@@ -728,23 +728,16 @@ class process:
                 elif words[0] == 'STATUS':
                     return returns.NotImplemented
 
-        if len(words) > 1 and words[0].upper() in self.completer.options:
-            # Arbitary length strings
-            uc = words[0].upper()
-            if not self.completer.options[uc] is None:
-                default = self.completer.options[uc].Default
-                if not self.completer.options[uc].Value:
-                    self.completer.options[uc].Value = default #init
-            if not self.completer.options[uc].Minimum:
-                if self.completer.options[uc].Minimum == -1:
-                    length = len(words[0]) + 1
-                    new_words = words # Make a new list
-                    new_words.pop(0) # remove the first item
-                    new_words = " ".join(new_words)
-                    if display == True: print (to_user (uc, self.completer.options[uc].Value, new_words))
-                    self.completer.options[uc].Value = new_words
-                    return returns.Ok
-                return returns.Bad
+        uc = words[0].upper()
+        if words[0] in self.completer.options:
+            if not self.completer.options[uc].Minimum is None:
+                # 'becacon every 5' has a minimum of 2, but len() of 3 
+                if len(words) < self.completer.options[uc].Minimum:
+                    # too short
+                    return returns.Bad
+            
+
+
 
         if len(words) == 2 and words[0].upper() in self.completer.options:
             # Start with two words, and go from there 
@@ -772,214 +765,245 @@ class process:
     
         if len(words) == 2:
             uc = words[0].upper()
-            # Commands in the form 'TXDELAY 20'
-            if words[1].isnumeric():
-                number = int (words[1])
-                if not self.completer.options[uc] is None and not self.completer.options[uc].Max is None:
-                    if number < self.completer.options[uc].Min: 
-                        return returns.Bad
-                    if number > self.completer.options[uc].Max: 
-                        return returns.Bad
-                    if display == True: print (to_user (uc, self.completer.options[uc].Value, number))
-                    self.completer.options[uc].Value = number   
+            if words[0] in self.completer.options:
+                # Commands in the form 'TXDELAY 20'
+                if words[1].isnumeric():
+                    number = int (words[1])
+                    if not self.completer.options[uc] is None and not self.completer.options[uc].Max is None:
+                        if number < self.completer.options[uc].Min: 
+                            return returns.Bad
+                        if number > self.completer.options[uc].Max: 
+                            return returns.Bad
+                        if display == True: self.output (to_user (uc, self.completer.options[uc].Value, number))
+                        self.completer.options[uc].Value = number   
+                        return returns.Ok
+                else:
+                    uc = words[0].upper()
+                    if display == True: self.output (to_user (uc, self.completer.options[uc].Value, words[1]))
+                    self.completer.options[uc].Value = words[1]
                     return returns.Ok
+            
+                
+
+        if len(words) > 1 and words[0].upper() in self.completer.options:
+            uc = words[0].upper()
+            #if self.completer.options[uc].Minimum == -1:
+            # we know that the length is ok... 
+            length = len(words[0]) + 1
+            new_words = words # Make a new list
+            new_words.pop(0) # remove the first item
+            new_words = " ".join(new_words)
+            if display == True: self.output (to_user (uc, self.completer.options[uc].Value, new_words))
+            self.completer.options[uc].Value = new_words
+            return returns.Ok
 
         return returns.Eh
 
-        print ('Err: Did not find %s' %(words))
+    def output(self, line):
+        self.tnc.output (line)
 
 
 
 
 
 
+class Monitor:
+    def __init__ (self):
+        self._completer = None
+        self._output = None
+        self._tnc = None
+
+    def setCompleter (self, c):
+        self._completer = c
+
+    def setOutput (self, o):
+        self._output = o
+
+    def setTnc (self, t):
+        self._tnc = t
+
+    def _on_receive_trace (self, frame): 
+        bytes = frame.__bytes__() 
+        paclen = len(bytes)
+        self.output (    'byte  ------------hex display------------ -shifted ASCII-- -----ASCII------')
+        offset = 0
+        #6, 42, 59
+
+        while offset < paclen:
+            # deal with the string as a list
+            line = list(('%03x                                                                        ' % (offset)))
+            i = 0
+            hpos = 6
+            sapos = 42
+            apos = 59
+            hexcount = 0 
+            while (offset + i < paclen) and (i < 16):
+                ascii = bytes[offset+i]
+                hex = "{:02x}".format(ascii)
+                line [hpos] = hex[0]
+                line [hpos+1] = hex [1]
+                hpos += 2
+                hexcount += 1
+
+                if hexcount == 4 or hexcount == 8 or hexcount == 12:
+                    hpos += 1
+
+                if chr(bytes[offset+i] >> 1).isprintable():
+                    line [sapos] = chr(bytes[offset+i] >> 1)
+                else:
+                    line[sapos] = '.'
+                sapos += 1
+
+                if chr(bytes[offset+i]).isprintable():
+                    line [apos] = chr(bytes[offset+i])
+                else:
+                    line[apos] = '.'
+                apos += 1
+                i += 1
+            offset += 0x10
+
+            line = "".join(line)
+            self.output (line)
 
 
 
+    def _on_receive_monitor (self, frame):
 
-def _on_receive_trace (frame): 
-    bytes = frame.__bytes__() 
-    paclen = len(bytes)
-    output (    'byte  ------------hex display------------ -shifted ASCII-- -----ASCII------')
-    offset = 0
-    #6, 42, 59
+        calls = re.split (r"[*>,]", str(frame.header))
+        calls = [value for value in calls if value != '']
+        lcalls = self._completer.options['LCALLS'].Value.split(',') if not self._completer.options['LCALLS'].Value is None else []
+        budlist = self._completer.options['BUDLIST'].Value
+        mall = self._completer.options['MALL'].Value
+        mcon = self._completer.options['MCON'].Value
+        mrpt = self._completer.options['MRPT'].Value
+        headerln = self._completer.options['HEADERLN'].Value
+        adrdisp = self._completer.options['ADRDISP'].Value
+        trace = self._completer.options['TRACE'].Value
+        mtrans = self._completer.options['MTRANS'].Value
 
-    while offset < paclen:
-        # deal with the string as a list
-        line = list(('%03x                                                                        ' % (offset)))
-        i = 0
-        hpos = 6
-        sapos = 42
-        apos = 59
-        hexcount = 0 
-        while (offset + i < paclen) and (i < 16):
-            ascii = bytes[offset+i]
-            hex = "{:02x}".format(ascii)
-            line [hpos] = hex[0]
-            line [hpos+1] = hex [1]
-            hpos += 2
-            hexcount += 1
 
-            if hexcount == 4 or hexcount == 8 or hexcount == 12:
-                hpos += 1
+        if self._tnc.mode == self._tnc.modeTransparent:
+            if mtrans == False:
+                # No Monitoring
+                return False
 
-            if chr(bytes[offset+i] >> 1).isprintable():
-                line [sapos] = chr(bytes[offset+i] >> 1)
+        displayPacket = False
+
+        if self._tnc.connected:
+            if mcon == False:
+                # do not display in Connected mode if mcon = False
+                return
+
+        #print (calls)
+        #print (lcalls)
+        #print (budlist)
+        if set(calls).intersection(lcalls):
+            if budlist == True:
+                # Monitor these
+                True
             else:
-                line[sapos] = '.'
-            sapos += 1
-
-            if chr(bytes[offset+i]).isprintable():
-                line [apos] = chr(bytes[offset+i])
+                # Ignore these
+                return
+        else:
+            if budlist == True:
+                # Ignore these
+                return
             else:
-                line[apos] = '.'
-            apos += 1
-            i += 1
-        offset += 0x10
+                # Monitor these
+                True
 
-        line = "".join(line)
-        output (line)
-
-
-
-def _on_receive_monitor (frame, completer, tnc):
-
-    calls = re.split (r"[*>,]", str(frame.header))
-    calls = [value for value in calls if value != '']
-    lcalls = completer.options['LCALLS'].Value.split(',') if not completer.options['LCALLS'].Value is None else []
-    budlist = completer.options['BUDLIST'].Value
-    mall = completer.options['MALL'].Value
-    mcon = completer.options['MCON'].Value
-    mrpt = completer.options['MRPT'].Value
-    headerln = completer.options['HEADERLN'].Value
-    adrdisp = completer.options['ADRDISP'].Value
-    trace = completer.options['TRACE'].Value
-    mtrans = completer.options['MTRANS'].Value
-
-
-    if tnc.mode == tnc.modeTransparent:
-        if mtrans == False:
-            # No Monitoring
-            return False
-
-    displayPacket = False
-
-    if tnc.connected:
-        if mcon == False:
-            # do not display in Connected mode if mcon = False
-            return
-
-    #print (calls)
-    #print (lcalls)
-    #print (budlist)
-    if set(calls).intersection(lcalls):
-        if budlist == True:
-            # Monitor these
+        if mall:
+            # mon connected and unconnected
             True
         else:
-            # Ignore these
-            return
-    else:
-        if budlist == True:
-            # Ignore these
-            return
-        else:
-            # Monitor these
-            True
+            # mon unconnected only
+            if type(frame) is aioax25.frame.AX25UnnumberedInformationFrame:
+                True
+            else:
+                return
 
-    if mall:
-        # mon connected and unconnected
-        True
-    else:
-        # mon unconnected only
-        if type(frame) is aioax25.frame.AX25UnnumberedInformationFrame:
+        if self._completer.options['MONITOR'].Value: # MONITOR ON
             True
         else:
+            # If Monitor is OFF, Return
             return
+            
+        #MRPT On: WB9FLW>AD7I,K9NG*,N2WX-7:Hi Paul.
+        #MRPT OFF: WB9FLW>AD7I:Hi Paul.
+        if mrpt:
+            callsigns = frame.header.source.__str__() + '>' + frame.header.destination.__str__() + ',' + frame.header.repeaters.__str__()
+        else:
+            callsigns = frame.header.source.__str__() + '>' + frame.header.destination.__str__()
 
-    if completer.options['MONITOR'].Value: # MONITOR ON
-        True
-    else:
-        # If Monitor is OFF, Return
-        return
+
+        c = frame.control
+        # x1 = RR; x5 = RNR, x9 = REJ, 03 = UI, 0F = DM, 2F = SABM, 43 = DISC, 63 = UA, 87 = FRMR, even = I
+        if False:
+            True
+        elif (c & 0x0F) == 0x01:
+            control = 'RR'
+        elif (c & 0x0F) == 0x05:
+            control = 'RNR'
+        elif (c & 0x0F) == 0x09:
+            control = 'REJ'
+        elif c == 0x03:
+            control = 'UI'
+        elif c == 0x0F:
+            control = 'DM'
+        elif c == 0x2F:
+            control = 'SABM'
+        elif c == 0x43:
+            control = 'DISC'
+        elif c == 0x63:
+            control = 'UA'
+        elif c == 0x87:
+            control = 'FRMR'
+        elif (c & 0x01) == 0x00:
+            control = 'I'
+
+        #ToDo: Check Polarity
+        if frame.header.cr:
+            control = control + ' C'
+        else:
+            control = control + ' R'
+
+        #ToDo: Check Polarity
+        if frame.pf:
+            control = control + ' P'
+        else:
+            control = control + ' F'
+
+        if (c & 0x01) == 0x00:
+            # Sequenced I frames
+            control = control + ' ToDo-Sn'
+
+        if  ((c & 0x01) == 0x00) or ((c & 0x0F) == 0x01) or ((c & 0x0F) == 0x05) or ((c & 0x0F) == 0x09):
+            # I, REJ, RNR, RR
+            control = control + ' ToDo-Rn'
+
+        control = ' <' + control + '>:'
         
-    #MRPT On: WB9FLW>AD7I,K9NG*,N2WX-7:Hi Paul.
-    #MRPT OFF: WB9FLW>AD7I:Hi Paul.
-    if mrpt:
-        callsigns = frame.header.source.__str__() + '>' + frame.header.destination.__str__() + ',' + frame.header.repeaters.__str__()
-    else:
-        callsigns = frame.header.source.__str__() + '>' + frame.header.destination.__str__()
 
-
-    c = frame.control
-    # x1 = RR; x5 = RNR, x9 = REJ, 03 = UI, 0F = DM, 2F = SABM, 43 = DISC, 63 = UA, 87 = FRMR, even = I
-    if False:
-        True
-    elif (c & 0x0F) == 0x01:
-        control = 'RR'
-    elif (c & 0x0F) == 0x05:
-        control = 'RNR'
-    elif (c & 0x0F) == 0x09:
-        control = 'REJ'
-    elif c == 0x03:
-        control = 'UI'
-    elif c == 0x0F:
-        control = 'DM'
-    elif c == 0x2F:
-        control = 'SABM'
-    elif c == 0x43:
-        control = 'DISC'
-    elif c == 0x63:
-        control = 'UA'
-    elif c == 0x87:
-        control = 'FRMR'
-    elif (c & 0x01) == 0x00:
-        control = 'I'
-
-    #ToDo: Check Polarity
-    if frame.header.cr:
-        control = control + ' C'
-    else:
-        control = control + ' R'
-
-    #ToDo: Check Polarity
-    if frame.pf:
-        control = control + ' P'
-    else:
-        control = control + ' F'
-
-    if (c & 0x01) == 0x00:
-        # Sequenced I frames
-        control = control + ' ToDo-Sn'
-
-    if  ((c & 0x01) == 0x00) or ((c & 0x0F) == 0x01) or ((c & 0x0F) == 0x05) or ((c & 0x0F) == 0x09):
-        # I, REJ, RNR, RR
-        control = control + ' ToDo-Rn'
-
-    control = ' <' + control + '>:'
-    
-
-    #ADRdisp - default ON - N4UQQ>N4UQR,TPA5* <UI R>:This is a monitored frame.
-    if headerln:
-        #HEADERLN On: KV7D>N2WX: Go ahead and transfer the file.
-        if adrdisp:
-            output (callsigns + control)
-        output (frame.payload)
-    else:
-        #HEADERLN Off: N2WX>KV7D:
-        #           Sorry, I'm not quite ready yet.
-        if adrdisp:
-            output (callsigns + control + str(frame.payload.decode()))
+        #ADRdisp - default ON - N4UQQ>N4UQR,TPA5* <UI R>:This is a monitored frame.
+        if headerln:
+            #HEADERLN On: KV7D>N2WX: Go ahead and transfer the file.
+            if adrdisp:
+                self.output (callsigns + control)
+            self.output (frame.payload)
         else:
-            output (frame.payload)
+            #HEADERLN Off: N2WX>KV7D:
+            #           Sorry, I'm not quite ready yet.
+            if adrdisp:
+                self.output (callsigns + control + str(frame.payload.decode()))
+            else:
+                self.output (frame.payload)
 
-    if trace:
-        # Trace mode enabled.
-        _on_receive_trace (frame)
+        if trace:
+            # Trace mode enabled.
+            self._on_receive_trace (frame)
 
 
 
 
-def output(line):
-    # So I can abstract print
-    print (line)
+    def output(self, line):
+        self._output (line)

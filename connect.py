@@ -46,7 +46,7 @@ class Stream:
     
     @Connection.setter
     def Connection(self, connection):
-        self._Connection = Connection
+        self._Connection = connection
 
     @property
     def cbDisconnect(self):
@@ -253,6 +253,7 @@ class kiss_interface():
             loop=self.loop
             )
             kissdevice.open() # happens in background asynchronously
+
             return kissdevice
         self.logger.debug ('start_ax25_device - No TCP interface specified')
 
@@ -276,32 +277,36 @@ class kiss_interface():
         return ax25int
 
 
+
+
+
+
     def start_ax25_station(self, device, kissPort):
 
         #AX25Station takes AX25Interface as a constructor. [SSID on network]
         #attach interface via .attach() - links it up to an interface so it can send/receive S and I frames
         dev = str(int(device))
-        axint = self.kissDevices[dev][str(kissPort)]
+        axint = self.kissDevices[dev].KissPorts(kissPort)
 
 
-        station = aioax25.station.AX25Station (axint['AX25Interface'], self.call, 
+        station = aioax25.station.AX25Station (axint.AX25Interface, self.call, 
                                             self.ssid, 
                                             protocol=AX25Version.AX25_20, 
                                             log=self.logging, 
                                             loop=self.loop)
 
         station.attach() # Connect the station to the interface
-        axint['Station'] = station
+        axint.Station = station
 
         peer = station.getpeer ('N0CALL', 0, []) # callsign, ssid, repeaters[]
         peer.connect()
-        axint['Peer'] = peer
+        axint.Peer = peer
 
     def send_ax25_station (self, device, kissPort, data):
         dev = str(int(device))
-        axint = self.kissDevices[dev][str(kissPort)]
+        axint = self.kissDevices[dev].KissPorts(kissPort)
 
-        peer = axint['Peer']
+        peer = axint.Peer
 
         # **************
         peer.send (data)

@@ -10,6 +10,52 @@ to allow settings to be stored for use at runtime.
 * Type 'HELP ALL' for information on all the commands. This needs to be longer.
 * Exiting CONV mode is an issue at the moment. ALT-C on my Mac exits into command mode
 * You can connect to Eliza by typing 'C ELIZA' at the CMD prompt. Exit by typing 'BYE'
+* Over time functionality is added to pyTNC.py and then over time moved to another library. This code is very much being worked on
+
+
+* Look at the following commands
+    #MFILTER Comma separated characters to totally ignore
+    #MSTAMP WB9FLW>AD7I,K9NG*,N2WX-71 05/24/97 16:53:19]:Hi Paul.
+    #UTC - display in UTC. Default OFF
+
+    #MONITOR - 1 = No characters > 0x7F; 2 = MONITOR ON
+
+
+    #CONRPT - if on, LTEXT -> L3TEXT, STEXT, CTEXT (if CMSG = On) sent on connection
+    #    break if CMSGDISC????
+
+    #CPOLL?
+    #CSTATUS - Status of connection streams
+    #CTEXT
+    #DGPscall
+    #Digipeat - Complex
+    #EBEACON - Default OFF - BTEXT echoed to terminal on transmission
+    #ENCRYPT, ENSHIFT
+    #Group - default Off - group monitoring (MASTERM) - Ignore this command
+
+    #STATUS
+
+* pyTNC._on_receive notes
+    # interface = ax25int above
+    # frame = the incoming UI frame (aioax25.frame.AX25UnnumberedInformationFrame)
+    # match = Regular expression Match object, if regular expressions were used in
+    #         the bind() call.
+    #p ('_on_receive')
+    #p (frame.header)
+    #p (frame.header.destination)
+    #p (frame.header.source)
+    #p (frame.header.repeaters)
+    #p (frame.header.cr)     # cd = Command Response bit
+    #p (frame.header.src_cr)
+    #p ('Control %x' %(frame.control))
+    #p (frame.pid)
+    #p (frame.frame_payload)
+    #p (frame)
+    #p (str(type(frame)))
+    #p (type(frame) is aioax25.frame.AX25UnnumberedInformationFrame)
+    #https://stackoverflow.com/questions/70181515/how-to-have-a-comfortable-e-g-gnu-readline-style-input-line-in-an-asyncio-tas
+
+
 
 
 == Notes on using the AIOAX25 library ==

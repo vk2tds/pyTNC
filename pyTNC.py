@@ -167,58 +167,8 @@ class TNC:
         self.tncConnected = v
 
 
-
-
-
-    #MFILTER Comma separated characters to totally ignore
-    #MSTAMP WB9FLW>AD7I,K9NG*,N2WX-71 05/24/97 16:53:19]:Hi Paul.
-    #UTC - display in UTC. Default OFF
-
-    #MONITOR - 1 = No characters > 0x7F; 2 = MONITOR ON
-
-    #AMONTH - Default On - All months = three letter alpha
-
-    #CONRPT - if on, LTEXT -> L3TEXT, STEXT, CTEXT (if CMSG = On) sent on connection
-    #    break if CMSGDISC????
-
-    #CPOLL?
-    #CSTATUS - Status of connection streams
-    #CTEXT
-    #DGPscall
-    #Digipeat - Complex
-    #EBEACON - Default OFF - BTEXT echoed to terminal on transmission
-    #ENCRYPT, ENSHIFT
-    #Group - default Off - group monitoring (MASTERM) - Ignore this command
-
-    #STATUS
-
-
-
-
-
-
 def _on_receive(interface, frame, match=None):
     # NOTE: Make sure the kissdevice lines up with the one you wnat to listen too
-
-    # interface = ax25int above
-    # frame = the incoming UI frame (aioax25.frame.AX25UnnumberedInformationFrame)
-    # match = Regular expression Match object, if regular expressions were used in
-    #         the bind() call.
-    #p ('_on_receive')
-    #p (frame.header)
-    #p (frame.header.destination)
-    #p (frame.header.source)
-    #p (frame.header.repeaters)
-    #p (frame.header.cr)     # cd = Command Response bit
-    #p (frame.header.src_cr)
-    #p ('Control %x' %(frame.control))
-    #p (frame.pid)
-    #p (frame.frame_payload)
-    #p (frame)
-    #p (str(type(frame)))
-    #p (type(frame) is aioax25.frame.AX25UnnumberedInformationFrame)
-    #https://stackoverflow.com/questions/70181515/how-to-have-a-comfortable-e-g-gnu-readline-style-input-line-in-an-asyncio-tas
-
 
     if 'UTC' in completer.options and completer.options['UTC'].Value:
         tnc.mheard[str(frame.header.source)] = datetime.utcnow()
@@ -229,20 +179,11 @@ def _on_receive(interface, frame, match=None):
     tnc.monitor._on_receive_monitor(frame)
 
 
-    pass
-
-
-
-
 ip = {}
 
 TNC2 = {}
 tnc = TNC() 
 tnc.kiss_interface = connect.kiss_interface (_on_receive, logging)
-
-
-
-#input_loop()
 
 streaming_queue = asyncio.Queue()
 
@@ -387,12 +328,21 @@ async def main_async():
     while True:
         chunk = await streaming_queue.get()
         if tnc.mode == tnc.modeCommand:
+            ret = ip.input_process(chunk)
+            r = ret[0]
             
-            r = ip.input_process(chunk)
-            if r == commands.returns.Eh:
-                tnc.output ('?EH')
+            if r == commands.returns.Ok:
+                if ret[1]: tnc.output (ret[1])
+            elif r == commands.returns.Eh:
+                if ret[1]: 
+                    tnc.output ('?Eh %s' % ret[1])
+                else:
+                    tnc.output ('?EH')
             elif r == commands.returns.Bad:
-                tnc.output ('?BAD')
+                if ret[1]: 
+                    tnc.output ('?Bad %s' % ret[1])
+                else:
+                    tnc.output ('?Bad')
             elif r == commands.returns.NotImplemented:
                 tnc.output ('?Not Implemented')
         elif tnc.mode == tnc.modeConverse:
@@ -481,11 +431,12 @@ def init():
     for o in completer.options:
         if completer.options[o].Default is not None:
             line = o + ' ' + completer.options[o].Default
-            ip.input_process (line, display=False)
+            ip.input_process (line) # ignore the return values
         # Only the upper case letters are an alternative
         completer.options[o].Shorter = ''.join(filter(str.isupper, completer.options[o].Display))
 
     # Custom startup for debugging...
+    tnc.output ('Custom settings..')
     for custom in ('TRACE ON', 
                    'DAYUSA OFF', 
                    'CONSTAMP ON', 
@@ -493,8 +444,9 @@ def init():
                    'KISSdev 1 tcp localhost 8001',
                    'KISSPort 1 1'
                    ):
-        ip.input_process (custom, display=True)
-
+        ret = ip.input_process (custom)
+        print (ret[1])
+    print('')
 
 init()
 

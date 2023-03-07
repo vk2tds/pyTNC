@@ -11,6 +11,7 @@ format they were in until refreshed
 * At the “cmd:” prompt, type |2a and press the enter key. This would move to port 2 on stream A
 
 * Need to queue printing of return values from processing and display before the command prompt
+* semaphores really should be based on asyncio.
 
 
 Future 

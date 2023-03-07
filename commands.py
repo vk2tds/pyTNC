@@ -23,9 +23,7 @@
 # https://web.tapr.org/meetings/CNC_1986/CNC1986-TNC-2Setting-W2VY.pdf
 
 import string
-from types import SimpleNamespace
 import re
-import eliza # for testing
 from datetime import timezone
 import datetime
 import gnureadline as readline
@@ -241,7 +239,9 @@ class BufferAwareCompleter:
 
 
 class connection:
-
+    """
+    Interface between user side and radio side. Not 100% sure this will be used in the future. 
+    """
     def __init__ (self, callFrom, callTo, callDigi, stream):
         self.callFrom = callFrom
         self.callTo = callTo
@@ -396,14 +396,15 @@ class process:
         return words
 
 
-    def input_process (self, line, display=True):
+    def input_process (self, line):
         """
         Process the command line.
         """        
         words = line.split()
         if len(words) == 0:
-            return returns.Ok
+            return (returns.Ok, None)
 
+        #pre-process the line
         words = self.input_cleanup (words)
 
         if words[0][0:4] == '/OPT':
@@ -412,28 +413,29 @@ class process:
             return returns.NotImplemented
 
         if False:
-            True
+            pass
         elif words[0] == 'HELP':
             if len(words) == 1:
-                if display == True: self.output (self.completer.options['HELP'].Help)
-                return returns.Ok
+                text = self.completer.options['HELP'].Help
+                return (returns.Ok, text)
             if len(words) >= 2:
                 if words[1].upper() == 'ALL':
                     for uc in self.completer.options:
                         if not self.completer.options[uc].Help is None:
-                            if display == True: self.output ('%s\t%s' % (uc, self.completer.options[uc].Help))
-                    return returns.Ok
+                            text = '%s\t%s' % (uc, self.completer.options[uc].Help)
+                            return (returns.Ok, text)
+                    return (returns.Eh, None)
                 if words[1] in self.completer.options:
                     uc = words[1].upper()
                     if not self.completer.options[uc].Help is None:
-                        if display == True: self.output (self.completer.options[uc].Help)
-                        return returns.Ok
+                        text = self.completer.options[uc].Help
+                        return (returns.Ok, None)
                     else:
-                        if display == True: self.output ('No help available')
-                        return returns.Ok
-            return returns.Bad
+                        text = 'No help available'
+                        return (returns.Ok, text)
+            return (returns.Bad, None)
         elif words[0] == 'DISPLAY':
-            if len(words) == 1:
+            if len(words) == 1: # Display
                 cols = 0
                 message = ''
                 for o in self.completer.options:
@@ -448,10 +450,9 @@ class process:
                                         cols = 4
                                 if cols == 4:
                                     message = message + '\n'
-                                    cols = 0
-                if display: self.output (message)                        
-                return returns.Ok
-            if len(words) > 1:
+                                    cols = 0                        
+                return (returns.Ok, message)
+            if len(words) > 1: # Display <word>
                 group = words[1][0]
                 cols = 0
                 message = ''
@@ -470,29 +471,26 @@ class process:
                                 if cols == 4:
                                     message = message + '\n'
                                     cols = 0
-
-                if display: self.output (message)
-
-                return returns.Ok
-            return returns.Bad
+                return (returns.Ok, message)
+            return (returns.Bad, None)
         elif words[0] == 'LCALLS':
             # special case - blank with % or just LCALLS
             if len(words) == 1:
                 self.completer.options['LCALLS'].Value = ''
-                return returns.Ok
+                return (returns.Ok, 'LCALLS')
             else:
                 if words[1][0] == '%' or words[1][0] == '&':
                     self.completer.options['LCALLS'].Value = ''
-                    return returns.Ok
+                    return (returns.Ok, 'LCALLS')
         elif words[0] == 'CTEXT':
             # special case - blank with %
             if len(words) == 1:
                 if words[1][0] == '%' or words[1][0] == '&':
                     self.completer.options['CTEXT'].Value = ''
-                    return returns.Ok
+                    return (returns.Ok, 'CTEXT')
         elif words[0] == 'CONNECT':
             if len(words) < 2:
-                return returns.Bad
+                return (returns.Bad, None)
             # put the words back together and then split them with space and commas
             words = " ".join(words).upper()
             calls = re.split (r"[ ,]", words)
@@ -505,45 +503,46 @@ class process:
                     callDigi = calls[3:]
                 else:
                     # The third word *MUST* be 'VIA' of there are digipeaters
-                    return returns.Eh    
+                    return (returns.Eh, 'Third word must be VIA if used followed by additional calls')
                 if len(calls) == 3:
                     # We need digipeaters if there is a 'Via'
-                    return returns.Eh    
+                    return (returns.Eh, 'Third word must be VIA if used followed by additional calls')
             #self.tnc.streams['A']['Connection'] = 
             connection (callFrom, callTo, callDigi, self.tnc.streams['A'])
             self.tnc.streams['A'].Connection.connect()
-            return returns.Ok
+            return (returns.Ok, None)
         elif words[0] == 'KISSDEV':
             # KISSdev 1 tcp localhost 8001
             if len(words) == 5 and not self.tnc.kiss_interface is None:
                 if words[2].upper() == 'TCP':
                     self.tnc.kiss_interface.kissDeviceTCP (int (words[1]), words[3], int (words[4]))
-                    return returns.Ok
+                    return (returns.Ok, " ".join ([words[0], words[1], words[2], words[3]]))
                 else: 
-                    return returns.Eh    
+                    return (returns.Eh, None)
             else: 
-                return returns.Eh
+                return (returns.Eh, None)
         elif words[0] == 'KISSPORT':
             # KISSport 1 1
             if len(words) == 3 and not self.tnc.kiss_interface is None:
                 self.tnc.kiss_interface.kissPort (int (words[1]), int (words[2]))
-                return returns.Ok
+                return (returns.Ok, " ".join ([words[0], words[1], words[2]]))
             else:
-                return returns.Eh
+                return (returns.Eh, None)
         elif words[0] == 'RECONNECT':
-            return returns.NotImplemented
+            return (returns.NotImplemented, None)
 
 
         if len(words) == 1 and words[0].upper() in self.completer.options:        # If a single word only, and it has a value,
             if not self.completer.options[words[0].upper()].Value is None:       # then print the value
                 #ToDo: Print True as 'On'
-                if display == True: self.output (library.to_user (words[0], None, self.completer.options[words[0].upper()].Value))
-                return returns.Ok
+                text = library.to_user (words[0], None, self.completer.options[words[0].upper()].Value)
+                return (returns.Ok, text)
         
             if self.completer.options[words[0].upper()].Default is None:   # We are a command
                 if False:
                     True
                 elif words[0] == 'CSTATUS':
+                    text = ""
                     for s in streamlist:
                         sstate = 'CONNECTED' if ((not self.tnc.streams[s] is None) and (not self.tnc.streams[s].Connection is None)) else 'DISCONNECTED'
                         if sstate == 'CONNECTED':
@@ -552,34 +551,39 @@ class process:
                                 scalls += "," + ",".join(self.tnc.streams[s].Connection.callDigi)
                         else:
                             scalls = 'NO CONNECTION'
-                        if display == True: self.output ('%s stream    State %s\t\t%s' %(s, sstate, scalls))
-                    return returns.Ok
+                        if len(text) > 0:
+                            text = text + '\n'
+                        text = text + '%s stream    State %s\t\t%s' %(s, sstate, scalls)
+                    return (returns.Ok, text)
                 elif words[0] == 'CALIBRA':
-                    return returns.NotImplemented
+                    return (returns.NotImplemented, None)
                 elif words[0] == 'CALSET':
-                    return returns.NotImplemented
+                    return (returns.NotImplemented, None)
                 elif words[0] == 'CONVERS':
                     self.tnc.mode = self.tnc.modeConverse
-                    return returns.Ok
+                    return (returns.Ok, None)
                 elif words[0] == 'DISCONNE':
                     self.tnc.streams['A'].Connection.disconnect()
-                    return returns.Ok
+                    return (returns.Ok, None)
                 elif words[0] == 'ID':
-                    return returns.NotImplemented
+                    return (returns.NotImplemented, None)
                 elif words[0] == 'MHCLEAR':
                     self.tnc.mheard = []
-                    return returns.Ok
+                    return (returns.Ok, None)
                 elif words[0] == 'MHEARD':
+                    text = ""
                     for c in self.tnc.mheard:
-                        if display: self.output ('%s\t\t\t%s' % (c, self.displaydatetime(self.tnc.mheard[c])))
-                    return returns.Ok 
+                        if len(text) > 0:
+                            text = text + '\n'
+                        text = text + '%s\t\t\t%s' % (c, self.displaydatetime(self.tnc.mheard[c]))
+                    return (returns.Ok, text)
                 elif words[0] == 'RESTART':
-                    return returns.NotImplemented
+                    return (returns.NotImplemented, None)
                 elif words[0] == 'TRANS':
                     self.tnc.mode = self.tnc.modeTrans
-                    return returns.Ok
+                    return (returns.Ok, None)
                 elif words[0] == 'STATUS':
-                    return returns.NotImplemented
+                    return (returns.NotImplemented, None)
 
         uc = words[0].upper()
         if words[0] in self.completer.options:
@@ -587,10 +591,8 @@ class process:
                 # 'becacon every 5' has a minimum of 2, but len() of 3 
                 if len(words) < self.completer.options[uc].Minimum:
                     # too short
-                    return returns.Bad
+                    (returns.Bad, None)
             
-
-
 
         if len(words) == 2 and words[0].upper() in self.completer.options:
             # Start with two words, and go from there 
@@ -601,19 +603,19 @@ class process:
                 if not self.completer.options[uc].Value is None:
                     self.completer.options[uc].Value = default #init
                 if words[1].upper() == 'ON' and 'On' in self.completer.options[uc].Commands:
-                    if display == True: self.output ( library.to_user (uc, self.completer.options[uc].Value, True))
+                    text = library.to_user (uc, self.completer.options[uc].Value, True)
                     self.completer.options[uc].Value = True
-                    return returns.Ok
+                    return (returns.Ok, text)
                 if words[1].upper() == 'OFF' and 'Off' in self.completer.options[uc].Commands:
-                    if display == True: self.output (library.to_user (uc, self.completer.options[uc].Value, False))
+                    text = library.to_user (uc, self.completer.options[uc].Value, False)
                     self.completer.options[uc].Value = False
-                    return returns.Ok
+                    return (returns.Ok, text)
                 if len(default) == 3 and default[0] == '$' and len(words[1]) == 3:
                     # We need to enter a HEX value, of the form $NN
                     if words[1][0] == '$' and library.is_hex(words[1][1:]):
-                        if display == True: self.output (library.to_user (uc, self.completer.options[uc].Value, words[1]))
+                        text = library.to_user (uc, self.completer.options[uc].Value, words[1])
                         self.completer.options[uc].Value = words[1]
-                        return returns.Ok                    
+                        return (returns.Ok, text)
 
     
         if len(words) == 2:
@@ -627,14 +629,14 @@ class process:
                             return returns.Bad
                         if number > self.completer.options[uc].Max: 
                             return returns.Bad
-                        if display == True: self.output (library.to_user (uc, self.completer.options[uc].Value, number))
+                        text = library.to_user (uc, self.completer.options[uc].Value, number)
                         self.completer.options[uc].Value = number   
-                        return returns.Ok
+                        return (returns.Ok, text)
                 else:
                     uc = words[0].upper()
-                    if display == True: self.output (library.to_user (uc, self.completer.options[uc].Value, words[1]))
+                    text = library.to_user (uc, self.completer.options[uc].Value, words[1])
                     self.completer.options[uc].Value = words[1]
-                    return returns.Ok
+                    return (returns.Ok, text)
             
                 
 
@@ -646,14 +648,12 @@ class process:
             new_words = words # Make a new list
             new_words.pop(0) # remove the first item
             new_words = " ".join(new_words)
-            if display == True: self.output (library.to_user (uc, self.completer.options[uc].Value, new_words))
+            text = library.to_user (uc, self.completer.options[uc].Value, new_words)
             self.completer.options[uc].Value = new_words
-            return returns.Ok
+            return (returns.Ok, text)
 
-        return returns.Eh
+        return (returns.Eh, None)
 
-    def output(self, line):
-        self.tnc.output (line)
 
 
 

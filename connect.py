@@ -14,8 +14,8 @@
 
 
 import asyncio
-from aioax25.kiss import make_device
 import aioax25
+from aioax25.kiss import make_device
 from aioax25.version import AX25Version
 
 
@@ -239,6 +239,12 @@ class kiss_interface():
         if dev in self.kissDevices:
             axint = self.start_ax25_port (self.kissDevices[dev].KissDevice, kissPort)
             self.kissDevices[dev].setKissPorts (kissPort, KissPort (axint, None, None))
+
+
+    # *********************************************
+    # THIS FOLLOWING CODE IS NOT YET ACTIVE
+    # *********************************************
+
 
     def start_ax25_device(self, host, port, phy):
 

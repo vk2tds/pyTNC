@@ -46,6 +46,7 @@ from threading import Thread
 from datetime import datetime
 from datetime import timezone
 
+from threading import Semaphore
 import eliza
 import re
 
@@ -405,6 +406,8 @@ async def main_async():
         elif tnc.mode == tnc.modeTrans:
             True
 
+        semaphore.release()
+
 
 def event_loop(loop):
     #Remove comments in production
@@ -496,6 +499,9 @@ def init():
 init()
 
 
+semaphore = Semaphore()
+
+
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
     event_thread = Thread(target=event_loop, args=(loop,))
@@ -505,6 +511,7 @@ if __name__ == "__main__":
             chunk = ''
             while chunk != 'stop':
                 # GNU readline overloads input() 
+                semaphore.acquire()
 
                 if tnc.mode == tnc.modeCommand:
                     chunk = input('cmd: ')
@@ -514,4 +521,5 @@ if __name__ == "__main__":
                     chunk = input('> ')
 
                 loop.call_soon_threadsafe(send_chunk, chunk)
+
 

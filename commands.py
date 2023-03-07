@@ -251,7 +251,7 @@ class connection:
         self.stream = stream
         self.stream.Connection = self
 
-        print ('Manage a connection from %s to %s via %s' % (callFrom, callTo, callDigi))
+        self.output ('Manage a connection from %s to %s via %s' % (callFrom, callTo, callDigi))
         if self.stream.axInit:
             for callback in self.stream.axInit:
                 callback (self.stream.Stream)
@@ -261,7 +261,7 @@ class connection:
 
 
     def connect(self):
-        print ('connection connect')
+        self.output ('connection connect')
         self.axConnected = True
         #if self.stream['cbInit']:
         #    for callback in self.stream['cbInit']:
@@ -297,7 +297,7 @@ class connection:
             self.callDigi = None
 
     def axSend(self, text):
-        print ('axSend %s' % (text))
+        self.output ('axSend %s' % (text))
         if self.stream.axSent:
             for callback in self.stream.axSent:
                 callback (text, self.stream.Stream)
@@ -313,9 +313,8 @@ class connection:
             for callback in self.stream.cbReceived:
                 callback (text, self.stream.Stream)
 
-
-
-
+    def output (self, line):
+        print (line)
 
 
 
@@ -342,6 +341,9 @@ class process:
 
 
     def input_cleanup (self, words):
+        """
+        Cleanup the command line before processing
+        """
         # Upper case the first word
         words [0] = words[0].upper()
         if words[0] == 'K':
@@ -352,6 +354,7 @@ class process:
                 if self.completer.options[o].Shorter == words[0]:
                     words[0] = o
         if not words[0] in self.completer.options:
+            # See if there is only ONE unique command possible
             list = []
             for o in self.completer.options:
                 if len(o) > len(words[0]):
@@ -394,7 +397,9 @@ class process:
 
 
     def input_process (self, line, display=True):
-        
+        """
+        Process the command line.
+        """        
         words = line.split()
         if len(words) == 0:
             return returns.Ok
@@ -414,8 +419,6 @@ class process:
                 return returns.Ok
             if len(words) >= 2:
                 if words[1].upper() == 'ALL':
-                    print ('ALL')
-                    print (self.completer.options)
                     for uc in self.completer.options:
                         if not self.completer.options[uc].Help is None:
                             if display == True: self.output ('%s\t%s' % (uc, self.completer.options[uc].Help))
@@ -468,7 +471,7 @@ class process:
                                     message = message + '\n'
                                     cols = 0
 
-                if display: print (message)
+                if display: self.output (message)
 
                 return returns.Ok
             return returns.Bad
@@ -513,7 +516,6 @@ class process:
         elif words[0] == 'KISSDEV':
             # KISSdev 1 tcp localhost 8001
             if len(words) == 5 and not self.tnc.kiss_interface is None:
-                print (words[2].upper())
                 if words[2].upper() == 'TCP':
                     self.tnc.kiss_interface.kissDeviceTCP (int (words[1]), words[3], int (words[4]))
                     return returns.Ok
@@ -524,7 +526,6 @@ class process:
         elif words[0] == 'KISSPORT':
             # KISSport 1 1
             if len(words) == 3 and not self.tnc.kiss_interface is None:
-                print ('Port')
                 self.tnc.kiss_interface.kissPort (int (words[1]), int (words[2]))
                 return returns.Ok
             else:
@@ -536,7 +537,7 @@ class process:
         if len(words) == 1 and words[0].upper() in self.completer.options:        # If a single word only, and it has a value,
             if not self.completer.options[words[0].upper()].Value is None:       # then print the value
                 #ToDo: Print True as 'On'
-                if display == True: print (library.to_user (words[0], None, self.completer.options[words[0].upper()].Value))
+                if display == True: self.output (library.to_user (words[0], None, self.completer.options[words[0].upper()].Value))
                 return returns.Ok
         
             if self.completer.options[words[0].upper()].Default is None:   # We are a command
@@ -548,11 +549,10 @@ class process:
                         if sstate == 'CONNECTED':
                             scalls = ('%s>%s' % (self.tnc.streams[s].Connection.callFrom, self.tnc.streams[s].Connection.callTo))
                             if not self.tnc.streams[s].Connection.callDigi == '' and not self.tnc.streams[s].Connection.callDigi is None :
-                                print (self.tnc.streams[s].Connection.callDigi)
                                 scalls += "," + ",".join(self.tnc.streams[s].Connection.callDigi)
                         else:
                             scalls = 'NO CONNECTION'
-                        if display == True: print ('%s stream    State %s\t\t%s' %(s, sstate, scalls))
+                        if display == True: self.output ('%s stream    State %s\t\t%s' %(s, sstate, scalls))
                     return returns.Ok
                 elif words[0] == 'CALIBRA':
                     return returns.NotImplemented
@@ -571,9 +571,7 @@ class process:
                     return returns.Ok
                 elif words[0] == 'MHEARD':
                     for c in self.tnc.mheard:
-                        #print (c)
-                        #dt.replace(tzinfo=timezone.utc)
-                        print ('%s\t\t\t%s' % (c, self.displaydatetime(self.tnc.mheard[c])))
+                        if display: self.output ('%s\t\t\t%s' % (c, self.displaydatetime(self.tnc.mheard[c])))
                     return returns.Ok 
                 elif words[0] == 'RESTART':
                     return returns.NotImplemented
@@ -603,17 +601,17 @@ class process:
                 if not self.completer.options[uc].Value is None:
                     self.completer.options[uc].Value = default #init
                 if words[1].upper() == 'ON' and 'On' in self.completer.options[uc].Commands:
-                    if display == True: print( library.to_user (uc, self.completer.options[uc].Value, True))
+                    if display == True: self.output ( library.to_user (uc, self.completer.options[uc].Value, True))
                     self.completer.options[uc].Value = True
                     return returns.Ok
                 if words[1].upper() == 'OFF' and 'Off' in self.completer.options[uc].Commands:
-                    if display == True: print (library.to_user (uc, self.completer.options[uc].Value, False))
+                    if display == True: self.output (library.to_user (uc, self.completer.options[uc].Value, False))
                     self.completer.options[uc].Value = False
                     return returns.Ok
                 if len(default) == 3 and default[0] == '$' and len(words[1]) == 3:
                     # We need to enter a HEX value, of the form $NN
                     if words[1][0] == '$' and library.is_hex(words[1][1:]):
-                        if display == True: print (library.to_user (uc, self.completer.options[uc].Value, words[1]))
+                        if display == True: self.output (library.to_user (uc, self.completer.options[uc].Value, words[1]))
                         self.completer.options[uc].Value = words[1]
                         return returns.Ok                    
 
@@ -749,9 +747,6 @@ class Monitor:
                 # do not display in Connected mode if mcon = False
                 return
 
-        #print (calls)
-        #print (lcalls)
-        #print (budlist)
         if set(calls).intersection(lcalls):
             if budlist == True:
                 # Monitor these

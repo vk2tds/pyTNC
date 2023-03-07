@@ -236,10 +236,7 @@ class kiss_interface():
 
     def kissPort (self, device, kissPort):
         dev = str(int(device))
-        print ('Before Here')
         if dev in self.kissDevices:
-            print ('Here')
-            print (self.kissDevices[dev].KissDevice)
             axint = self.start_ax25_port (self.kissDevices[dev].KissDevice, kissPort)
             self.kissDevices[dev].setKissPorts (kissPort, KissPort (axint, None, None))
 
@@ -299,8 +296,9 @@ class kiss_interface():
         axint.Station = station
 
         peer = station.getpeer ('N0CALL', 0, []) # callsign, ssid, repeaters[]
-        peer.connect()
         axint.Peer = peer
+
+        peer.connect()
 
     def send_ax25_station (self, device, kissPort, data):
         dev = str(int(device))

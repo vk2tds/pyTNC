@@ -53,7 +53,7 @@ import re
 #local
 import commands 
 import connect 
-
+import ROM
 
 
 
@@ -72,12 +72,6 @@ console.setFormatter(formater)
 logging.getLogger('console').addHandler(console)
 
 loggerscreen = logging.getLogger ('console')
-
-
-
-
-
-
 
 
 
@@ -459,9 +453,9 @@ def init():
 
 
 
-    for index in commands.TNC2_ROM:
+    for index in ROM.TNC2_ROM:
         c = commands.Individual_Command()
-        c.set (commands.TNC2_ROM[index])
+        c.set (ROM.TNC2_ROM[index])
         c.Display = index
         TNC2[index.upper()] = c
 

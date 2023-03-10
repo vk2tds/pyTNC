@@ -600,7 +600,7 @@ class process:
             uc = words[0].upper()
             if not self.completer.options[uc] is None:
                 default = self.completer.options[uc].Default
-                if not self.completer.options[uc].Value is None:
+                if self.completer.options[uc].Value is None:
                     self.completer.options[uc].Value = default #init
                 if words[1].upper() == 'ON' and 'On' in self.completer.options[uc].Commands:
                     text = library.to_user (uc, self.completer.options[uc].Value, True)

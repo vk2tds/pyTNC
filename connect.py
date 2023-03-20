@@ -247,7 +247,7 @@ class kiss_interface():
 
 
     def start_ax25_device(self, host, port, phy):
-
+        print ('start_ax25_device')
         if phy.upper() == 'TCP':
             
             kissdevice = make_device(
@@ -262,7 +262,7 @@ class kiss_interface():
 
 
     def start_ax25_port(self, kissdevice, kissPort):
-
+        print ('start_ax25_port')
         #That `KISSDevice` class represents all the ports on the KISS interface
         #-- for Direwolf; there can be multiple ports (e.g. on my UDRC-II board,
         #the DIN-6 connector is port 1 and the DB15HD is port 0.).  Most

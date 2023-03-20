@@ -58,7 +58,7 @@ import ROM
 
 
 
-LOG_FILENAME = '/tmp/completer.log'
+LOG_FILENAME = '/tmp/pyTNC.log'
 logging.basicConfig(
     format='%(message)s',
     filename=LOG_FILENAME,
@@ -187,21 +187,25 @@ tnc.kiss_interface = connect.kiss_interface (_on_receive, logging)
 
 streaming_queue = asyncio.Queue()
 
-
+# The therapist is in the VIRTUAL Stream H
 myeliza = {'Stream': 'H', 'Therapist': None}
 
+
+ELIZA = False
 
 def axReceived(text, ax):
     c = tnc.streams[ax].Connection
 
-    cA = tnc.streams['A'].Connection
-    cEliza = tnc.streams[myeliza['Stream']].Connection
-    if not cA is None and not cEliza is None:
-        # now check if our end is connected...
-        # we must assume the other end is connected
-        if c.axConnected:
-            #c.axSend (text)
-            True
+    if ELIZA: # depricated code...
+        cA = tnc.streams['A'].Connection
+        #if cA.callTo == 'ELIZA':
+        cEliza = tnc.streams[myeliza['Stream']].Connection
+        if not cA is None and not cEliza is None:
+            # now check if our end is connected...
+            # we must assume the other end is connected
+            if c.axConnected:
+                #c.axSend (text)
+                True
 
     tnc.output ('AX%s> %s' % (ax, text))
     
@@ -210,11 +214,15 @@ def axReceived(text, ax):
 def tncReceived(text, ax):
     c = tnc.streams[ax].Connection
 
-        #c.axSend (myeliza['Therapist'].respond (text))
-    if ax == myeliza['Stream']:
-        c.axSend (myeliza['Therapist'].respond (text))
-    else:
-        tnc.output ('%s> %s' % (ax, text))
+    if ELIZA: # depricated code...
+            #c.axSend (myeliza['Therapist'].respond (text))
+        if ax == myeliza['Stream']:
+            c.axSend (myeliza['Therapist'].respond (text))
+        else:
+            tnc.output ('%s> %s' % (ax, text))
+    
+    tnc.output ('%s> %s' % (ax, text))
+
 
 def axConnected(ax):
     loggerscreen.debug ('# axConnected %s ' % (ax))
@@ -244,27 +252,27 @@ def tncDisconnected(ax):
     tnc.output ('*** DISCONNECTED %s' % (ax))
     tnc.mode = tnc.modeCommand
     # tnc.streams[ax] = None
-    if ax == 'A':
-        # also disconnect the far end if needed
-        cEliza = tnc.streams[myeliza['Stream']].Connection
-        cEliza.disconnect()
+
+    if ELIZA: # depricated code...
+        if ax == 'A':
+            # also disconnect the far end if needed
+            cEliza = tnc.streams[myeliza['Stream']].Connection
+            cEliza.disconnect()
 
 
 def axSend(text, ax):
     loggerscreen.debug ('# axSend %s %s ' %(text, ax))
     c = tnc.streams[ax].Connection
 
-    cA = tnc.streams['A'].Connection # Assume A
-    cEliza = tnc.streams[myeliza['Stream']].Connection 
+    if ELIZA: # depricated code...
+        cA = tnc.streams['A'].Connection # Assume A
+        cEliza = tnc.streams[myeliza['Stream']].Connection 
 
-
-    if ax == 'A':
-        cEliza.axReceived (text)
-    if ax == myeliza['Stream']:
-        cA.axReceived (text)
-
-
-        #c.axSend (myeliza['Therapist'].respond (text))
+        if ax == 'A':
+            cEliza.axReceived (text)
+        if ax == myeliza['Stream']:
+            cA.axReceived (text)
+            #c.axSend (myeliza['Therapist'].respond (text))
 
     True
 
@@ -275,48 +283,47 @@ def tncSend(text, ax):
 
 
 
-
-
 def axInit(ax):
-    global myeliza
     loggerscreen.debug ('# axInit %s ' % (ax))
 
     c = tnc.streams[ax].Connection
-    if not c is None: # Should never be none... But...
-        if c.callTo == 'ELIZA':
-            # we need to init another stream and connection. Lets call it H or Hell..
-            # swap the callsigns
-            callFrom = c.callTo
-            callTo = c.callFrom
-            callDigi = c.callDigi.reverse()
-            myeliza['Therapist'] = eliza.Eliza()
-            commands.connection (callFrom, callTo, callDigi, tnc.streams[myeliza['Stream']])
+    if ELIZA: # depricated code...
+        if not c is None: # Should never be none... But...
+            if c.callTo == 'ELIZA':
+                # we need to init another stream and connection. Lets call it H or Hell..
+                # swap the callsigns
+                callFrom = c.callTo
+                callTo = c.callFrom
+                callDigi = c.callDigi.reverse()
+                myeliza['Therapist'] = eliza.Eliza()
+                commands.connection (callFrom, callTo, callDigi, tnc.streams[myeliza['Stream']])
 
 
 def tncInit(ax):
     loggerscreen.debug ('# tncInit %s ' % (ax))
     c = tnc.streams[ax].Connection
-    if c.callTo == 'ELIZA': 
-        cEliza = tnc.streams[myeliza['Stream']].Connection
-        cEliza.connect = True
+    if ELIZA: # depricated code...
+        if c.callTo == 'ELIZA': 
+            cEliza = tnc.streams[myeliza['Stream']].Connection
+            cEliza.connect = True
 
 
 
 async def periodic():
     while True:
-        if True:
-            # Eliza functionality
-            cA = tnc.streams['A'].Connection # Assume A
-            cEliza = tnc.streams[eliza['Stream']].Connection
-            if not cA is None and not cEliza is None:
-                # we have connection objects on both
-                if not cA.connected and not cEliza.connected:
-                    # neither end is connected
-                    if cA['callTo'] == cEliza['callFrom'] and cA['callFrom'] == cEliza['callTo']:
-                        # we are trying to connect to each other definitely...
-                        cA.connected = True
-                        cEliza.connected = True
-
+        if ELIZA: # depricated code...
+            if True:
+                # Eliza functionality
+                cA = tnc.streams['A'].Connection # Assume A
+                cEliza = tnc.streams[eliza['Stream']].Connection
+                if not cA is None and not cEliza is None:
+                    # we have connection objects on both
+                    if not cA.connected and not cEliza.connected:
+                        # neither end is connected
+                        if cA['callTo'] == cEliza['callFrom'] and cA['callFrom'] == cEliza['callTo']:
+                            # we are trying to connect to each other definitely...
+                            cA.connected = True
+                            cEliza.connected = True
 
         await asyncio.sleep(1)
 
@@ -423,8 +430,8 @@ def init():
 
     # Use the tab key for completion
     readline.parse_and_bind('tab: complete')
-    readline.parse_and_bind('"ç": "%s\n"' % (tnc.exitToCommandMode))
- 
+    readline.parse_and_bind('"ç": "%s\n"' % (tnc.exitToCommandMode)) # Alt-C / Option-C on MacOS depending on the keyboard 
+
     ip = commands.process (completer, tnc)
 
     # First, process defaults
@@ -435,14 +442,15 @@ def init():
         # Only the upper case letters are an alternative
         completer.options[o].Shorter = ''.join(filter(str.isupper, completer.options[o].Display))
 
-    # Custom startup for debugging...
+    # Custom startup for debugging... Ideally the defaults elsewhere should be the defaults...
+    # well, except for KISSdev and KISSPort, which can have multiple calls
     tnc.output ('Custom settings..')
     for custom in ('TRACE ON', 
                    'DAYUSA OFF', 
                    'CONSTAMP ON', 
                    'TRACE OFF',
                    'KISSdev 1 tcp localhost 8001',
-                   'KISSPort 1 1'
+                   'KISSPort 1 0'
                    ):
         ret = ip.input_process (custom)
         print (ret[1])

@@ -82,7 +82,7 @@ TNC2_ROM = {
     'LCSTREAM': {'Commands': ['On', 'Off'], 'Group': 'C', 'Default': 'On', 'Help': 'Convert the stream select specifer to Upper case'},
     'LFIGNORE': {'Commands': ['On', 'Off'], 'Group': 'L', 'Default': 'Off', 'Help': 'TNC will ignore <LF> characters'},
     'LFadd': {'Commands': ['On', 'Off'], 'Group': 'L', 'Default': 'Off', 'Help': 'Add a Line Feed after each CR send to the terminal'},
-    'KISSdev': {'Commands': [], 'Group': 'M', 'Default': 'KISSdev 1  tcp localhost 8001', 'Minimum': -1, 'Help': 'Open a KISS Device in aioax25. First number is the Kiss Device number'},
+    'KISSdev': {'Commands': [], 'Group': 'M', 'Default': 'KISSdev 1  tcp localhost 8001', 'Minimum': -1, 'Help': 'Open a KISS Device in aioax25. First number is the Kiss Device number we are creating.'},
     'KISSPort': {'Commands': [], 'Group': 'M', 'Default': 'KISSport 1 1', 'Minimum': -1, 'Help': 'Definces the Kissport for a device. First number is device number and then port number'},
     'MAll': {'Commands': ['On', 'Off'], 'Group': 'M', 'Default': 'On', 'Help': 'Monitor data frames as well as beacons'},
     'MAXframe': {'Commands': [], 'Group': 'L', 'Default': '4', 'Min': 1, 'Max': 7, 'Help': 'The window size for outstanding frames'},

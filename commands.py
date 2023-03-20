@@ -259,6 +259,9 @@ class connection:
             for callback in self.stream.cbInit:
                 callback (self.stream.Stream)
 
+        if self.callTo == 'ELIZA':
+            self.connect()
+
 
     def connect(self):
         self.output ('connection connect')
@@ -509,13 +512,15 @@ class process:
                     return (returns.Eh, 'Third word must be VIA if used followed by additional calls')
             #self.tnc.streams['A']['Connection'] = 
             connection (callFrom, callTo, callDigi, self.tnc.streams['A'])
-            self.tnc.streams['A'].Connection.connect()
+            # self.tnc.streams['A'].Connection.connect()
             return (returns.Ok, None)
         elif words[0] == 'KISSDEV':
             # KISSdev 1 tcp localhost 8001
             if len(words) == 5 and not self.tnc.kiss_interface is None:
                 if words[2].upper() == 'TCP':
                     self.tnc.kiss_interface.kissDeviceTCP (int (words[1]), words[3], int (words[4]))
+                    # TODO: Something better than this next line...
+                    self.completer.options[words[0].upper()].Value = " ".join ([words[1], words[2], words[3]])
                     return (returns.Ok, " ".join ([words[0], words[1], words[2], words[3]]))
                 else: 
                     return (returns.Eh, None)
@@ -525,6 +530,7 @@ class process:
             # KISSport 1 1
             if len(words) == 3 and not self.tnc.kiss_interface is None:
                 self.tnc.kiss_interface.kissPort (int (words[1]), int (words[2]))
+                self.completer.options[words[0].upper()].Value = " ".join ([words[1], words[2]])
                 return (returns.Ok, " ".join ([words[0], words[1], words[2]]))
             else:
                 return (returns.Eh, None)
@@ -833,20 +839,27 @@ class Monitor:
 
         control = ' <' + control + '>:'
         
+        self.output (type(frame))
+        self.output (frame)
 
         #ADRdisp - default ON - N4UQQ>N4UQR,TPA5* <UI R>:This is a monitored frame.
+        if hasattr(frame, 'payload'):
+            payload = str(frame.payload.decode())
+        else:
+            payload = '<NO_PAYLOAD>'
+
         if headerln:
             #HEADERLN On: KV7D>N2WX: Go ahead and transfer the file.
             if adrdisp:
                 self.output (callsigns + control)
-            self.output (frame.payload)
+            self.output (payload)
         else:
             #HEADERLN Off: N2WX>KV7D:
             #           Sorry, I'm not quite ready yet.
             if adrdisp:
-                self.output (callsigns + control + str(frame.payload.decode()))
+                self.output (callsigns + control + payload)
             else:
-                self.output (frame.payload)
+                self.output (payload)
 
         if trace:
             # Trace mode enabled.

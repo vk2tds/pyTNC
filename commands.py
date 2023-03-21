@@ -648,6 +648,16 @@ class process:
 
         if len(words) > 1 and words[0].upper() in self.completer.options:
             uc = words[0].upper()
+
+            if words[0] == 'BEACON':
+                words[1] = words[1].upper()
+                self.completer.options[uc].Value = " ".join (words)
+                self.tnc.setBeacon (words[1], words[2])
+                return (returns.Ok, self.completer.options[uc].Value)
+
+
+
+
             #if self.completer.options[uc].Minimum == -1:
             # we know that the length is ok... 
             length = len(words[0]) + 1

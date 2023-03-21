@@ -24,7 +24,7 @@
 
 
 
-
+import traceback
 
 
 #try:
@@ -45,6 +45,7 @@ from aioax25.frame import AX25UnnumberedInformationFrame
 from threading import Thread
 from datetime import datetime
 from datetime import timezone
+import time
 
 from threading import Semaphore
 import eliza
@@ -90,6 +91,10 @@ class TNC:
         self.mheard = {}
         self.kissinterface = None
         self.exitToCommandMode = '*** COMMAND MODE ***'
+
+        self.beaconCondition = 'AFTER'
+        self.beaconPeriod = 0 # Beacon every 0 * 10 seconds
+        self.beaconDue = 0
 
         self.monitor = commands.Monitor()
 
@@ -141,6 +146,49 @@ class TNC:
         for s in commands.streamlist:
             self.streams[s].axInit = cb
 
+    def setBeacon (self, cond, period):
+        print ('SetBeacon')
+        self.beaconPeriod = int(period)
+        if cond == 'AFTER':
+            self.beaconCondition = 'AFTER'
+            if self.beaconPeriod > 0:
+                self.beaconDue = time.time() + 2 # if BEACON EVERY, send after 2 seconds
+            else:
+                self.beaconDue = 0
+        else: # EVERY
+            self.beaconCondition = 'EVERY'
+            if self.beaconPeriod > 0:
+                self.beaconDue = time.time() + self.beaconPeriod
+            else:
+                self.beaconDue = 0
+
+    def PPS(self):
+        # One pulse per second. Duh. Needs to be triggered of course.
+        try:
+            t = time.time()
+            if self.beaconDue != 0:
+                if self.beaconDue <= t:
+                    print ('SEND BEACON NOW!!!')
+
+                    axint = tnc.kiss_interface.kissDevices['1'].KissPorts(0).AX25Interface
+                    print ('---')
+                    print (axint)
+                    frame = aioax25.frame.AX25UnnumberedInformationFrame(
+                        destination="CQCQCQ",
+                        source="VK4MSL-9",
+                        repeaters=("VK4RZB","VK4RZA"),
+                        pid=aioax25.frame.AX25Frame.PID_NO_L3,
+                        payload=b"CQ CQ CQ AX.25 World"
+                    )
+                    print (frame)
+                    axint.transmit (frame, callback=None)
+
+                    if self.beaconCondition == 'AFTER':
+                        self.beaconDue = 0
+                    else:
+                        self.beaconDue = t + (self.beaconPeriod * 10) 
+        except Exception:
+            traceback.print_exc()
 
 
     @property
@@ -311,6 +359,9 @@ def tncInit(ax):
 
 async def periodic():
     while True:
+        if tnc:
+            tnc.PPS() # call TNC 1PPS
+
         if ELIZA: # depricated code...
             if True:
                 # Eliza functionality

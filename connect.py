@@ -240,11 +240,9 @@ class kiss_interface():
             axint = self.start_ax25_port (self.kissDevices[dev].KissDevice, kissPort)
             self.kissDevices[dev].setKissPorts (kissPort, KissPort (axint, None, None))
 
+            
 
-    # *********************************************
-    # THIS FOLLOWING CODE IS NOT YET ACTIVE
-    # *********************************************
-
+    
 
     def start_ax25_device(self, host, port, phy):
         print ('start_ax25_device')
@@ -280,6 +278,9 @@ class kiss_interface():
         return ax25int
 
 
+    # *********************************************
+    # THIS FOLLOWING CODE IS NOT YET ACTIVE
+    # *********************************************
 
 
 

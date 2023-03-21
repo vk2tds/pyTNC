@@ -511,7 +511,7 @@ class process:
                     # We need digipeaters if there is a 'Via'
                     return (returns.Eh, 'Third word must be VIA if used followed by additional calls')
             #self.tnc.streams['A']['Connection'] = 
-            connection (callFrom, callTo, callDigi, self.tnc.streams['A'])
+            connection (callFrom, callTo, callDigi, self.tnc.streams['A']) # save to stream as well
             # self.tnc.streams['A'].Connection.connect()
             return (returns.Ok, None)
         elif words[0] == 'KISSDEV':
@@ -531,6 +531,7 @@ class process:
             if len(words) == 3 and not self.tnc.kiss_interface is None:
                 self.tnc.kiss_interface.kissPort (int (words[1]), int (words[2]))
                 self.completer.options[words[0].upper()].Value = " ".join ([words[1], words[2]])
+                self.tnc.initStation (int (words[1]), int (words[2]))
                 return (returns.Ok, " ".join ([words[0], words[1], words[2]]))
             else:
                 return (returns.Eh, None)
@@ -654,8 +655,6 @@ class process:
                 self.completer.options[uc].Value = " ".join (words)
                 self.tnc.setBeacon (words[1], words[2])
                 return (returns.Ok, self.completer.options[uc].Value)
-
-
 
 
             #if self.completer.options[uc].Minimum == -1:

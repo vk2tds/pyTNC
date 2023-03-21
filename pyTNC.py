@@ -42,6 +42,7 @@ import sys
 from aioax25.signal import Signal
 from aioax25.interface import AX25Interface
 from aioax25.frame import AX25UnnumberedInformationFrame
+from aioax25.station import AX25Station
 from threading import Thread
 from datetime import datetime
 from datetime import timezone
@@ -86,6 +87,7 @@ class TNC:
         self.modeCommand = 2
         self.tncMode = self.modeCommand
         #self.completer = completer
+        self.station = None
 
         self.tncConnected = False
         self.mheard = {}
@@ -146,6 +148,25 @@ class TNC:
         for s in commands.streamlist:
             self.streams[s].axInit = cb
 
+    def initStation (self, device, port):
+      print ('initStart')
+      try:
+        axint = tnc.kiss_interface.kissDevices[str(device)].KissPorts(port).AX25Interface
+
+        mycall = completer.options['MYCALL'].Value
+        if '-' in mycall:
+            (call, ssid) = mycall.split('-')
+        else:
+            call = mycall
+            ssid = 0
+
+        self.station = AX25Station (axint, call, ssid)
+        self.station.attach()
+        print ('initStation')
+      except Exception:
+            traceback.print_exc()
+
+
     def setBeacon (self, cond, period):
         print ('SetBeacon')
         self.beaconPeriod = int(period)
@@ -168,11 +189,8 @@ class TNC:
             t = time.time()
             if self.beaconDue != 0:
                 if self.beaconDue <= t:
-                    print ('SEND BEACON NOW!!!')
-
                     axint = tnc.kiss_interface.kissDevices['1'].KissPorts(0).AX25Interface
-                    print ('---')
-                    print (axint)
+
                     u = completer.options['UNPROTO'].Value.split()
                     dest = u[0]
                     r = None
@@ -189,7 +207,8 @@ class TNC:
                         payload=str.encode(completer.options['BTEXT'].Value)
                     )
                     print (frame)
-                    axint.transmit (frame, callback=None)
+
+                    axint.transmit (frame, callback = self.on_axSent) #callback=None)
 
                     if self.beaconCondition == 'AFTER':
                         self.beaconDue = 0

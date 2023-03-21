@@ -173,12 +173,20 @@ class TNC:
                     axint = tnc.kiss_interface.kissDevices['1'].KissPorts(0).AX25Interface
                     print ('---')
                     print (axint)
+                    u = completer.options['UNPROTO'].Value.split()
+                    dest = u[0]
+                    r = None
+                    if len(u) > 1:
+                        u.pop (0)
+                        if len(u) != 0:
+                            r = u
+ 
                     frame = aioax25.frame.AX25UnnumberedInformationFrame(
-                        destination="CQCQCQ",
-                        source="VK4MSL-9",
-                        repeaters=("VK4RZB","VK4RZA"),
+                        destination=dest,
+                        source=completer.options['MYCALL'].Value,
+                        repeaters=r, 
                         pid=aioax25.frame.AX25Frame.PID_NO_L3,
-                        payload=b"CQ CQ CQ AX.25 World"
+                        payload=str.encode(completer.options['BTEXT'].Value)
                     )
                     print (frame)
                     axint.transmit (frame, callback=None)

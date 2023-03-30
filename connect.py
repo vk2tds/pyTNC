@@ -218,7 +218,10 @@ class kiss_interface():
         self.loop = asyncio.get_event_loop()
         self.on_rx = on_rx
         self.call = ""
-        self.ssid = 0
+        self.ssid = None
+        self.myCall = ""
+        self.mySsid = None
+
 
     def callsign(self, call):
         if '-' in call:
@@ -239,6 +242,9 @@ class kiss_interface():
         if dev in self.kissDevices:
             axint = self.start_ax25_port (self.kissDevices[dev].KissDevice, kissPort)
             self.kissDevices[dev].setKissPorts (kissPort, KissPort (axint, None, None))
+            #self.start_ax25_station (dev, kissPort)
+
+
 
             
 
@@ -250,7 +256,7 @@ class kiss_interface():
             
             kissdevice = make_device(
             type="tcp", host="localhost", port=8001,
-            log=self.logging.getLogger("ax25.kiss"),
+            log=self.logging, #.getLogger("ax25.kiss"),
             loop=self.loop
             )
             kissdevice.open() # happens in background asynchronously
@@ -271,7 +277,7 @@ class kiss_interface():
         ax25int = aioax25.interface.AX25Interface(
             kissport=kissdevice[int(kissPort)],         # 0 = HF; 2 = USB
             loop=self.loop, 
-            log=self.logging.getLogger('ax25.interface')
+            log=self.logging, #.getLogger('ax25.interface')
         )
 
         ax25int.bind (self.on_rx, '(.*?)', ssid=None, regex=True)
@@ -284,17 +290,33 @@ class kiss_interface():
 
 
 
+    def _on_connection_rq(self, peer, **kwargs):
 
-    def start_ax25_station(self, device, kissPort):
+        self.logging.info ('*** Connection Request in connect.py')
+
+        # Accept the connection
+        peer.accept()
+        # do something else with peer here
+        
+
+
+
+    def start_ax25_station(self, device, kissPort, call, ssid):
 
         #AX25Station takes AX25Interface as a constructor. [SSID on network]
         #attach interface via .attach() - links it up to an interface so it can send/receive S and I frames
         dev = str(int(device))
         axint = self.kissDevices[dev].KissPorts(kissPort)
 
-
-        station = aioax25.station.AX25Station (axint.AX25Interface, self.call, 
-                                            self.ssid, 
+        print ('start_ax25_station')
+        print (call)
+        print (ssid)
+        print (self.logging)
+        self.logging.info ('TEST IF LOGGING WORKS')
+        self.logging.getChild('a').info ('CHILD')
+        station = aioax25.station.AX25Station (axint.AX25Interface, 
+                                            call, 
+                                            ssid, 
                                             protocol=AX25Version.AX25_20, 
                                             log=self.logging, 
                                             loop=self.loop)
@@ -302,10 +324,33 @@ class kiss_interface():
         station.attach() # Connect the station to the interface
         axint.Station = station
 
-        peer = station.getpeer ('N0CALL', 0, []) # callsign, ssid, repeaters[]
-        axint.Peer = peer
+
+        station.connection_request.connect(self._on_connection_rq)
+
+        # Do we need to split here... have a listen and have a talk?
+        # Listen...
+
+        #def _on_connection_rq(peer, **kwargs):
+        #   # Accept the connection
+        #   peer.accept()
+        #   # do something else with peer here
+        #
+        #station.connection_request.connect(_on_connection_rq)
+
+
+    def connect_ax25_station(self, device, kissPort):
+
+        dev = str(int(device))
+        axint = self.kissDevices[dev].KissPorts(kissPort)
+
+
+        # Is the following code for an outgoing connection?
+        peer = axint.station.getpeer ('N0CALL', 0, []) # callsign, ssid, repeaters[]
+        axint.axint.Peer = peer
 
         peer.connect()
+
+
 
     def send_ax25_station (self, device, kissPort, data):
         dev = str(int(device))

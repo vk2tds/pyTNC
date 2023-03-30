@@ -29,38 +29,20 @@ import datetime
 import gnureadline as readline
 import aioax25
 import library
+import enum
+import sys 
+
+
 
 
 streamlist = ('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J')
 
+class returns (enum.Enum):
+    Ok = 0
+    Eh = 1
+    Bad = 2
+    NotImplemented = 3
 
-
-class returns:
-    """
-    Return values for the command line...
-    """
-
-    #returns = SimpleNamespace(**{'Ok':0, 'Eh': 1, 'Bad': 2, 'NotImplemented': 3})
-    def __init(self):
-        True
-
-    @property
-    def Ok(self):
-        return 0
-    
-    @property 
-    def Eh(self):
-        return 1
-
-    @property
-    def Bad(self):
-        return 2
-    
-    @property
-    def NotImplemented(self):
-        return 3
-
-    
 
 class Individual_Command:
     """
@@ -75,6 +57,7 @@ class Individual_Command:
         self._Min = None
         self._Max = None
         self._Minimum = None
+        self._Upper = None
         self._Shorter = None
         self._Value = None
 
@@ -94,6 +77,8 @@ class Individual_Command:
             self._Min = ind['Min']
         if 'Max' in ind: 
             self._Max = ind['Max']
+        if 'Upper' in ind:
+            self._Upper = ind['Upper']
         if 'Minimum' in ind: 
             self._Minimum = ind['Minimum']
         if 'Shorter' in ind:
@@ -153,6 +138,10 @@ class Individual_Command:
     @property
     def Minimum(self):
         return self._Minimum
+    
+    @property
+    def Upper(self):
+        return self._Upper
     
 
 
@@ -242,12 +231,13 @@ class connection:
     """
     Interface between user side and radio side. Not 100% sure this will be used in the future. 
     """
-    def __init__ (self, callFrom, callTo, callDigi, stream):
+    def __init__ (self, callFrom, callTo, callDigi, tnc, stream):
         self.callFrom = callFrom
         self.callTo = callTo
         self.callDigi = callDigi
         self.therapist = None
         self.connectedSession = False
+        self.tnc = tnc
         self.stream = stream
         self.stream.Connection = self
 
@@ -258,6 +248,20 @@ class connection:
         if self.stream.cbInit:
             for callback in self.stream.cbInit:
                 callback (self.stream.Stream)
+
+
+        toCall = None
+        toSSID = None
+
+        if '-' in self.callTo:
+            (toCall, toSSID) = self.callTo.split('-')
+        else:
+            toCall = self.callTo
+
+        print ('AAAAA')
+        print ('CCCCC')
+
+
 
         if self.callTo == 'ELIZA':
             self.connect()
@@ -351,6 +355,7 @@ class process:
         words [0] = words[0].upper()
         if words[0] == 'K':
             words[0] = 'CONNECT'
+
         if not words[0] in self.completer.options:
             # didnt find the first word, so see if we can do a shorter version
             for o in self.completer.options:
@@ -369,6 +374,10 @@ class process:
 
         if len(words) == 1:
             return words
+
+        if not self.completer.options[words[0]].Upper is None: # Upper case ALL words if needed
+            if self.completer.options[words[0]].Upper:
+                words = [x.upper() for x in words]
 
         # We have more than one word
         if words[0] in self.completer.options:
@@ -403,6 +412,7 @@ class process:
         """
         Process the command line.
         """        
+
         words = line.split()
         if len(words) == 0:
             return (returns.Ok, None)
@@ -511,7 +521,7 @@ class process:
                     # We need digipeaters if there is a 'Via'
                     return (returns.Eh, 'Third word must be VIA if used followed by additional calls')
             #self.tnc.streams['A']['Connection'] = 
-            connection (callFrom, callTo, callDigi, self.tnc.streams['A']) # save to stream as well
+            connection (callFrom, callTo, callDigi, self.tnc, self.tnc.streams['A']) # save to stream as well
             # self.tnc.streams['A'].Connection.connect()
             return (returns.Ok, None)
         elif words[0] == 'KISSDEV':
@@ -591,6 +601,7 @@ class process:
                     return (returns.Ok, None)
                 elif words[0] == 'STATUS':
                     return (returns.NotImplemented, None)
+
 
         uc = words[0].upper()
         if words[0] in self.completer.options:
@@ -800,9 +811,11 @@ class Monitor:
         else:
             callsigns = frame.header.source.__str__() + '>' + frame.header.destination.__str__()
 
+        print ('FRAME', frame)
 
         c = frame.control
         # x1 = RR; x5 = RNR, x9 = REJ, 03 = UI, 0F = DM, 2F = SABM, 43 = DISC, 63 = UA, 87 = FRMR, even = I
+        control = '**UNKNOWN %x **' % (c)
         if False:
             True
         elif (c & 0x0F) == 0x01:
@@ -817,6 +830,12 @@ class Monitor:
             control = 'DM'
         elif c == 0x2F:
             control = 'SABM'
+        elif c == 0x3F:
+            control = 'SABM'
+        elif c == 0x6F:
+            control = 'SABME'
+        elif c == 0x7F:
+            control = 'SABME'
         elif c == 0x43:
             control = 'DISC'
         elif c == 0x63:

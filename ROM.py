@@ -22,7 +22,8 @@ TNC2_ROM = {
     'AMonth': {'Commands': ['On', 'Off'], 'Group': 'M', 'Default': 'On', 'Help': 'Display months as words'},
     'AUtolf': {'Commands': ['On', 'Off'], 'Group': 'A', 'Default': 'On', 'Help': 'Send Linefeed to terminal after each CR'},
     'AWlen': {'Commands': [7, 8], 'Group': 'A',  'Default': '7', 'Min': 7, 'Max': 8, 'Help': 'Terminal character length (7/8)'},
-    'Ax2512v2': {'Commands': ['On', 'Off'], 'Group': 'L',  'Default': 'Off', 'Help': 'Run as version 1.0 of AX.25'},
+    'Ax2512v2': {'Commands': ['On', 'Off'], 'Group': 'L',  'Default': 'Off', 'Help': 'Run as version 1.0 of AX.25'}, # TODO remove this for AXVERSION
+    'AXVersion': {'Commands': ['AX25_10', 'AX25_20', 'AX25_22'], 'Group': 'L',  'Default': 'AX25_22', 'Help': 'Which version of AX25 to use'},
     'AXDelay': {'Commands': [], 'Group': 'T', 'Default': '0', 'Min': 0, 'Max': 180, 'Help': '(O-180 * 0.1 set) Voice Repeater keyup delay'},
     'AXHang': {'Commands': [], 'Group': 'T',  'Default': '0', 'Min': 0, 'Max': 20, 'Help': '(O-20 * 0.1 set) Voice Repeater hang time'},
     'ACKTIME': {'Commands': [], 'Group': 'T', 'Default': '14', 'Min': 0, 'Max': 250, 'Help': '(O-250 * 10 mSec) ACKTIME specifies the time required to send an RR or RNR response frame'},
@@ -98,7 +99,7 @@ TNC2_ROM = {
     'MRpt': {'Commands': ['On', 'Off'], 'Group': 'M', 'Default': 'On', 'Help': 'Display the digipeater path in monitored frames'},
     'MStamp': {'Commands': ['On', 'Off'], 'Group': 'M', 'Default': 'Off', 'Help': 'Monitored frames are Not time stamped'},
     'MYALIAScall': {'Commands': [], 'Group': 'I', 'Minimum': -1, 'Help': 'An identifier for a digipeater'},
-    'MYcall': {'Commands': [], 'Group': 'I', 'Default': 'N0CALL-0', 'Help': 'The station callsign for ID and linking'},
+    'MYcall': {'Commands': [], 'Group': 'I', 'Default': 'N0CALL-0', 'Upper': True, 'Help': 'The station callsign for ID and linking'},
     'NEwmode': {'Commands': ['On', 'Off'], 'Group': 'L',  'Default': 'Off', 'Help': 'The TNC acts like a TNC I for changing modes'},
     'NOmode': {'Commands': ['On', 'Off'], 'Group': 'L', 'Default': 'Off', 'Help': 'If ON allow explicit mode change only'},
     'NUcr': {'Commands': ['On', 'Off'], 'Group': 'A', 'Default': 'Off', 'Help': 'Don\'t send NULLS ($00) after a CR'},
@@ -134,11 +135,13 @@ TNC2_ROM = {
     'TXFlow': {'Commands': ['On', 'Off'], 'Group': 'A', 'Default': 'Off', 'Help': 'Disable flow control to the TNC (Transparent mode)'},
     'TXDIDDLE': {'Commands': ['On', 'Off'], 'Group': 'A', 'Default': 'On', 'Help': 'TXDIDDLE should be kept ON  unless you  are  certain the  TNCs  in your  network  require lengthy flagging intervals.'},
     'TXUIFRAM': {'Commands': ['On', 'Off'], 'Group': 'L', 'Default': 'Off', 'Help': 'The TNC will "flush its buffers" to the radio port upon loss of a connection.'},
-    'Unproto': {'Commands': [], 'Group': 'I', 'Default': 'CQ','Minimum': -1, 'Help': 'Path and address to send beacon data'},
+    'Unproto': {'Commands': [], 'Group': 'I', 'Default': 'CQ','Minimum': -1, 'Upper': True, 'Help': 'Path and address to send beacon data'},
     'Users': {'Commands': [], 'Group': 'L', 'Default': '1', 'Min': 1, 'Max': 16, 'Help': 'Sets the number of streams (links) allowed'},
     'Xflow': {'Commands': ['On', 'Off'], 'Group': 'A', 'Default': 'On', 'Help': 'XON/XOFF Flow control enabled instead of hardware'},
     'XMitok': {'Commands': ['On', 'Off'], 'Group': 'L', 'Default': 'On', 'Help': 'Allow transmitter to come on'},
     'UTC': {'Commands': ['On', 'Off'], 'Group': 'M', 'Default': 'Off', 'Help': 'Display times in UTC'},
     'XOff': {'Commands': [], 'Group': 'C', 'Default': '$13', 'Help': '(CTRL-S) Character to stop data from terminal'},
     'XON': {'Commands': [], 'Group': 'C', 'Default': '$11', 'Help': '(CTRL-Q) Character to start data from terminal'},
+    'Test': {'Commands': [], 'Help': 'Call test code!!!'},
+
 }

@@ -12,6 +12,7 @@ to allow settings to be stored for use at runtime.
 * You can connect to Eliza by typing 'C ELIZA' at the CMD prompt. Exit by typing 'BYE'
 * Over time functionality is added to pyTNC.py and then over time moved to another library. This code is very much being worked on
 
+* I have disconnected ELIZA at the moment. She *MIGHT* be connected back in the future. 
 
 * Look at the following commands
     #MFILTER Comma separated characters to totally ignore

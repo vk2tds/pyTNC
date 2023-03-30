@@ -43,6 +43,8 @@ from aioax25.signal import Signal
 from aioax25.interface import AX25Interface
 from aioax25.frame import AX25UnnumberedInformationFrame
 from aioax25.station import AX25Station
+from aioax25.version import AX25Version
+
 from threading import Thread
 from datetime import datetime
 from datetime import timezone
@@ -67,6 +69,35 @@ logging.basicConfig(
     level=logging.DEBUG,
 )
 
+logger = logging.getLogger()
+# create file handler which logs even debug messages
+fh = logging.FileHandler('file')
+fh.setLevel(logging.DEBUG)
+logger.addHandler(fh)
+filelogger = logging.getLogger('file')
+
+
+
+
+#Right, so the `Signal()` class is from the `signalslot` package.  It
+#has a `.connect()` method to which you pass a function reference which
+#takes keyword arguments.  It takes some ideas from Qt which uses this
+#"observer" pattern quite heavily.
+#
+#https://signalslot.readthedocs.io/en/latest/
+#
+#So in this case; we need a handler that picks up the `peer` argument,
+#something like:
+#
+#```
+#def _on_connection_rq(peer, **kwargs):
+#   # Accept the connection
+#   peer.accept()
+#   # do something else with peer here
+#
+#station.connection_request.connect(_on_connection_rq)
+
+
 
 console = logging.StreamHandler(sys.stdout)
 console.setLevel(logging.DEBUG)
@@ -74,8 +105,21 @@ formater = logging.Formatter('%(name)-13s: %(levelname)-8s %(message)s')
 console.setFormatter(formater)
 logging.getLogger('console').addHandler(console)
 
-loggerscreen = logging.getLogger ('console')
+loggerfile = logging.getLogger ('console')
 
+
+def tracefunc(frame, event, arg, indent=[0]):
+      # https://stackoverflow.com/questions/8315389/how-do-i-print-functions-as-they-are-called
+      if event == "call":
+          indent[0] += 2
+          print("-" * indent[0] + "> call function", frame.f_code.co_name)
+      elif event == "return":
+          print("<" + "-" * indent[0], "exit function", frame.f_code.co_name)
+          indent[0] -= 2
+      return tracefunc
+    # To activate sys.setprofile(tracefunc) 
+if False: 
+        sys.setprofile(tracefunc)
 
 
 class TNC:
@@ -158,17 +202,23 @@ class TNC:
             (call, ssid) = mycall.split('-')
         else:
             call = mycall
-            ssid = 0
+            ssid = None
+        axver = AX25Version[completer.options['AXVERSION'].Value]
+        #self.station = AX25Station (axint, call, ssid, protocol = axver) # do the connection
+        #self.station.attach()
 
-        self.station = AX25Station (axint, call, ssid)
-        self.station.attach()
-        print ('initStation')
+        tnc.kiss_interface.start_ax25_station (str(device), port, call, ssid)
+
+
+
       except Exception:
             traceback.print_exc()
 
 
+
+
+
     def setBeacon (self, cond, period):
-        print ('SetBeacon')
         self.beaconPeriod = int(period)
         if cond == 'AFTER':
             self.beaconCondition = 'AFTER'
@@ -258,7 +308,7 @@ ip = {}
 
 TNC2 = {}
 tnc = TNC() 
-tnc.kiss_interface = connect.kiss_interface (_on_receive, logging)
+tnc.kiss_interface = connect.kiss_interface (_on_receive, filelogger)
 
 streaming_queue = asyncio.Queue()
 
@@ -498,7 +548,7 @@ def init():
         TNC2[index.upper()] = c
 
     # Register our completer function
-    completer = commands.BufferAwareCompleter(TNC2, logging)
+    completer = commands.BufferAwareCompleter(TNC2, loggerfile)
 
     tnc.monitor.setCompleter(completer)
     tnc.monitor.setOutput(output)
@@ -527,6 +577,8 @@ def init():
                    'DAYUSA OFF', 
                    'CONSTAMP ON', 
                    'TRACE OFF',
+                   'AXVERSION AX25_20', #for testing
+                   'MYCALL vk2tds-2', 
                    'KISSdev 1 tcp localhost 8001',
                    'KISSPort 1 0'
                    ):
@@ -545,6 +597,8 @@ if __name__ == "__main__":
     event_thread = Thread(target=event_loop, args=(loop,))
     event_thread.start()
     task = loop.create_task(periodic()) # every second 
+
+
     if True: 
             chunk = ''
             while chunk != 'stop':

@@ -51,7 +51,6 @@ from datetime import timezone
 import time
 
 from threading import Semaphore
-import eliza
 import re
 
 
@@ -60,11 +59,11 @@ import commands
 import connect 
 import ROM
 
-
+formater = logging.Formatter('%(name)-13s: %(levelname)-8s %(message)s')
 
 LOG_FILENAME = '/tmp/pyTNC.log'
 logging.basicConfig(
-    format='%(message)s',
+    format='%(name)-13s: %(levelname)-8s %(message)s',
     filename=LOG_FILENAME,
     level=logging.DEBUG,
 )
@@ -74,8 +73,16 @@ logger = logging.getLogger()
 fh = logging.FileHandler('file')
 fh.setLevel(logging.DEBUG)
 logger.addHandler(fh)
-filelogger = logging.getLogger('file')
+loggerfile = logging.getLogger('file')
 
+
+console = logging.StreamHandler(sys.stdout)
+console.setLevel(logging.DEBUG)
+
+console.setFormatter(formater)
+logging.getLogger('console').addHandler(console)
+
+loggerconsole = logging.getLogger ('console')
 
 
 
@@ -99,13 +106,6 @@ filelogger = logging.getLogger('file')
 
 
 
-console = logging.StreamHandler(sys.stdout)
-console.setLevel(logging.DEBUG)
-formater = logging.Formatter('%(name)-13s: %(levelname)-8s %(message)s')
-console.setFormatter(formater)
-logging.getLogger('console').addHandler(console)
-
-loggerfile = logging.getLogger ('console')
 
 
 def tracefunc(frame, event, arg, indent=[0]):
@@ -308,29 +308,12 @@ ip = {}
 
 TNC2 = {}
 tnc = TNC() 
-tnc.kiss_interface = connect.kiss_interface (_on_receive, filelogger)
+tnc.kiss_interface = connect.kiss_interface (_on_receive, loggerfile)
 
 streaming_queue = asyncio.Queue()
 
-# The therapist is in the VIRTUAL Stream H
-myeliza = {'Stream': 'H', 'Therapist': None}
-
-
-ELIZA = False
-
 def axReceived(text, ax):
     c = tnc.streams[ax].Connection
-
-    if ELIZA: # depricated code...
-        cA = tnc.streams['A'].Connection
-        #if cA.callTo == 'ELIZA':
-        cEliza = tnc.streams[myeliza['Stream']].Connection
-        if not cA is None and not cEliza is None:
-            # now check if our end is connected...
-            # we must assume the other end is connected
-            if c.axConnected:
-                #c.axSend (text)
-                True
 
     tnc.output ('AX%s> %s' % (ax, text))
     
@@ -339,22 +322,15 @@ def axReceived(text, ax):
 def tncReceived(text, ax):
     c = tnc.streams[ax].Connection
 
-    if ELIZA: # depricated code...
-            #c.axSend (myeliza['Therapist'].respond (text))
-        if ax == myeliza['Stream']:
-            c.axSend (myeliza['Therapist'].respond (text))
-        else:
-            tnc.output ('%s> %s' % (ax, text))
-    
     tnc.output ('%s> %s' % (ax, text))
 
 
 def axConnected(ax):
-    loggerscreen.debug ('# axConnected %s ' % (ax))
+    loggerconsole.debug ('# axConnected %s ' % (ax))
     c = tnc.streams[ax].Connection
 
 def tncConnected(ax):
-    loggerscreen.debug ('# tncConencted %s' % (ax))
+    loggerconsole.debug ('# tncConencted %s' % (ax))
     c = tnc.streams[ax].Connection
     if 'UTC' in completer.options and completer.options['UTC'].Value:
         t = datetime.utcnow()
@@ -378,59 +354,29 @@ def tncDisconnected(ax):
     tnc.mode = tnc.modeCommand
     # tnc.streams[ax] = None
 
-    if ELIZA: # depricated code...
-        if ax == 'A':
-            # also disconnect the far end if needed
-            cEliza = tnc.streams[myeliza['Stream']].Connection
-            cEliza.disconnect()
 
 
 def axSend(text, ax):
-    loggerscreen.debug ('# axSend %s %s ' %(text, ax))
+    loggerconsole.debug ('# axSend %s %s ' %(text, ax))
     c = tnc.streams[ax].Connection
 
-    if ELIZA: # depricated code...
-        cA = tnc.streams['A'].Connection # Assume A
-        cEliza = tnc.streams[myeliza['Stream']].Connection 
-
-        if ax == 'A':
-            cEliza.axReceived (text)
-        if ax == myeliza['Stream']:
-            cA.axReceived (text)
-            #c.axSend (myeliza['Therapist'].respond (text))
-
-    True
 
 def tncSend(text, ax):
-    loggerscreen.debug ('# tncSend %s ' % (ax))
+    loggerconsole.debug ('# tncSend %s ' % (ax))
     c = tnc.streams[ax].Connection
     True
 
 
 
 def axInit(ax):
-    loggerscreen.debug ('# axInit %s ' % (ax))
+    loggerconsole.debug ('# axInit %s ' % (ax))
 
     c = tnc.streams[ax].Connection
-    if ELIZA: # depricated code...
-        if not c is None: # Should never be none... But...
-            if c.callTo == 'ELIZA':
-                # we need to init another stream and connection. Lets call it H or Hell..
-                # swap the callsigns
-                callFrom = c.callTo
-                callTo = c.callFrom
-                callDigi = c.callDigi.reverse()
-                myeliza['Therapist'] = eliza.Eliza()
-                commands.connection (callFrom, callTo, callDigi, tnc.streams[myeliza['Stream']])
 
 
 def tncInit(ax):
-    loggerscreen.debug ('# tncInit %s ' % (ax))
+    loggerconsole.debug ('# tncInit %s ' % (ax))
     c = tnc.streams[ax].Connection
-    if ELIZA: # depricated code...
-        if c.callTo == 'ELIZA': 
-            cEliza = tnc.streams[myeliza['Stream']].Connection
-            cEliza.connect = True
 
 
 
@@ -438,20 +384,6 @@ async def periodic():
     while True:
         if tnc:
             tnc.PPS() # call TNC 1PPS
-
-        if ELIZA: # depricated code...
-            if True:
-                # Eliza functionality
-                cA = tnc.streams['A'].Connection # Assume A
-                cEliza = tnc.streams[eliza['Stream']].Connection
-                if not cA is None and not cEliza is None:
-                    # we have connection objects on both
-                    if not cA.connected and not cEliza.connected:
-                        # neither end is connected
-                        if cA['callTo'] == cEliza['callFrom'] and cA['callFrom'] == cEliza['callTo']:
-                            # we are trying to connect to each other definitely...
-                            cA.connected = True
-                            cEliza.connected = True
 
         await asyncio.sleep(1)
 

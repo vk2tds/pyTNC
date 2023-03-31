@@ -31,6 +31,8 @@ import aioax25
 import library
 import enum
 import sys 
+import inspect
+from pprint import pprint
 
 
 
@@ -60,6 +62,7 @@ class Individual_Command:
         self._Upper = None
         self._Shorter = None
         self._Value = None
+        self._Stage = None # What order should this be processed in? Default = 1
 
     def set(self, ind):
         if 'Display' in ind: 
@@ -85,6 +88,10 @@ class Individual_Command:
             self._Shorter = ind['Shorter']
         if 'Value' in ind:
             self._Value = ind['Value']
+        if 'Stage' in ind:
+            self._Stage = ind['Stage']
+        else:
+            self._Stage = 1
 
     @property
     def Display(self):
@@ -143,6 +150,9 @@ class Individual_Command:
     def Upper(self):
         return self._Upper
     
+    @property
+    def Stage(self):
+        return self._Stage
 
 
 
@@ -452,6 +462,7 @@ class process:
                 cols = 0
                 message = ''
                 for o in self.completer.options:
+                    #TODO: If KissDev or KissPort maybe pretty print.
                     #if 'Value' in self.completer.options[o].Value:
                                 if len(message) > 0:
                                     message = message + '\t\t' + library.to_user (o, None, self.completer.options[o].Value)
@@ -525,24 +536,62 @@ class process:
             # self.tnc.streams['A'].Connection.connect()
             return (returns.Ok, None)
         elif words[0] == 'KISSDEV':
+            if len(words) == 1:
+                text = ''
+                working = self.completer.options[words[0].upper()].Value.split(',')
+                if len(working) > 0:
+                    i = 1
+                    for w in working:
+                        s = w.split(' ')
+                        if len(s) >= 3: # Ignore empties
+                            text = text + '%s:\t%s\t%s\t%s\t%s\n' % (i, s[0], s[1], s[2], s[3])
+                            i = i + 1
+                return (returns.Ok, text)
+            if len(words) == 2:
+                return (returns.NotImplemented, 'TODO: Type KISSDEV 4 to remove the fourth item on the list. ')    
+
+
             # KISSdev 1 tcp localhost 8001
             if len(words) == 5 and not self.tnc.kiss_interface is None:
+                #TODO: This is append only at the moment
                 if words[2].upper() == 'TCP':
                     self.tnc.kiss_interface.kissDeviceTCP (int (words[1]), words[3], int (words[4]))
                     # TODO: Something better than this next line...
-                    self.completer.options[words[0].upper()].Value = " ".join ([words[1], words[2], words[3]])
-                    return (returns.Ok, " ".join ([words[0], words[1], words[2], words[3]]))
+                    line = " ".join ([words[1], words[2], words[3], words[4]])
+                    if self.completer.options[words[0].upper()].Value is None or len(self.completer.options[words[0].upper()].Value) == 0:
+                        self.completer.options[words[0].upper()].Value = line
+                    else:
+                        self.completer.options[words[0].upper()].Value += ("," + line)
+                    return (returns.Ok, line)
                 else: 
                     return (returns.Eh, None)
             else: 
                 return (returns.Eh, None)
         elif words[0] == 'KISSPORT':
+            if len(words) == 1:
+                text = ''
+                working = self.completer.options[words[0].upper()].Value.split(',')
+                if len(working) > 0:
+                    i = 1
+                    for w in working:
+                        s = w.split(' ')
+                        if len(s) >= 2: # Ignore empties
+                            text = text + '%s:\t%s\t%s' %(i, s[0], s[1])
+                            i = i + 1
+                return (returns.Ok, text)
+            if len(words) == 2:
+                return (returns.NotImplemented, 'TODO: Type KISSPORT 4 to remove the fourth item on the list. ')    
+
             # KISSport 1 1
             if len(words) == 3 and not self.tnc.kiss_interface is None:
                 self.tnc.kiss_interface.kissPort (int (words[1]), int (words[2]))
-                self.completer.options[words[0].upper()].Value = " ".join ([words[1], words[2]])
+                line = " ".join ([words[1], words[2]])
+                if self.completer.options[words[0].upper()].Value is None or len*(self.completer.options[words[0].upper()].Value) == 0:
+                    self.completer.options[words[0].upper()].Value = line
+                else:
+                    self.completer.options[words[0].upper()].Value += (',' + line)
                 self.tnc.initStation (int (words[1]), int (words[2]))
-                return (returns.Ok, " ".join ([words[0], words[1], words[2]]))
+                return (returns.Ok, line)
             else:
                 return (returns.Eh, None)
         elif words[0] == 'RECONNECT':
@@ -812,6 +861,10 @@ class Monitor:
             callsigns = frame.header.source.__str__() + '>' + frame.header.destination.__str__()
 
         print ('FRAME', frame)
+
+        if type(frame) is aioax25.frame.AX25RawFrame:
+            self.output ('--->AX25RawFrame')
+            self.output (frame)
 
         c = frame.control
         # x1 = RR; x5 = RNR, x9 = REJ, 03 = UI, 0F = DM, 2F = SABM, 43 = DISC, 63 = UA, 87 = FRMR, even = I

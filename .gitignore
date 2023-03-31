@@ -127,3 +127,5 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+demofile2.xml
+dxcc.txt

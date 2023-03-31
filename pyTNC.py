@@ -563,12 +563,17 @@ def init():
     ip = commands.process (completer, tnc)
 
     # First, process defaults
-    for o in completer.options:
-        if completer.options[o].Default is not None:
-            line = o + ' ' + completer.options[o].Default
-            ip.input_process (line) # ignore the return values
-        # Only the upper case letters are an alternative
-        completer.options[o].Shorter = ''.join(filter(str.isupper, completer.options[o].Display))
+    for stage in range (1,4): # Process defaults in stages. 1 is default, then 2, 3, etc. Needed for KissDev and KissPort
+        for o in completer.options:
+            if completer.options[o].Stage == stage:
+                if completer.options[o].Default is not None:
+                    line = o + ' ' + completer.options[o].Default
+                    ip.input_process (line) # ignore the return values
+                # Only the upper case letters are an alternative
+                completer.options[o].Shorter = ''.join(filter(str.isupper, completer.options[o].Display))
+
+
+
 
     # Custom startup for debugging... Ideally the defaults elsewhere should be the defaults...
     # well, except for KISSdev and KISSPort, which can have multiple calls

@@ -311,9 +311,6 @@ class kiss_interface():
         print ('start_ax25_station')
         print (call)
         print (ssid)
-        print (self.logging)
-        self.logging.info ('TEST IF LOGGING WORKS')
-        self.logging.getChild('a').info ('CHILD')
         station = aioax25.station.AX25Station (axint.AX25Interface, 
                                             call, 
                                             ssid, 

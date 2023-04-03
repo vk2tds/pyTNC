@@ -84,6 +84,8 @@ logging.getLogger('console').addHandler(console)
 
 loggerconsole = logging.getLogger ('console')
 
+loggerfile.info ('')
+loggerfile.info ('Starting pyTNC - Copyright 2023 Darryl Smith VK2TDS')
 
 
 #Right, so the `Signal()` class is from the `signalslot` package.  It

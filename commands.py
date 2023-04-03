@@ -562,7 +562,7 @@ class process:
                         self.completer.options[words[0].upper()].Value = line
                     else:
                         self.completer.options[words[0].upper()].Value += ("," + line)
-                    return (returns.Ok, line)
+                    return (returns.Ok, 'KISSDEV add ' + line)
                 else: 
                     return (returns.Eh, None)
             else: 
@@ -591,7 +591,7 @@ class process:
                 else:
                     self.completer.options[words[0].upper()].Value += (',' + line)
                 self.tnc.initStation (int (words[1]), int (words[2]))
-                return (returns.Ok, line)
+                return (returns.Ok, 'KISSPORT add ' + line)
             else:
                 return (returns.Eh, None)
         elif words[0] == 'RECONNECT':
@@ -866,57 +866,60 @@ class Monitor:
             self.output ('--->AX25RawFrame')
             self.output (frame)
 
-        c = frame.control
-        # x1 = RR; x5 = RNR, x9 = REJ, 03 = UI, 0F = DM, 2F = SABM, 43 = DISC, 63 = UA, 87 = FRMR, even = I
-        control = '**UNKNOWN %x **' % (c)
-        if False:
-            True
-        elif (c & 0x0F) == 0x01:
-            control = 'RR'
-        elif (c & 0x0F) == 0x05:
-            control = 'RNR'
-        elif (c & 0x0F) == 0x09:
-            control = 'REJ'
-        elif c == 0x03:
-            control = 'UI'
-        elif c == 0x0F:
-            control = 'DM'
-        elif c == 0x2F:
-            control = 'SABM'
-        elif c == 0x3F:
-            control = 'SABM'
-        elif c == 0x6F:
-            control = 'SABME'
-        elif c == 0x7F:
-            control = 'SABME'
-        elif c == 0x43:
-            control = 'DISC'
-        elif c == 0x63:
-            control = 'UA'
-        elif c == 0x87:
-            control = 'FRMR'
-        elif (c & 0x01) == 0x00:
-            control = 'I'
-
-        #ToDo: Check Polarity
-        if frame.header.cr:
-            control = control + ' C'
+        if type(frame) is aioax25.frame.AX25RawFrame:
+            control = 'RAW PACKET'
         else:
-            control = control + ' R'
+            c = frame.control
+            # x1 = RR; x5 = RNR, x9 = REJ, 03 = UI, 0F = DM, 2F = SABM, 43 = DISC, 63 = UA, 87 = FRMR, even = I
+            control = '**UNKNOWN %x **' % (c)
+            if False:
+                True
+            elif (c & 0x0F) == 0x01:
+                control = 'RR'
+            elif (c & 0x0F) == 0x05:
+                control = 'RNR'
+            elif (c & 0x0F) == 0x09:
+                control = 'REJ'
+            elif c == 0x03:
+                control = 'UI'
+            elif c == 0x0F:
+                control = 'DM'
+            elif c == 0x2F:
+                control = 'SABM'
+            elif c == 0x3F:
+                control = 'SABM'
+            elif c == 0x6F:
+                control = 'SABME'
+            elif c == 0x7F:
+                control = 'SABME'
+            elif c == 0x43:
+                control = 'DISC'
+            elif c == 0x63 or c == 0x73:
+                control = 'UA'
+            elif c == 0x87:
+                control = 'FRMR'
+            elif (c & 0x01) == 0x00:
+                control = 'I'
 
-        #ToDo: Check Polarity
-        if frame.pf:
-            control = control + ' P'
-        else:
-            control = control + ' F'
+            #ToDo: Check Polarity
+            if frame.header.cr:
+                control = control + ' C'
+            else:
+                control = control + ' R'
 
-        if (c & 0x01) == 0x00:
-            # Sequenced I frames
-            control = control + ' ToDo-Sn'
+            #ToDo: Check Polarity
+            if frame.pf:
+                control = control + ' P'
+            else:
+                control = control + ' F'
 
-        if  ((c & 0x01) == 0x00) or ((c & 0x0F) == 0x01) or ((c & 0x0F) == 0x05) or ((c & 0x0F) == 0x09):
-            # I, REJ, RNR, RR
-            control = control + ' ToDo-Rn'
+            if (c & 0x01) == 0x00:
+                # Sequenced I frames
+                control = control + ' ToDo-Sn'
+
+            if  ((c & 0x01) == 0x00) or ((c & 0x0F) == 0x01) or ((c & 0x0F) == 0x05) or ((c & 0x0F) == 0x09):
+                # I, REJ, RNR, RR
+                control = control + ' ToDo-Rn'
 
         control = ' <' + control + '>:'
         

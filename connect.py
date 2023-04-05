@@ -24,6 +24,9 @@ class Stream:
     def __init__(self, stream):
         self._stream = stream 
         self._Connection = None
+
+        self._Port = None
+
         self._cbDisconnect = [] # user callbacks
         self._cbReceived = []
         self._cbSent = []
@@ -128,83 +131,94 @@ class Stream:
     def axInit(self, cb):
         self._axInit.append (cb)
 
-class KissDevices:
-    def __init__ (self, host, port, phy):
-        self._Host = host
-        self._Port = port
-        self._Phy = phy
-        self._KissDevice = {}
-        self._KissPorts = {}
-
-    @property
-    def Host(self):
-        return self._Host
-    
-    @Host.setter
-    def Host(self, host):
-        self._Host = host
-
-    @property
+    @property 
     def Port(self):
         return self._Port
-    
+
     @Port.setter
     def Port(self, port):
         self._Port = port
 
-    @property
-    def Phy(self):
-        return self._Phy
-    
-    @Port.setter
-    def Phy(self, phy):
-        self._Phy = phy
+#class KissDevice:
+#    def __init__ (self, host, port, phy):
+#        self._Host = host
+#        self._Port = port
+#        self._Phy = phy
+#        print ('init', phy)
+#        self._Device = None#
+#
+#    @property
+#    def Host(self):
+#        return self._Host
+#    
+#    @Host.setter
+#    def Host(self, host):
+#        self._Host = host
+#
+#    @property
+#    def Port(self):
+##        return self._Port
+ #   
+#    @Port.setter
+#    def Port(self, port):
+#        self._Port = port
+#
+#    @property
+#    def Phy(self):
+#        # for some reason that I cannot determine, this has not been working It has been returning self._Host
+#        return 'sss' #self._Phy
+#    
+#    @Port.setter
+#    def Phy(self, phy):
+#        print ('Set PHy')
+#        self._Phy = phy
+#
+#    @property
+#    def Device(self):
+#        return self._Device
+#    
+#    @Device.setter
+#    def Device(self, kissdevice):
+#        self._Device = kissdevice
 
-    @property
-    def KissDevice(self):
-        return self._KissDevice
-    
-    @KissDevice.setter
-    def KissDevice(self, kissdevice):
-        self._KissDevice = kissdevice
 
-    def setKissPorts (self, port, kissports):
-        self._KissPorts[port] = kissports
-
-    def KissPorts (self, port):
-        return self._KissPorts[port]
+#    def setKissPorts (self, port, kissports):
+#        self._KissPorts[port] = kissports#
+#
+#    def KissPorts (self, port):
+#        return self._KissPorts[port]
         
 
-class KissPort:
-    def __init__(self, axint, station, peer):
-        self._AX25Interface = axint
-        self._Station = station
-        self._Peer = peer
+# class KissInt:
+#    def __init__(self, axint, station, peer):
+#        self._AX25Interface = axint
+#        self._Station = station
+#        self._Peer = peer
 
-    @property
-    def AX25Interface (self):
-        return self._AX25Interface
+    # @property
+    # def AX25Interface (self):
+    #     return self._AX25Interface
     
-    @AX25Interface.setter
-    def AX25Interface (self, axint):
-        self._AX25Interface = axint
+    # @AX25Interface.setter
+    # def AX25Interface (self, axint):
+    #     self._AX25Interface = axint
 
-    @property
-    def Station (self):
-        return self._Station
+    # @property
+    # def Station (self):
+    #     return self._Station
     
-    @Station.setter
-    def Station (self, station):
-        self._Station = station
+    # @Station.setter
+    # def Station (self, station):
+    #     self._Station = station
 
-    @property
-    def Peer(self):
-        return self._Peer
+    # @property
+    # def Peer(self):
+    #     return self._Peer
     
-    @Peer.setter
-    def Peer(self, peer):
-        self._Peer = peer
-        
+    # @Peer.setter
+    # def Peer(self, peer):
+    #     self._Peer = peer
+
 
 
 #self.kissDevices[dev] = {'Host': host, 'Port': port, 'Phy': 'tcp', 'Kiss': {} }
@@ -212,11 +226,12 @@ class KissPort:
 class kiss_interface():
     #ToDo: Split call from kiss_interface
     def __init__ (self, on_rx, logging):
-        self.kissDevices = {}
+        self._kissDevices = {}
+        self._kissInts = {}
         #self.ax25int = ax25int
         self.logging = logging
         self.loop = asyncio.get_event_loop()
-        self.on_rx = on_rx
+        self._on_rx = on_rx
         self.call = ""
         self.ssid = None
         self.myCall = ""
@@ -233,39 +248,48 @@ class kiss_interface():
             self.ssid = 0
 
     def kissDeviceTCP (self, device, host, port):
-        dev = str(int(device))
-        self.kissDevices[dev] = KissDevices (host, port, 'TCP')
-        self.kissDevices[dev].KissDevice = self.start_ax25_device (host, port, 'TCP')
-
-    def kissPort (self, device, kissPort):
-        dev = str(int(device))
-        if dev in self.kissDevices:
-            axint = self.start_ax25_port (self.kissDevices[dev].KissDevice, kissPort)
-            self.kissDevices[dev].setKissPorts (kissPort, KissPort (axint, None, None))
-            #self.start_ax25_station (dev, kissPort)
-
-
-
-            
-
-    
-
-    def start_ax25_device(self, host, port, phy):
-        print ('start_ax25_device')
-        if phy.upper() == 'TCP':
-            
-            kissdevice = make_device(
-            type="tcp", host="localhost", port=8001,
+        print ('device', device)
+        self._kissDevices[device] = make_device(
+            type="tcp", host=host, port=port,
             log=self.logging, #.getLogger("ax25.kiss"),
             loop=self.loop
             )
-            kissdevice.open() # happens in background asynchronously
-
-            return kissdevice
-        self.logger.debug ('start_ax25_device - No TCP interface specified')
+        self._kissDevices[device].open() # happens in background asynchronously
 
 
-    def start_ax25_port(self, kissdevice, kissPort):
+    def kissPort (self, interface):
+        #if interface in self._kissInts:
+            #if self.kissInts[interface].Device is None:
+            #    True
+            #    # Start this device
+            #    #dev.Device = SDFGHJKL
+            #    #dev = jadsfsd
+            if not interface in self._kissInts:
+                (device,kissPort) = interface.split(':')
+                print ('Adding here')
+                self._kissInts[interface] = aioax25.interface.AX25Interface(
+                    kissport=self._kissDevices[device][int(kissPort)],         # 0 = HF; 2 = USB
+                    loop=self.loop, 
+                    log=self.logging, #.getLogger('ax25.interface')
+                )
+
+            self._kissInts[interface].bind (self._on_rx, '(.*?)', ssid=None, regex=True)
+                
+                
+                
+                
+                #KissInt (None, None, None)
+
+
+            #axint = self.start_ax25_port (self._kissDevices[dev].KissDevice, kissPort)
+            #self._kissDevices[dev].setKissPorts (kissPort, KissPort (axint, None, None, None))
+            #self.start_ax25_station (dev, kissPort)
+        #else:
+        #    print (self._kissInts)
+        #    print ('interface', interface)
+        #    assert ()
+
+    def start_ax25_port(self, port):
         print ('start_ax25_port')
         #That `KISSDevice` class represents all the ports on the KISS interface
         #-- for Direwolf; there can be multiple ports (e.g. on my UDRC-II board,
@@ -282,6 +306,20 @@ class kiss_interface():
 
         ax25int.bind (self.on_rx, '(.*?)', ssid=None, regex=True)
         return ax25int
+
+
+
+    @property 
+    def kissInts(self):
+        return self._kissInts
+
+
+    @property
+    def kissDevices(self):
+        return self._kissDevices
+            
+
+
 
 
     # *********************************************
@@ -305,8 +343,8 @@ class kiss_interface():
 
         #AX25Station takes AX25Interface as a constructor. [SSID on network]
         #attach interface via .attach() - links it up to an interface so it can send/receive S and I frames
-        dev = str(int(device))
-        axint = self.kissDevices[dev].KissPorts(kissPort)
+        dev = device
+        axint = None, #self.kissDevices[dev].KissPorts(kissPort)
 
         print ('start_ax25_station')
         print (call)

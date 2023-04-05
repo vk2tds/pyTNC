@@ -34,7 +34,7 @@ import sys
 import inspect
 from pprint import pprint
 
-
+import uuid
 
 
 streamlist = ('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J')
@@ -443,16 +443,18 @@ class process:
                 return (returns.Ok, text)
             if len(words) >= 2:
                 if words[1].upper() == 'ALL':
+                    text = ''
                     for uc in self.completer.options:
                         if not self.completer.options[uc].Help is None:
-                            text = '%s\t%s' % (uc, self.completer.options[uc].Help)
-                            return (returns.Ok, text)
-                    return (returns.Eh, None)
-                if words[1] in self.completer.options:
+                            if len(text) > 0: 
+                                text = text + '\n'
+                            text = text + '%s\t%s' % (uc, self.completer.options[uc].Help)
+                    return (returns.Ok, text)
+                if words[1].upper() in self.completer.options:
                     uc = words[1].upper()
                     if not self.completer.options[uc].Help is None:
-                        text = self.completer.options[uc].Help
-                        return (returns.Ok, None)
+                        text = '%s\t%s' % (uc, self.completer.options[uc].Help)
+                        return (returns.Ok, text)
                     else:
                         text = 'No help available'
                         return (returns.Ok, text)
@@ -537,6 +539,7 @@ class process:
             return (returns.Ok, None)
         elif words[0] == 'KISSDEV':
             if len(words) == 1:
+
                 text = ''
                 working = self.completer.options[words[0].upper()].Value.split(',')
                 if len(working) > 0:
@@ -555,7 +558,8 @@ class process:
             if len(words) == 5 and not self.tnc.kiss_interface is None:
                 #TODO: This is append only at the moment
                 if words[2].upper() == 'TCP':
-                    self.tnc.kiss_interface.kissDeviceTCP (int (words[1]), words[3], int (words[4]))
+                    #self.tnc.kiss_interface.kissDeviceTCP (words[1], words[3], int (words[4]))
+                    self.tnc.kiss_interface.kissDeviceTCP (words[1], words[3], int (words[4]))
                     # TODO: Something better than this next line...
                     line = " ".join ([words[1], words[2], words[3], words[4]])
                     if self.completer.options[words[0].upper()].Value is None or len(self.completer.options[words[0].upper()].Value) == 0:
@@ -567,7 +571,7 @@ class process:
                     return (returns.Eh, None)
             else: 
                 return (returns.Eh, None)
-        elif words[0] == 'KISSPORT':
+        elif words[0] == 'KISSINT':
             if len(words) == 1:
                 text = ''
                 working = self.completer.options[words[0].upper()].Value.split(',')
@@ -582,22 +586,65 @@ class process:
             if len(words) == 2:
                 return (returns.NotImplemented, 'TODO: Type KISSPORT 4 to remove the fourth item on the list. ')    
 
-            # KISSport 1 1
+            # KISSint 1 1
             if len(words) == 3 and not self.tnc.kiss_interface is None:
-                self.tnc.kiss_interface.kissPort (int (words[1]), int (words[2]))
+
+                #
+                #self.tnc.kiss_interface.kissPort (words[1], int (words[2]), u)
                 line = " ".join ([words[1], words[2]])
-                if self.completer.options[words[0].upper()].Value is None or len*(self.completer.options[words[0].upper()].Value) == 0:
+                if self.completer.options[words[0].upper()].Value is None or len(self.completer.options[words[0].upper()].Value) == 0:
                     self.completer.options[words[0].upper()].Value = line
                 else:
                     self.completer.options[words[0].upper()].Value += (',' + line)
-                self.tnc.initStation (int (words[1]), int (words[2]))
+
+                if len(self.tnc.kiss_interface.kissInts) == 0:
+                    self.tnc.streams[self.tnc.currentStream].Port = (words[1] + ':' + words[2]) # if we dont have a default for this stream, set it
+
+                port = words[1] + ':' + words[2]
+
+                self.tnc.kiss_interface.kissPort (port)
+
+
+                # *********************
+                #self.tnc.initStation (port)
+                print (line)
                 return (returns.Ok, 'KISSPORT add ' + line)
             else:
                 return (returns.Eh, None)
+        elif words[0] == 'PORT':
+            if len(words) == 1:
+                text = ''
+                for ki in self.tnc.kiss_interface.kissInts:
+                    (d,i) = ki.split(':')
+                    kD = self.tnc.kiss_interface.kissDevices[d]
+                    if len(text) > 0:
+                        text += '\n'
+                    if self.tnc.streams[self.tnc.currentStream].Port == ki:
+                        text += '%s*\t%s\t%s\t%s' % (ki, kD._Phy, kD.Host, kD.Port) # This is active for thsi stream 
+                    else:
+                        text += '%s\t%s\t%s\t%s' % (ki, kD._Phy, kD.Host, kD.Port)
+
+                return (returns.Ok, text)
+            if len(words) == 2:
+                # We are setting the current port
+                if words[1] in self.tnc.kiss_interface.kissInts:
+                    self.tnc.streams[self.tnc.currentStream].Port = words[1]
+                    return (returns.Ok, None)
+
+            return (returns.Eh, None)
+
+
+        elif words[0] == 'STREAM':
+            if len(words) == 1:
+                text = 'Stream\t%s' % (self.tnc.currentStream)
+                return (returns.Ok, text)
+            if len(words) == 2:
+                if words[1] in streamlist:
+                    self.tnc.currentStream = words[1]
+            return (returns.Eh, None)
+
         elif words[0] == 'RECONNECT':
             return (returns.NotImplemented, None)
-
-
         if len(words) == 1 and words[0].upper() in self.completer.options:        # If a single word only, and it has a value,
             if not self.completer.options[words[0].upper()].Value is None:       # then print the value
                 #ToDo: Print True as 'On'

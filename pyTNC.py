@@ -146,9 +146,23 @@ class TNC:
 
         self.monitor = commands.Monitor()
 
+
         self.streams = {}
         for s in commands.streamlist:
             self.streams[s] = connect.Stream(s)
+
+        self._currentStream = commands.streamlist[0]
+
+    @property 
+    def currentStream(self):
+        return self._currentStream
+    
+    @currentStream.setter
+    def currentStream(self, s):
+        print (s)
+        self._currentStream = s
+
+
 
     def output (self, line):
         print (line)
@@ -197,7 +211,7 @@ class TNC:
     def initStation (self, device, port):
       print ('initStart')
       try:
-        axint = tnc.kiss_interface.kissDevices[str(device)].KissPorts(port).AX25Interface
+        #axint = tnc.kiss_interface.kissDevices[str(device)].KissPorts(port).AX25Interface
 
         mycall = completer.options['MYCALL'].Value
         if '-' in mycall:
@@ -518,8 +532,8 @@ def init():
                    'TRACE OFF',
                    'AXVERSION AX25_20', #for testing
                    'MYCALL vk2tds-2', 
-                   'KISSdev 1 tcp localhost 8001',
-                   'KISSPort 1 0'
+                   'KISSdev picopacket tcp localhost 8001',
+                   'KISSInt picopacket 0'
                    ):
         ret = ip.input_process (custom)
         print (ret[1])

@@ -59,6 +59,33 @@ to allow settings to be stored for use at runtime.
 
 
 
+
+
+
+
+
+KISSDEV
+KISSINT
+PORT
+STREAM
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 == Notes on using the AIOAX25 library ==
 
 AX25Station takes AX25Interface as a constructor. [SSID on network]
@@ -121,3 +148,45 @@ you know the saying, learn to crawl before attempting to walk or run.
 
 Regards,
 -- 
+
+
+
+    Command KISSDEV calls \/
+
+    def kissDeviceTCP (self, device, host, port):
+        self._kissDevices[device] = KissDevice (host, port, 'TCP')
+
+        #self._kissDevices[dev].KissDevice = self.start_ax25_device (host, port, 'TCP')
+
+    calls \/
+
+     def start_ax25_device(self, host, port, phy):
+            kissdevice = make_device(
+            type="tcp", host="localhost", port=8001,
+            log=self.logging, #.getLogger("ax25.kiss"),
+            loop=self.loop
+            )
+            kissdevice.open() # happens in background asynchronously
+
+            return kissdevice
+
+
+    def kissPort (self, interface):
+            #axint = self.start_ax25_port (self._kissDevices[dev].KissDevice, kissPort)
+            #self._kissDevices[dev].setKissPorts (kissPort, KissPort (axint, None, None, None))
+            #self.start_ax25_station (dev, kissPort)
+
+
+
+
+    def start_ax25_port(self, port):
+        ax25int = aioax25.interface.AX25Interface(
+            kissport=kissdevice[int(kissPort)],         # 0 = HF; 2 = USB
+            loop=self.loop, 
+            log=self.logging, #.getLogger('ax25.interface')
+        )
+
+        ax25int.bind (self.on_rx, '(.*?)', ssid=None, regex=True)
+
+
+

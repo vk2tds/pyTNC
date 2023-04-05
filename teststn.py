@@ -43,13 +43,13 @@ async def asyncmain():
     )
 
     kissdev = make_device(
-        type="serial", device="/dev/ax0", baudrate=9600,
+        type="tcp", host="localhost", port=8001,
         reset_on_close=False, kiss_commands=[]
     )
     interface = AX25Interface(kissdev[0])
     station = AX25Station(
         interface=interface,
-        callsign="VK4MSL", ssid=4
+        callsign="VK2TDS", ssid=2
     )
 
     station.connection_request.connect(_on_connection_rq)

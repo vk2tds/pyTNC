@@ -72,7 +72,7 @@ STREAM
 
 
 
-
+new command STREAMSHOW - show the name of the interface when showing packets
 
 
 
@@ -171,13 +171,14 @@ Regards,
             return kissdevice
 
 
+    Command KISSINT calls \/
+
     def kissPort (self, interface):
             #axint = self.start_ax25_port (self._kissDevices[dev].KissDevice, kissPort)
             #self._kissDevices[dev].setKissPorts (kissPort, KissPort (axint, None, None, None))
             #self.start_ax25_station (dev, kissPort)
 
-
-
+    Calls \/
 
     def start_ax25_port(self, port):
         ax25int = aioax25.interface.AX25Interface(

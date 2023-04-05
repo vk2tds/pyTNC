@@ -268,7 +268,6 @@ class connection:
         else:
             toCall = self.callTo
 
-        print ('AAAAA')
         print ('CCCCC')
 
 
@@ -619,10 +618,12 @@ class process:
                     kD = self.tnc.kiss_interface.kissDevices[d]
                     if len(text) > 0:
                         text += '\n'
+                    active = ''
                     if self.tnc.streams[self.tnc.currentStream].Port == ki:
-                        text += '%s*\t%s\t%s\t%s' % (ki, kD._Phy, kD.Host, kD.Port) # This is active for thsi stream 
-                    else:
-                        text += '%s\t%s\t%s\t%s' % (ki, kD._Phy, kD.Host, kD.Port)
+                        active = '*'
+                    if type(kD) == aioax25.kiss.TCPKISSDevice:
+                        text += '%s%s\t%s\t%s\t%s' % (ki, active, 'TCP', kD._conn_args['host'], kD._conn_args['port'])
+                    # TODO add other device types.                            
 
                 return (returns.Ok, text)
             if len(words) == 2:
@@ -797,9 +798,11 @@ class Monitor:
     def setTnc (self, t):
         self._tnc = t
 
-    def _on_receive_trace (self, frame): 
+    def _on_receive_trace (self, textInterface, frame): 
         bytes = frame.__bytes__() 
         paclen = len(bytes)
+        if self._completer.options['STREAMSHOW'].Value:
+            self.output (textInterface + ' ->')
         self.output (    'byte  ------------hex display------------ -shifted ASCII-- -----ASCII------')
         offset = 0
         #6, 42, 59
@@ -842,7 +845,20 @@ class Monitor:
 
 
 
-    def _on_receive_monitor (self, frame):
+    def _on_receive_monitor (self, interface, frame):
+
+
+        port = interface._port
+        device = 'Unknown'
+
+        if type(port._device) == aioax25.kiss.TCPKISSDevice:
+            for d in self._tnc.kiss_interface.kissDevices:
+                kD = self._tnc.kiss_interface.kissDevices[d]
+                if kD._conn_args['host'] == port._device._conn_args['host'] and kD._conn_args['port'] == port._device._conn_args['port']:
+                    device = d
+
+        textInterface = device + ':' + str(port._port)
+
 
         calls = re.split (r"[*>,]", str(frame.header))
         calls = [value for value in calls if value != '']
@@ -851,6 +867,7 @@ class Monitor:
         mall = self._completer.options['MALL'].Value
         mcon = self._completer.options['MCON'].Value
         mrpt = self._completer.options['MRPT'].Value
+        streamshow = self._completer.options['STREAMSHOW'].Value
         headerln = self._completer.options['HEADERLN'].Value
         adrdisp = self._completer.options['ADRDISP'].Value
         trace = self._completer.options['TRACE'].Value
@@ -906,8 +923,6 @@ class Monitor:
             callsigns = frame.header.source.__str__() + '>' + frame.header.destination.__str__() + ',' + frame.header.repeaters.__str__()
         else:
             callsigns = frame.header.source.__str__() + '>' + frame.header.destination.__str__()
-
-        print ('FRAME', frame)
 
         if type(frame) is aioax25.frame.AX25RawFrame:
             self.output ('--->AX25RawFrame')
@@ -979,22 +994,30 @@ class Monitor:
         else:
             payload = '<NO_PAYLOAD>'
 
+        out = ''
         if headerln:
             #HEADERLN On: KV7D>N2WX: Go ahead and transfer the file.
             if adrdisp:
-                self.output (callsigns + control)
-            self.output (payload)
+                out = callsigns + control
+            else:
+                out = payload 
         else:
             #HEADERLN Off: N2WX>KV7D:
             #           Sorry, I'm not quite ready yet.
             if adrdisp:
-                self.output (callsigns + control + payload)
+                out = callsigns + control + payload
             else:
-                self.output (payload)
+                out = payload
+
+        if streamshow: 
+            out = textInterface + ' | ' + out
+
+
+        self.output (out)
 
         if trace:
             # Trace mode enabled.
-            self._on_receive_trace (frame)
+            self._on_receive_trace (textInterface, frame)
 
 
 

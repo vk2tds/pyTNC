@@ -311,13 +311,14 @@ class TNC:
 def _on_receive(interface, frame, match=None):
     # NOTE: Make sure the kissdevice lines up with the one you wnat to listen too
 
+
     if 'UTC' in completer.options and completer.options['UTC'].Value:
         tnc.mheard[str(frame.header.source)] = datetime.utcnow()
     else:
         tnc.mheard[str(frame.header.source)] = datetime.now()
 
     #tnc.mheard['VK2TDS-1'] = datetime.now
-    tnc.monitor._on_receive_monitor(frame)
+    tnc.monitor._on_receive_monitor(interface, frame)
 
 
 ip = {}

@@ -124,6 +124,7 @@ TNC2_ROM = {
     'STArt': {'Commands': [], 'Group': 'C', 'Default': '$11', 'Help': '(CTRL-Q) the XON for data TO the terminal'},
     'STOp': {'Commands': [], 'Group': 'C', 'Default': '$13', 'Help': '(CTRL-S) the XOFF for data TO the terminal'},
     'STREAMCa': {'Commands': ['On', 'Off'], 'Group': 'C', 'Default': 'Off', 'Help': 'Don\'t show the callsign after stream id'},
+    'STREAMShow': {'Commands': ['On', 'Off'], 'Group': 'C', 'Default': 'On', 'Help': 'Show the stream ID when displaying packets'},
     'STREAMDbl': {'Commands': ['On', 'Off'], 'Group': 'C', 'Default': 'Off', 'Help': 'Don\'t print the stream switch char twice (!!A)'},
     'STReamsw': {'Commands': [], 'Group': 'C', 'Default': '$7c', 'Help': 'Character to use to change streams (links)'},
     'TRAce': {'Commands': ['On', 'Off'], 'Group': 'L', 'Default': 'Off', 'Help': 'Hexidecimal trace mode is disabled'},

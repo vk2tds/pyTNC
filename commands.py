@@ -644,6 +644,14 @@ class process:
                     self.tnc.currentStream = words[1]
             return (returns.Eh, None)
 
+        elif words[0] == 'MYCALL' and len(words) == 2:
+            line = str (self.completer.options[words[0].upper()].Value or '')
+            self.completer.options[words[0].upper()].Value = words[1].upper()
+            self.tnc.kiss_interface.myCallsign (self.completer.options[words[0].upper()].Value)
+            return (returns.Ok, 'KISSPORT was ' + line)
+
+
+
         elif words[0] == 'RECONNECT':
             return (returns.NotImplemented, None)
         if len(words) == 1 and words[0].upper() in self.completer.options:        # If a single word only, and it has a value,
@@ -954,7 +962,7 @@ class Monitor:
                 control = 'SABME'
             elif c == 0x7F:
                 control = 'SABME'
-            elif c == 0x43:
+            elif c == 0x43 or c == 0x53:
                 control = 'DISC'
             elif c == 0x63 or c == 0x73:
                 control = 'UA'

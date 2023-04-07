@@ -52,7 +52,7 @@ async def asyncmain():
         callsign="VK2TDS", ssid=2
     )
 
-    station.connection_request.connect(_on_connection_rq)
+    station.connection_request.connect(_on_connection_rq) # Incoming
     station.attach()
     kissdev.open()
 

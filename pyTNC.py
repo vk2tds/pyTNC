@@ -149,10 +149,12 @@ class TNC:
 
         self.streams = {}
         for s in commands.streamlist:
-            self.streams[s] = connect.Stream(s)
+            self.streams[s] = connect.Stream(s, loggerfile)
 
         self._currentStream = commands.streamlist[0]
 
+
+    # These are letters
     @property 
     def currentStream(self):
         return self._currentStream
@@ -162,6 +164,10 @@ class TNC:
         print (s)
         self._currentStream = s
 
+    # return the stream object.
+    @property
+    def activeStream (self):
+        return self.streams(self._currentStream)
 
 
     def output (self, line):

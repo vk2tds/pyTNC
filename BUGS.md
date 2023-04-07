@@ -23,3 +23,9 @@ Future
         print("Found gnu readline")
         readline.parse_and_bind("tab: complete")
 
+
+Need to implement CONOK
+
+
+
+

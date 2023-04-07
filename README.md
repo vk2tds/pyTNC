@@ -191,3 +191,29 @@ Regards,
 
 
 
+
+
+
+
+Multi-Connects
+The TNC makes it possible for you to talk to more than one person at the same time. Single port TNCs, such as the KPC-3 Plus, support 26 streams on the one port. Multi- port TNCs, such as the KPC-9612 Plus, support 26 streams per port.
+The command MAXUSERS determines how many streams may be used at one time, per port, and the command USERS determines how many people can connect to the TNC per port. An incoming connect uses the next available stream. If the number of streams set by USERS is full, then a station attempting a connect with your TNC will receive a busy message instead of a connect. However, if MAXUSERS is set larger than USERS, you can still issue outgoing connects on additional streams.
+To determine which port you are on, simply use the STATUS command, typing STAT at the command prompt. The TNC will report which streams are active and which one you are on. If you wish to remain on the current stream to communicate, no action is necessary. To change streams ( to make another connect or to send data to another
+station already connected to you) type the STREAMSW character, the number of the port (if you are changing ports on a multi-port TNC), and the letter designation of the stream you wish to be on. No return or enter key is necessary.
+For example, let’s assume you are using a KPC-9612 Plus and you are connected to WØXI on stream A of port 2 but you wish to return to a discussion with NØKN on stream B of port 1. Whether in command mode or convers mode, simply enter “|1b” and the TNC will switch to port 1, stream B. When you do this, the CON and STA lights on the front panel will switch with you, reporting the status of the new stream.
+If you are connected and have MONITOR or MCON OFF, the normal headers containing the “to” and “from” callsigns will not be shown. The setting of STREAMEV will then determine how often you see the stream designator. This parameter comes defaulted OFF, so the stream designators are only shown when a change in streams occurs. Turning this command ON will make the stream designators show on every connected packet received. Turning STREAMCA ON will also add the callsign of the “from” station beside the stream designator.
+
+***
+Connect requests may only be initiated in the Command Mode and the connect will be established on the current stream.
+
+
+
+CONOK {ON | OFF}
+default ON Multi-Port
+When ON, connect requests from other TNCs will be automatically acknowledged and a <UA> packet will be sent. The standard connect message, with stream ID if appropriate, will be output to the terminal and the mode specified by CONMODE will be entered on the I/O stream if you are not connected to another station and NOMODE is OFF.
+When OFF, connect requests from other TNCs will not be acknowledged and a <DM> packet will be sent to the requesting station. The message “connect request: (callsign of whoever is trying to connect to you)” will be output to your terminal if INTFACE is TERMINAL or NEWUSER.
+When CONOK is OFF, you can still connect to your mailbox.
+When operating with multiple connects allowed, the connection will take place on the next available stream. Connect requests in excess of the number allowed by the USERS command will receive a <DM> response and the “connect request: (call)” message will be output to your terminal if INTFACE is TERMINAL or NEWUSER.
+See also: conmode, connect, intface, maxusers, monitor, nomode, and users
+
+

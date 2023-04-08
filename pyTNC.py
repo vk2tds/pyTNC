@@ -331,7 +331,7 @@ ip = {}
 
 TNC2 = {}
 tnc = TNC() 
-tnc.kiss_interface = connect.kiss_interface (_on_receive, loggerfile)
+tnc.kiss_interface = connect.kiss_interface (tnc, _on_receive, loggerfile)
 
 streaming_queue = asyncio.Queue()
 

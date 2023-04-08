@@ -21,6 +21,7 @@ from aioax25.version import AX25Version
 import logging
 import commands 
 
+import queue 
 
 
 
@@ -130,7 +131,18 @@ class Stream:
         self._axSent = []
         self._axConnect = []
         self._axInit = []
-        True
+
+
+
+        # incoming and outgoing buffers
+        # for FIFO, use .put() and .get()
+        #
+        #TODO expand buffer sizes dynamically saving content
+        
+        self._bufferSize = 7            
+        self._rxBuffer = queue.Queue(self._bufferSize)
+        self._txBuffer = queue.Queue(self._bufferSize)
+
 
 
 
@@ -255,7 +267,7 @@ class Stream:
 
 class kiss_interface():
     #ToDo: Split call from kiss_interface
-    def __init__ (self, on_rx, logging):
+    def __init__ (self, tnc, on_rx, logging):
         self._kissDevices = {}
         self._kissInts = {}
         self._stations = {}
@@ -267,7 +279,8 @@ class kiss_interface():
         self.ssid = None
         self._myCall = ""
         self._mySsid = None
-
+        self._tnc = tnc
+        self._peerstream = PeerStream(self._tnc)
 
     def callsign(self, call):
         print ('Callsign', call)
@@ -384,16 +397,27 @@ class kiss_interface():
         log = logging.getLogger("connection.%s" % peer.address)
 
         log.info("Incoming connection from %s", peer.address)
+        mystream = self.parentself._peerstream.whichstream(peer)
+
 
         def _on_state_change(state, **kwargs):
+            nonlocal mystream
             print ('STATE')
             log.info("State is now %s", state)
-            if state is peer.AX25PeerState.CONNECTED:
+            if state is peer.AX25PeerState.CONNECTING:
+                True
+            elif state is peer.AX25PeerState.CONNECTED:
                 # print ('---->', peer.address + ':' + peer.station().address)
 
                 peer.send(("Hello %s\r\n" % peer.address).encode())
+            elif state is peer.AX25PeerState.DISCONNECTED:
+                True
+
+            elif state is peer.AX25PeerState.DISCONNECTING:
+                True
 
         def _on_rx(payload, **kwargs):
+            nonlocal mystream
             print ('RECEIVE')
             try:
                 payload = payload.decode()
@@ -401,6 +425,8 @@ class kiss_interface():
                 log.exception("Could not decode %r", payload)
                 peer.send("Could not decode %r: %s", payload, e)
                 return
+
+            
 
             log.info("Received: %r", payload)
             peer.send(("You sent: %r\r\n" % payload).encode())

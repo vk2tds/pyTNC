@@ -143,6 +143,10 @@ class Stream:
         self._rxBuffer = queue.Queue(self._bufferSize)
         self._txBuffer = queue.Queue(self._bufferSize)
 
+        # Peer details
+
+        self._peer = None
+
 
 
 
@@ -155,6 +159,32 @@ class Stream:
         # station.connection_request.connect(_on_connection_rq)
         # station.attach()
         # kissdev.open()
+
+
+
+    def received (self, payload):
+        if not self._rxBuffer.full():
+            self._rxBuffer.put(payload)    
+        else:
+            # Not sure what to do if RX buffer is full.
+            True
+
+        # TODO Send a message somwehere to say that we have the payload. Investigate stream swapping
+
+
+    def send (self, payload):
+        if not self.peer is None:
+            self._peer.send (payload)
+        True
+
+    @property
+    def peer(self):
+        return self._peer
+
+    @peer.setter
+    def peer(self, peer):
+        self._peer = peer
+
 
 
 
@@ -426,7 +456,10 @@ class kiss_interface():
                 peer.send("Could not decode %r: %s", payload, e)
                 return
 
-            
+            self._peerstream.received (payload)
+
+
+            #TODO: Do I need a TX buffer? Is it in the peer.send object?
 
             log.info("Received: %r", payload)
             peer.send(("You sent: %r\r\n" % payload).encode())

@@ -7,8 +7,71 @@ progress, with lots more work needed. Thing such as error checking are rarely im
 The software is designed to conenct to a KISS TNC via TCP. The best solution for this might be DIREWOLF. Commands have been added
 to allow settings to be stored for use at runtime. 
 
+The first thing that you should note is that custom settings are stored in the same directory as the code. These are user settings and 
+work exactly as if they had been typed on the pyTNC command line. The file is called 'custom.txt'
+
+The software has a command line GUI. At some point, a TCP interface would be cool, so that you could telnet in remotely. We are not to that point yet. The 
+commands are basically TNC-2, with changes. They should all be documented if you type 'HELP ALL'. You can also get help with a command by replacing 'ALL'
+with the name of the command. For instance 'HELP CONNECT' will tell you how to connect. This help does need to be expanded. 
+
+The command to exit CONV mode is an issue at the moment. ALT-C on my Mac exits into command mode
+
+== Changing the Callsign ==
+
+To set the callsign, use 'MYCALL VK2TDS-10', replacing my callsign with your callsign obviously. The callsign should be set before you use the KISS commands below. In future this will likely be fixed. Therefore, at this point, work out how to connect to the TNC.
+
+
+
+== Connecting to a TNC == 
+
+At the moment, the software is required to connect to a KISS TNC via TCP. More connection modes will come. Since I am using a Mac, this is what I need
+to use. There are two very important KISS commands that need to be used, KISSDEV and KISSINT. KISSDEV should be used first, since it sets up the device, followed by KISSINT, which sets up the interface on that device. 
+
+An example appears below:
+
+* KISSdev picopacket tcp localhost 8001
+* KISSInt picopacket 0
+
+Looking at the KISSDEV line, the first thing to note is the name 'picopacket'. This is freeform text. The only requirement is that it is the same as the ones used in KISSINT.
+
+We then go to TCP, indicating that we are connecting via TCP. Then onto the hostname and port for the KISS interface. This is fairly straightforward.
+
+Each KISS device can have miltiple interfaces. An interface is generally a radio port. These start at index 0, and go up from there. 
+
+The KISSINT command basically just says which KISS interfaces to activate. 
+
+You can see what has been set up by just typing the commands 'KISSINT' and 'KISSDEV'. However, a better way is using the 'PORT' command.
+
+There needs to be a default interface for us to use. To make things easy, we use the 'PORT' command to see the available ports and select a new one. A port might be called something like 'picopacket:0'. To change to that port, type 'PORT picopacket:0'. If there is an asterisk next to one of the ports, that means it is the currently selected port. You can ignore the asterisk if changing ports.
+
+
+
+
+
+
 * Type 'HELP ALL' for information on all the commands. This needs to be longer.
-* Exiting CONV mode is an issue at the moment. ALT-C on my Mac exits into command mode
+* 
+
+
+
+
+
+
+
+TODO: have the custom.txt search in the home directory for the user too
+TODO: Take over Control-C
+TODO: Changing callsign after KISS is opened.
+TODO: KISSDEV name case insenstive 
+
+
+
+
+
+
+
+
+
+
 * You can connect to Eliza by typing 'C ELIZA' at the CMD prompt. Exit by typing 'BYE'
 * Over time functionality is added to pyTNC.py and then over time moved to another library. This code is very much being worked on
 

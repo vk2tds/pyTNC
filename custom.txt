@@ -1,0 +1,9 @@
+TRACE ON
+DAYUSA OFF 
+CONSTAMP ON
+TRACE OFF
+AXVERSION AX25_20
+MYCALL vk2tds-2
+KISSdev picopacket tcp localhost 8001
+KISSInt picopacket 0
+

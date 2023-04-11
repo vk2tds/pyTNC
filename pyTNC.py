@@ -38,6 +38,9 @@ import asyncio
 from aioax25.kiss import make_device
 import aioax25
 import sys
+import os
+from pathlib import Path
+
 
 from aioax25.signal import Signal
 from aioax25.interface import AX25Interface
@@ -532,18 +535,16 @@ def init():
 
     # Custom startup for debugging... Ideally the defaults elsewhere should be the defaults...
     # well, except for KISSdev and KISSPort, which can have multiple calls
-    tnc.output ('Custom settings..')
-    for custom in ('TRACE ON', 
-                   'DAYUSA OFF', 
-                   'CONSTAMP ON', 
-                   'TRACE OFF',
-                   'AXVERSION AX25_20', #for testing
-                   'MYCALL vk2tds-2', 
-                   'KISSdev picopacket tcp localhost 8001',
-                   'KISSInt picopacket 0'
-                   ):
-        ret = ip.input_process (custom)
-        print (ret[1])
+    tnc.output ('Loading custom settings..')
+    #filename = os.path.join(__location__, 'custom.txt')
+    p = Path(__file__).with_name('custom.txt')
+    if p.exists():
+        #if os.path.isfile (filename):
+        with p.open('r') as f:
+            lines = f.readlines()
+            for custom in lines:
+                ret = ip.input_process (custom)
+                print (ret[1])
     print('')
 
 init()

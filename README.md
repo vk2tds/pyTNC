@@ -49,8 +49,31 @@ There needs to be a default interface for us to use. To make things easy, we use
 
 
 
-* Type 'HELP ALL' for information on all the commands. This needs to be longer.
-* 
+== AX25 Version ==
+
+To change the version of AX.25 being used, use the 'AXVERSION' command. It is slightly non-standard, as it only changes between AX.25v2.0 and AX.25v2.2. The default is the more modern version. To change to AX.25v2.0, you can use the command 'AXVERSION AX25_20'. 
+
+
+
+
+
+
+== Streams ==
+
+At the time of writing, streams are still being developed. You can see the current stream by typing 'STREAM' and change streams with the stream command followed by a character, for instance, 'STREAM B'. 
+
+PORTS and CONNECTIONS operate within a stream. Connections stay in their current state when you change streams. When you return to a stream, it is as if you had never left it. 
+
+There is a new command called 'STREAMSHOW', which when active, will display the stream when monitoring packets. Beware, this command may be changed to 'PORTSHOW' as the concept of streams is further developed. 
+
+
+
+
+
+
+
+
+
 
 
 
@@ -62,11 +85,27 @@ TODO: have the custom.txt search in the home directory for the user too
 TODO: Take over Control-C
 TODO: Changing callsign after KISS is opened.
 TODO: KISSDEV name case insenstive 
+TODO: should it be STREAMSHOW or PORTSHOW??
 
 
 
+== CODE ==
 
 
+
+=== ROM.PY ===
+All the TNC commands, default values, help and more are stored in ROM.py. This file is processed by being read into a class. Certain values are then over-ridden by the custom.txt file entries. 
+
+
+=== commands.py ===
+
+This file does a lot of heavy lifting. 
+
+Firstly, it contains a class (Individual_Command) that stores all the details from ROM.py. Then it contains classes for processing commands - A Buffer Aware Completer class and an input processing class.
+
+There is also a class to display packet dumps. This is in this file since most UI is done in this file.
+
+Finally, thee is the 'connection' class that might not end up being used. In all honesty, I am trying to find a way to remove this code. 
 
 
 
@@ -122,20 +161,6 @@ TODO: KISSDEV name case insenstive
 
 
 
-
-
-
-
-
-KISSDEV
-KISSINT
-PORT
-STREAM
-
-
-
-
-new command STREAMSHOW - show the name of the interface when showing packets
 
 
 

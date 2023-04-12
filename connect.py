@@ -36,7 +36,7 @@ class PeerStream():
     '''
 
     def __init__(self, tnc):
-        
+        print ('PEERSTREAM')
         self._peerStream = {}
         self._tnc = tnc 
 
@@ -46,11 +46,11 @@ class PeerStream():
         # Our end = peer._station().address
         # Therefore, uniqueness === 
 
-        return peer.address + ':' + peer.station().address
+        return str(peer.address) + ':' + str(peer._station()._address)
 
-    @property
     def whichstream (self, peer):
         linkname = self.linkname (peer)
+
         # if this peer is NOT connected to a stream, make it conencted to the current stream
         if not linkname in self._peerStream:
             if not self._tnc.currentStream in self._peerStream:
@@ -336,7 +336,7 @@ class kiss_interface():
         log = logging.getLogger("connection.%s" % peer.address)
 
         log.info("Incoming connection from %s", peer.address)
-        mystream = self.parentself._peerstream.whichstream(peer) # TODO fix to self
+        mystream = self._peerstream.whichstream(peer) # TODO fix to self
 
 
         def _on_state_change(state, **kwargs):

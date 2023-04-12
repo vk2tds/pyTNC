@@ -12,6 +12,7 @@
 # Having said that, it would be great to know if this software gets used. If you want, buy me a coffee, or send me some hardware
 # Darryl Smith, VK2TDS. darryl@radio-active.net.au Copyright 2023
 
+#TODO record for each command how much of the command has been implemented, along with notes. 
 
 TNC2_ROM = {
     'Help': {'Commands': ['All'], 'Help':'Get help on commands'},
@@ -55,7 +56,8 @@ TNC2_ROM = {
     'CR': {'Commands': ['On', 'Off'], 'Group': 'L', 'Default': 'On', 'Help': 'Append a Carriage Return to each data packet'},
     'CText': {'Commands': [], 'Group': 'I',  'Default': '%', 'Minimum': -1, 'Help': '(120 Ch) Connect Message Text (see CMSG)'},
     'DAytime': {'Commands': [], 'Help': 'Date and time for real time clock'},
-    'DAYUsa': {'Commands': ['On', 'Off'], 'Group': 'M', 'Default': 'On', 'Help': 'Print date as mm/dd/yy instead of dd-mm-yy'},
+    'DAYUsa': {'Commands': ['On', 'Off'], 'Group': 'M', 'Default': 'On', 'Help': 'Print date as mm/dd/yy instead of dd-mm-yy',
+               'Implemented': True, 'Notes': 'Uses the process.displaydatetime() function'},
     'DELete': {'Commands': ['On', 'Off'], 'Group': 'C', 'Default': 'Off', 'Help': 'The character delete is BS ($08) not DEL ($7E)'},
     'DIGipeat': {'Commands': ['On', 'Off'], 'Group': 'L', 'Default': 'On', 'Help': 'Allow stations to use you as a Digipeater'},
     'Disconne': {'Commands': [], 'Help': 'Request a link disconnect from the other station'},
@@ -130,7 +132,7 @@ TNC2_ROM = {
     'TRAce': {'Commands': ['On', 'Off'], 'Group': 'L', 'Default': 'Off', 'Help': 'Hexidecimal trace mode is disabled'},
     'TRANS': {'Commands': [], 'Help': 'The TNC enters Transparent data mode'},
     'STATus': {'Commands': [], 'Help': 'It  returns the  acknowledged status  of the  current  outgoing packet  link  buffer.'},
-    'STReam': {'Commands': [], 'Help': 'Displays the current stream or changes stream'},
+    'STREam': {'Commands': [], 'Help': 'Displays the current stream or changes stream'},
     'TRFlow': {'Commands': ['On', 'Off'], 'Group': 'A', 'Default': 'Off', 'Help': 'Disable flow control to the Terminal (Trans mode)'},
     'TRIes': {'Commands': [], 'Group': 'L', 'Min': 0, 'Max': 15,  'Help': '(O-15) set or display the current retry counter'},
     'TXdelay': {'Commands': [], 'Group': 'T', 'Default': '30', 'Min': 0, 'Max': 120, 'Help': '(O-120 * 10ms) Keyup delay for the transmitter'},
@@ -145,6 +147,5 @@ TNC2_ROM = {
     'UTC': {'Commands': ['On', 'Off'], 'Group': 'M', 'Default': 'Off', 'Help': 'Display times in UTC'},
     'XOff': {'Commands': [], 'Group': 'C', 'Default': '$13', 'Help': '(CTRL-S) Character to stop data from terminal'},
     'XON': {'Commands': [], 'Group': 'C', 'Default': '$11', 'Help': '(CTRL-Q) Character to start data from terminal'},
-    'Test': {'Commands': [], 'Help': 'Call test code!!!'},
 
 }

@@ -1,18 +1,13 @@
 # pyTNC
 AX.25 Ham Radio TNC
 
-This code is designed to implement a TAPR TNC-2 type interface, written in Python. The code is definitely a work in
-progress, with lots more work needed. Thing such as error checking are rarely implemented. 
+This code is designed to implement a TAPR TNC-2 type interface, written in Python. The code is definitely a work in progress, with lots more work needed. Thing such as error checking are rarely implemented. 
 
-The software is designed to conenct to a KISS TNC via TCP. The best solution for this might be DIREWOLF. Commands have been added
-to allow settings to be stored for use at runtime. 
+The software is designed to conenct to a KISS TNC via TCP. The best solution for this might be DIREWOLF. Commands have been added to allow settings to be stored for use at runtime. 
 
-The first thing that you should note is that custom settings are stored in the same directory as the code. These are user settings and 
-work exactly as if they had been typed on the pyTNC command line. The file is called 'custom.txt'
+The first thing that you should note is that custom settings are stored in the same directory as the code. These are user settings and  work exactly as if they had been typed on the pyTNC command line. The file is called 'custom.txt'
 
-The software has a command line GUI. At some point, a TCP interface would be cool, so that you could telnet in remotely. We are not to that point yet. The 
-commands are basically TNC-2, with changes. They should all be documented if you type 'HELP ALL'. You can also get help with a command by replacing 'ALL'
-with the name of the command. For instance 'HELP CONNECT' will tell you how to connect. This help does need to be expanded. 
+The software has a command line GUI. At some point, a TCP interface would be cool, so that you could telnet in remotely. We are not to that point yet. The  commands are basically TNC-2, with changes. They should all be documented if you type 'HELP ALL'. You can also get help with a command by replacing 'ALL' with the name of the command. For instance 'HELP CONNECT' will tell you how to connect. This help does need to be expanded. 
 
 The command to exit CONV mode is an issue at the moment. ALT-C on my Mac exits into command mode
 
@@ -24,8 +19,7 @@ To set the callsign, use 'MYCALL VK2TDS-10', replacing my callsign with your cal
 
 == Connecting to a TNC == 
 
-At the moment, the software is required to connect to a KISS TNC via TCP. More connection modes will come. Since I am using a Mac, this is what I need
-to use. There are two very important KISS commands that need to be used, KISSDEV and KISSINT. KISSDEV should be used first, since it sets up the device, followed by KISSINT, which sets up the interface on that device. 
+At the moment, the software is required to connect to a KISS TNC via TCP. More connection modes will come. Since I am using a Mac, this is what I need to use. There are two very important KISS commands that need to be used, KISSDEV and KISSINT. KISSDEV should be used first, since it sets up the device, followed by KISSINT, which sets up the interface on that device. 
 
 An example appears below:
 
@@ -71,6 +65,13 @@ There is a new command called 'STREAMSHOW', which when active, will display the 
 
 
 
+#https://pynput.readthedocs.io/en/latest/keyboard.html ????????
+#http://pymotw.com/2/readline/ ??????
+
+
+
+# TNC2 Commands
+# https://web.tapr.org/meetings/CNC_1986/CNC1986-TNC-2Setting-W2VY.pdf
 
 
 
@@ -162,6 +163,25 @@ Finally, thee is the 'connection' class that might not end up being used. In all
 
 
 
+
+
+#Right, so the `Signal()` class is from the `signalslot` package.  It
+#has a `.connect()` method to which you pass a function reference which
+#takes keyword arguments.  It takes some ideas from Qt which uses this
+#"observer" pattern quite heavily.
+#
+#https://signalslot.readthedocs.io/en/latest/
+#
+#So in this case; we need a handler that picks up the `peer` argument,
+#something like:
+#
+#```
+#def _on_connection_rq(peer, **kwargs):
+#   # Accept the connection
+#   peer.accept()
+#   # do something else with peer here
+#
+#station.connection_request.connect(_on_connection_rq)
 
 
 
@@ -303,5 +323,43 @@ When OFF, connect requests from other TNCs will not be acknowledged and a <DM> p
 When CONOK is OFF, you can still connect to your mailbox.
 When operating with multiple connects allowed, the connection will take place on the next available stream. Connect requests in excess of the number allowed by the USERS command will receive a <DM> response and the “connect request: (call)” message will be output to your terminal if INTFACE is TERMINAL or NEWUSER.
 See also: conmode, connect, intface, maxusers, monitor, nomode, and users
+
+
+
+
+
+
+# Probably not needed and can be done in a class.
+# def _on_connection_rq(peer, **kwargs):
+#     log = logging.getLogger("connection.%s" % peer.address)
+
+#     log.info("Incoming connection from %s", peer.address)
+
+#     print ('Incoming Connection')
+#     def _on_state_change(state, **kwargs):
+#         print ('State')
+#         log.info("State is now %s", state)
+#         if state is peer.AX25PeerState.CONNECTED:
+#             peer.send(("Hello %s\r\n" % peer.address).encode())
+
+#     def _on_rx(payload, **kwargs):
+#         print ('RX')
+#         try:
+#             payload = payload.decode()
+#         except Exception as e:
+#             log.exception("Could not decode %r", payload)
+#             peer.send("Could not decode %r: %s", payload, e)
+#             return
+
+#         log.info("Received: %r", payload)
+#         peer.send(("You sent: %r\r\n" % payload).encode())
+
+#         if payload == "bye\r":
+#             peer.send(("Disconnecting\r\n").encode())
+#             peer.disconnect()
+
+#     peer.connect_state_changed.connect(_on_state_change)
+#     peer.received_information.connect(_on_rx)
+#     peer.accept()
 
 

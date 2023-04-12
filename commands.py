@@ -61,6 +61,8 @@ class Individual_Command:
         self._Minimum = None
         self._Upper = None
         self._Shorter = None
+        self._Implemented = False # Assume not implemented
+        self._Notes = None
         self._Value = None
         self._Stage = None # What order should this be processed in? Default = 1
 
@@ -90,6 +92,10 @@ class Individual_Command:
             self._Value = ind['Value']
         if 'Stage' in ind:
             self._Stage = ind['Stage']
+        if 'Implemented' in ind:
+            self._Implemented = ind['Implemented']
+        if 'Notes' in ind:
+            self._Notes = ind['Notes']
         else:
             self._Stage = 1
 

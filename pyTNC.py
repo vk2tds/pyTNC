@@ -14,34 +14,21 @@
 
 
 
-#https://pynput.readthedocs.io/en/latest/keyboard.html ????????
-#http://pymotw.com/2/readline/ ??????
+try:
+    import gnureadline as readline
+except ImportError:
+    import readline
 
-
-
-# TNC2 Commands
-# https://web.tapr.org/meetings/CNC_1986/CNC1986-TNC-2Setting-W2VY.pdf
-
-
-
+import logging
+import asyncio
+import aioax25
+import sys
+import time
 import traceback
 
 
-#try:
-import gnureadline as readline
-#except ImportError:
-#import readline
-import logging
-import string
-from types import SimpleNamespace
-import asyncio
+
 from aioax25.kiss import make_device
-import aioax25
-import sys
-import os
-from pathlib import Path
-
-
 from aioax25.signal import Signal
 from aioax25.interface import AX25Interface
 from aioax25.frame import AX25UnnumberedInformationFrame
@@ -49,12 +36,11 @@ from aioax25.station import AX25Station
 from aioax25.version import AX25Version
 
 from threading import Thread
+from threading import Semaphore
+from pathlib import Path
+from types import SimpleNamespace
 from datetime import datetime
 from datetime import timezone
-import time
-
-from threading import Semaphore
-import re
 
 
 #local
@@ -91,28 +77,7 @@ loggerfile.info ('')
 loggerfile.info ('Starting pyTNC - Copyright 2023 Darryl Smith VK2TDS')
 
 
-#Right, so the `Signal()` class is from the `signalslot` package.  It
-#has a `.connect()` method to which you pass a function reference which
-#takes keyword arguments.  It takes some ideas from Qt which uses this
-#"observer" pattern quite heavily.
-#
-#https://signalslot.readthedocs.io/en/latest/
-#
-#So in this case; we need a handler that picks up the `peer` argument,
-#something like:
-#
-#```
-#def _on_connection_rq(peer, **kwargs):
-#   # Accept the connection
-#   peer.accept()
-#   # do something else with peer here
-#
-#station.connection_request.connect(_on_connection_rq)
-
-
-
-
-
+#TODO remove this tracefunc ???
 def tracefunc(frame, event, arg, indent=[0]):
       # https://stackoverflow.com/questions/8315389/how-do-i-print-functions-as-they-are-called
       if event == "call":
@@ -128,8 +93,6 @@ if False:
 
 
 class TNC:
-
-
     def __init__(self):
         self.modeConverse = 0
         self.modeTransparent = 1
@@ -234,13 +197,8 @@ class TNC:
 
         tnc.kiss_interface.start_ax25_station (str(device), port, call, ssid)
 
-
-
       except Exception:
             traceback.print_exc()
-
-
-
 
 
     def setBeacon (self, cond, period):
@@ -536,7 +494,6 @@ def init():
     # Custom startup for debugging... Ideally the defaults elsewhere should be the defaults...
     # well, except for KISSdev and KISSPort, which can have multiple calls
     tnc.output ('Loading custom settings..')
-    #filename = os.path.join(__location__, 'custom.txt')
     p = Path(__file__).with_name('custom.txt')
     if p.exists():
         #if os.path.isfile (filename):

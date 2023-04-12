@@ -78,39 +78,6 @@ class PeerStream():
 
 
 
-# Probably not needed and can be done in a class.
-# def _on_connection_rq(peer, **kwargs):
-#     log = logging.getLogger("connection.%s" % peer.address)
-
-#     log.info("Incoming connection from %s", peer.address)
-
-#     print ('Incoming Connection')
-#     def _on_state_change(state, **kwargs):
-#         print ('State')
-#         log.info("State is now %s", state)
-#         if state is peer.AX25PeerState.CONNECTED:
-#             peer.send(("Hello %s\r\n" % peer.address).encode())
-
-#     def _on_rx(payload, **kwargs):
-#         print ('RX')
-#         try:
-#             payload = payload.decode()
-#         except Exception as e:
-#             log.exception("Could not decode %r", payload)
-#             peer.send("Could not decode %r: %s", payload, e)
-#             return
-
-#         log.info("Received: %r", payload)
-#         peer.send(("You sent: %r\r\n" % payload).encode())
-
-#         if payload == "bye\r":
-#             peer.send(("Disconnecting\r\n").encode())
-#             peer.disconnect()
-
-#     peer.connect_state_changed.connect(_on_state_change)
-#     peer.received_information.connect(_on_rx)
-#     peer.accept()
-
 
 
 class Stream:
@@ -148,20 +115,6 @@ class Stream:
         self._peer = None
 
 
-
-
-        # interface = AX25Interface(kissdev[0])
-        # station = AX25Station(
-        #     interface=interface,
-        #     callsign="VK2TDS", ssid=2
-        # )
-
-        # station.connection_request.connect(_on_connection_rq)
-        # station.attach()
-        # kissdev.open()
-
-
-
     def received (self, payload):
         if not self._rxBuffer.full():
             self._rxBuffer.put(payload)    
@@ -184,11 +137,6 @@ class Stream:
     @peer.setter
     def peer(self, peer):
         self._peer = peer
-
-
-
-
-
 
 
     @property
@@ -301,7 +249,6 @@ class kiss_interface():
         self._kissDevices = {}
         self._kissInts = {}
         self._stations = {}
-        #self.ax25int = ax25int
         self.logging = logging
         self.loop = asyncio.get_event_loop()
         self._on_rx = on_rx
@@ -346,12 +293,6 @@ class kiss_interface():
 
 
     def kissPort (self, interface):
-        #if interface in self._kissInts:
-            #if self.kissInts[interface].Device is None:
-            #    True
-            #    # Start this device
-            #    #dev.Device = SDFGHJKL
-            #    #dev = jadsfsd
             if not interface in self._kissInts:
                 (device,kissPort) = interface.split(':')
                 print ('Adding here')
@@ -379,38 +320,6 @@ class kiss_interface():
             self._kissInts[interface] = station
 
                 
-                
-                
-                #KissInt (None, None, None)
-
-
-            #axint = self.start_ax25_port (self._kissDevices[dev].KissDevice, kissPort)
-            #self._kissDevices[dev].setKissPorts (kissPort, KissPort (axint, None, None, None))
-            #self.start_ax25_station (dev, kissPort)
-        #else:
-        #    print (self._kissInts)
-        #    print ('interface', interface)
-        #    assert ()
-
-    # def start_ax25_port(self, port):
-    #     print ('start_ax25_port')
-    #     #That `KISSDevice` class represents all the ports on the KISS interface
-    #     #-- for Direwolf; there can be multiple ports (e.g. on my UDRC-II board,
-    #     #the DIN-6 connector is port 1 and the DB15HD is port 0.).  Most
-    #     #single-port TNCs only implement port 0:
-
-    #     #kissport = kissdevice[0] # first KISS port on device
-
-    #     ax25int = aioax25.interface.AX25Interface(
-    #         kissport=kissdevice[int(kissPort)],         # 0 = HF; 2 = USB
-    #         loop=self.loop, 
-    #         log=self.logging, #.getLogger('ax25.interface')
-    #     )
-
-    #     ax25int.bind (self.on_rx, '(.*?)', ssid=None, regex=True)
-    #     return ax25int
-
-
 
     @property 
     def kissInts(self):
@@ -427,7 +336,7 @@ class kiss_interface():
         log = logging.getLogger("connection.%s" % peer.address)
 
         log.info("Incoming connection from %s", peer.address)
-        mystream = self.parentself._peerstream.whichstream(peer)
+        mystream = self.parentself._peerstream.whichstream(peer) # TODO fix to self
 
 
         def _on_state_change(state, **kwargs):
@@ -435,16 +344,19 @@ class kiss_interface():
             print ('STATE')
             log.info("State is now %s", state)
             if state is peer.AX25PeerState.CONNECTING:
+                self._peerstream.peer = peer # I *THINK* I want to connect peer at this point so I could send data ready to go out.
                 True
             elif state is peer.AX25PeerState.CONNECTED:
+                self._peerstream.peer = peer
                 # print ('---->', peer.address + ':' + peer.station().address)
 
                 peer.send(("Hello %s\r\n" % peer.address).encode())
-            elif state is peer.AX25PeerState.DISCONNECTED:
-                True
-
             elif state is peer.AX25PeerState.DISCONNECTING:
-                True
+                self._peerstream.peer = None # I *THINK* this is what I want here.
+
+            elif state is peer.AX25PeerState.DISCONNECTED:
+                self._peerstream.peer = None
+
 
         def _on_rx(payload, **kwargs):
             nonlocal mystream
@@ -481,17 +393,6 @@ class kiss_interface():
 
 
 
-    # def _on_connection_rq(self, peer, **kwargs):
-
-    #     self.logging.info ('*** Connection Request in connect.py')
-
-    #     # Accept the connection
-    #     peer.accept()
-    #     # do something else with peer here
-        
-
-
-
     def start_ax25_station(self, interface, call, ssid):
 
         #AX25Station takes AX25Interface as a constructor. [SSID on network]
@@ -515,13 +416,6 @@ class kiss_interface():
 
         # Do we need to split here... have a listen and have a talk?
         # Listen...
-
-        #def _on_connection_rq(peer, **kwargs):
-        #   # Accept the connection
-        #   peer.accept()
-        #   # do something else with peer here
-        #
-        #station.connection_request.connect(_on_connection_rq)
 
 
     def connect_ax25_station(self, device, kissPort):

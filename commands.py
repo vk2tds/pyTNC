@@ -33,6 +33,9 @@ import enum
 import sys 
 import inspect
 from pprint import pprint
+import aioax25
+import aioax25.peer
+
 
 import uuid
 
@@ -349,17 +352,6 @@ class process:
         self.tnc = tnc
 
 
-    def displaydatetime (self, dt):
-        if self.completer.options['DAYUSA'].Value:
-            if self.completer.options['AMONTH'].Value:
-                return dt.strftime ('%d-%b-%Y %H:%M:%S')
-            else:
-                return dt.strftime ('%m/%d/%Y %H:%M:%S')
-        else:
-            if self.completer.options['AMONTH'].Value:
-                return dt.strftime ('%d-%b-%Y %H:%M:%S')
-            else:
-                return dt.strftime ('%d/%m/%Y %H:%M:%S')
 
 
     def input_cleanup (self, words):
@@ -388,6 +380,9 @@ class process:
                 words[0] = list[0]
 
         if len(words) == 1:
+            return words
+
+        if not words[0] in self.completer.options: # we didnt find the word at all...
             return words
 
         if not self.completer.options[words[0]].Upper is None: # Upper case ALL words if needed
@@ -672,11 +667,17 @@ class process:
                 elif words[0] == 'CSTATUS':
                     text = ""
                     for s in streamlist:
-                        sstate = 'CONNECTED' if ((not self.tnc.streams[s] is None) and (not self.tnc.streams[s].Connection is None)) else 'DISCONNECTED'
-                        if sstate == 'CONNECTED':
-                            scalls = ('%s>%s' % (self.tnc.streams[s].Connection.callFrom, self.tnc.streams[s].Connection.callTo))
-                            if not self.tnc.streams[s].Connection.callDigi == '' and not self.tnc.streams[s].Connection.callDigi is None :
-                                scalls += "," + ",".join(self.tnc.streams[s].Connection.callDigi)
+                        sstate = self.tnc.streams[s].state
+
+                        #sstate = 'CONNECTED' if ((not self.tnc.streams[s] is None) and (not self.tnc.streams[s].Connection is None)) else 'DISCONNECTED'
+                        if sstate == aioax25.peer.AX25Peer.AX25PeerState.CONNECTED:
+                            scalls = ('%s>%s' % (self.tnc.streams[s].peer.address, self.tnc.streams[s].peer._station()._address))
+                            if not self.tnc.streams[s].peer._repeaters is None and len(self.tnc.streams[s].peer._repeaters) != 0:
+                                print (self.tnc.streams[s].peer.reply_path)
+                                print (type(self.tnc.streams[s].peer.reply_path))
+                                scalls += ' VIA ' + str (self.tnc.streams[s].peer.reply_path) # TODO improve thsi code
+                            #if not self.tnc.streams[s].Connection.callDigi == '' and not self.tnc.streams[s].Connection.callDigi is None :
+                            #    scalls += "," + ",".join(self.tnc.streams[s].Connection.callDigi)
                         else:
                             scalls = 'NO CONNECTION'
                         if len(text) > 0:
@@ -703,7 +704,7 @@ class process:
                     for c in self.tnc.mheard:
                         if len(text) > 0:
                             text = text + '\n'
-                        text = text + '%s\t\t\t%s' % (c, self.displaydatetime(self.tnc.mheard[c]))
+                        text = text + '%s\t\t\t%s' % (c, library.displaydatetime(self.tnc.mheard[c], self.completer))
                     return (returns.Ok, text)
                 elif words[0] == 'RESTART':
                     return (returns.NotImplemented, None)

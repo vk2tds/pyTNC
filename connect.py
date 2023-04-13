@@ -20,6 +20,7 @@ from aioax25.version import AX25Version
 
 import logging
 import commands 
+import library 
 
 import queue 
 
@@ -85,8 +86,10 @@ class Stream:
         self._stream = stream 
         self._Port = None
         self._logging = logging 
+        self._completer = None 
         self._peer = None
         self._name = None # The text name of this stream.
+        self._state = None
 
 
 
@@ -130,7 +133,10 @@ class Stream:
     def send (self, payload):
         if not self.peer is None:
             print ('------> Actual Stream Send')
-            self._peer.send (payload)
+            if self._completer.options['CR'].Value:
+                self._peer.send ((payload + '\r').encode())
+            else:
+                self._peer.send (payload.encode())
         else:
             print ('*** NOT CONENCTED FOR ACTUAL STREAM SEND')
 
@@ -146,6 +152,23 @@ class Stream:
     @peer.setter
     def peer(self, apeer):
         self._peer = apeer
+
+
+    @property
+    def completer (self):
+        return self._completer
+    
+    @completer.setter
+    def completer (self, c):
+        self._completer = c
+
+    @property
+    def state (self):
+        return self._state
+    
+    @state.setter
+    def state (self, c):
+        self._state = c
 
 
 
@@ -345,31 +368,42 @@ class kiss_interface():
 
         def _on_state_change(state, **kwargs):
             nonlocal mystream
+            mystream.state = state
             print ('STATE')
             log.info("State is now %s", state)
+            constamp = self._tnc.completer.options['CONSTAMP'].Value
+            cbell = self._tnc.completer.options['CBELL'].Value
             if state is peer.AX25PeerState.CONNECTING:
                 #self._peerstream.peer.
                 mystream.peer = peer # I *THINK* I want to connect peer at this point so I could send data ready to go out.
                 print ('----> CONNECTING')
             elif state is peer.AX25PeerState.CONNECTED:
                 mystream.peer = peer
-                print ('----> CONNECTED')
+                message = '*** CONNECTED TO ' + str(peer.address) #TODO: Add DIGIPEATER ADDRESSES
+                if constamp:
+                    message = message + ' ' + library.displaydatetime (library.datetimenow(self._tnc.completer), self._tnc.completer)
+                if cbell:
+                    message = message + '\a' # Termainals often have the BELL silenced
 
-                #peer.send(("Hello %s\r\n" % peer.address).encode())
+                print (message)
+
                 cmsg = self._tnc.completer.options['CMSG'].Value
                 if cmsg == True or cmsg.upper() == 'DISC':
                     ctext = self._tnc.completer.options['CTEXT'].Value
                     if len(ctext) > 0:
-                        peer.send (ctext.encode()) #TODO Do I need to add \r\n
+                        mystream.send (ctext)
                     if cmsg.upper() == 'DISC':
                         peer.disconnect()
 
             elif state is peer.AX25PeerState.DISCONNECTING:
                 mystream.peer = None # I *THINK* this is what I want here.
-
+                message = message + ' ' + library.displaydatetime (library.datetimenow(self._tnc.completer), self._tnc.completer)
             elif state is peer.AX25PeerState.DISCONNECTED:
                 mystream.peer = None
-
+                message = '*** DISCONNECTED '
+                if constamp: 
+                    message = message + ' ' + library.displaydatetime (library.datetimenow(self._tnc.completer), self._tnc.completer)
+                print (message)
 
         def _on_rx(payload, **kwargs):
             nonlocal mystream
@@ -378,7 +412,7 @@ class kiss_interface():
                 payload = payload.decode()
             except Exception as e:
                 log.exception("Could not decode %r", payload)
-                peer.send("Could not decode %r: %s", payload, e)
+                mystream.send("Could not decode %r: %s" % (payload, e))
                 return
 
             self._peerstream.received (payload)
@@ -387,10 +421,10 @@ class kiss_interface():
             #TODO: Do I need a TX buffer? Is it in the peer.send object?
 
             log.info("Received: %r", payload)
-            peer.send(("You sent: %r\r\n" % payload).encode())
+            mystream.send(("You sent: %r\r\n" % payload))
 
             if payload == "bye\r":
-                peer.send(("Disconnecting\r\n").encode())
+                mystream.send(("Disconnecting\r\n"))
                 peer.disconnect()
 
         peer.connect_state_changed.connect(_on_state_change)

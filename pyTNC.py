@@ -25,7 +25,7 @@ import aioax25
 import sys
 import time
 import traceback
-
+import library
 
 
 from aioax25.kiss import make_device
@@ -98,7 +98,7 @@ class TNC:
         self.modeTransparent = 1
         self.modeCommand = 2
         self.tncMode = self.modeCommand
-        #self.completer = completer
+        #self._completer = completer
         self.station = None
 
         self.tncConnected = False
@@ -129,6 +129,8 @@ class TNC:
     @completer.setter
     def completer (self, c):
         self._completer = c
+        for s in self.streams:
+            self.streams[s].completer = self._completer 
 
     # These are letters
     @property 
@@ -288,11 +290,7 @@ class TNC:
 def _on_receive(interface, frame, match=None):
     # NOTE: Make sure the kissdevice lines up with the one you wnat to listen too
 
-
-    if 'UTC' in completer.options and completer.options['UTC'].Value:
-        tnc.mheard[str(frame.header.source)] = datetime.utcnow()
-    else:
-        tnc.mheard[str(frame.header.source)] = datetime.now()
+    tnc.mheard[str(frame.header.source)] = library.datetimenow(completer)
 
     #tnc.mheard['VK2TDS-1'] = datetime.now
     tnc.monitor._on_receive_monitor(interface, frame)
@@ -413,7 +411,7 @@ async def main_async():
                 print ('--->BYE')
                 tnc.activeStream.disconnect()
             else:
-                tnc.activeStream.send (chunk.encode())
+                tnc.activeStream.send (chunk)
             True
         elif tnc.mode == tnc.modeTrans:
             True
@@ -520,7 +518,6 @@ init()
 
 
 semaphore = Semaphore()
-
 
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()

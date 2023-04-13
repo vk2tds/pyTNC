@@ -14,6 +14,9 @@
 
 
 import string
+from datetime import datetime
+from datetime import timezone
+
 
 
 
@@ -41,3 +44,22 @@ def to_user (command, old, new):
         if old is False:
             old = 'Off'
         return ('%s was %s' % (command, old))
+    
+
+def displaydatetime (dt, completer):
+    if completer.options['DAYUSA'].Value:
+        if completer.options['AMONTH'].Value:
+            return dt.strftime ('%d-%b-%Y %H:%M:%S')
+        else:
+            return dt.strftime ('%m/%d/%Y %H:%M:%S')
+    else:
+        if completer.options['AMONTH'].Value:
+            return dt.strftime ('%d-%b-%Y %H:%M:%S')
+        else:
+            return dt.strftime ('%d/%m/%Y %H:%M:%S')
+
+def datetimenow (completer):
+    if completer.options['UTC'].Value:
+        return datetime.utcnow()
+    else:
+        return datetime.now()

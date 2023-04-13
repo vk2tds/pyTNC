@@ -6,4 +6,5 @@ AXVERSION AX25_20
 MYCALL vk2tds-2
 KISSdev picopacket tcp localhost 8001
 KISSInt picopacket 0
-
+CTEXT Welcome to pyTNC.PY by Darryl Smith VK2TDS with special thanks to Stephen Longland VK4MSL
+CMSG On

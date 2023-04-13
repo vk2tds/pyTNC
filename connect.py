@@ -128,11 +128,11 @@ class Stream:
 
 
     def send (self, payload):
-        print ('---> Stream Send')
         if not self.peer is None:
             print ('------> Actual Stream Send')
             self._peer.send (payload)
-        True
+        else:
+            print ('*** NOT CONENCTED FOR ACTUAL STREAM SEND')
 
     def disconnect(self):
         if not self.peer is None:
@@ -355,8 +355,15 @@ class kiss_interface():
                 mystream.peer = peer
                 print ('----> CONNECTED')
 
-                #TODO: COnnect text...
-                peer.send(("Hello %s\r\n" % peer.address).encode())
+                #peer.send(("Hello %s\r\n" % peer.address).encode())
+                cmsg = self._tnc.completer.options['CMSG'].Value
+                if cmsg == True or cmsg.upper() == 'DISC':
+                    ctext = self._tnc.completer.options['CTEXT'].Value
+                    if len(ctext) > 0:
+                        peer.send (ctext.encode()) #TODO Do I need to add \r\n
+                    if cmsg.upper() == 'DISC':
+                        peer.disconnect()
+
             elif state is peer.AX25PeerState.DISCONNECTING:
                 mystream.peer = None # I *THINK* this is what I want here.
 
@@ -398,30 +405,6 @@ class kiss_interface():
     # *********************************************
 
 
-
-    # def start_ax25_station(self, interface, call, ssid):
-
-    #     #AX25Station takes AX25Interface as a constructor. [SSID on network]
-    #     #attach interface via .attach() - links it up to an interface so it can send/receive S and I frames
-
-    #     print ('start_ax25_station')
-    #     print (call)
-    #     print (ssid)
-    #     station = aioax25.station.AX25Station (self._kissInts[interface], 
-    #                                         call, 
-    #                                         ssid, 
-    #                                         protocol=AX25Version.AX25_20, 
-    #                                         log=self.logging, 
-    #                                         loop=self.loop)
-
-    #     station.connection_request.connect(self._on_connection_rq) # incoming
-    #     station.attach() # Connect the station to the interface
-
-    #     #TODO Where do stations get stored? Streams? On the current stream?
-    #     #self.tnc.activeStream.Port
-
-    #     # Do we need to split here... have a listen and have a talk?
-    #     # Listen...
 
 
     def connect_ax25_station(self, device, kissPort):

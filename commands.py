@@ -515,7 +515,7 @@ class process:
                     return (returns.Ok, 'LCALLS')
         elif words[0] == 'CTEXT':
             # special case - blank with %
-            if len(words) == 1:
+            if len(words) == 2:
                 if words[1][0] == '%' or words[1][0] == '&':
                     self.completer.options['CTEXT'].Value = ''
                     return (returns.Ok, 'CTEXT')
@@ -803,7 +803,12 @@ class Monitor:
         self._output = None
         self._tnc = None
 
-    def setCompleter (self, c):
+    @property
+    def completer (self):
+        return self._completer
+    
+    @completer.setter
+    def completer (self, c):
         self._completer = c
 
     def setOutput (self, o):

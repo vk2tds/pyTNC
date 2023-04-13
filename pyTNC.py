@@ -111,6 +111,7 @@ class TNC:
         self.beaconDue = 0
 
         self.monitor = commands.Monitor()
+        self._completer = None
 
 
         self.streams = {}
@@ -120,6 +121,14 @@ class TNC:
 
         self._currentStream = commands.streamlist[0]
 
+
+    @property
+    def completer (self):
+        return self._completer
+    
+    @completer.setter
+    def completer (self, c):
+        self._completer = c
 
     # These are letters
     @property 
@@ -404,7 +413,6 @@ async def main_async():
                 print ('--->BYE')
                 tnc.activeStream.disconnect()
             else:
-                print ('---> CONV SEND ', chunk)
                 tnc.activeStream.send (chunk.encode())
             True
         elif tnc.mode == tnc.modeTrans:
@@ -469,7 +477,8 @@ def init():
     # Register our completer function
     completer = commands.BufferAwareCompleter(TNC2, loggerfile)
 
-    tnc.monitor.setCompleter(completer)
+    tnc.completer = completer
+    tnc.monitor.completer = completer
     tnc.monitor.setOutput(output)
     tnc.monitor.setTnc(tnc)
 

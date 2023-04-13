@@ -164,9 +164,6 @@ class TNC:
         for s in commands.streamlist:
             self.streams[s].cbSent = cb
             
-    def on_Connect (self, cb):
-        for s in commands.streamlist:
-            self.streams[s].cbConnect = cb
 
     def on_Init (self, cb):
         for s in commands.streamlist:
@@ -321,20 +318,6 @@ def axConnected(ax):
     loggerconsole.debug ('# axConnected %s ' % (ax))
     c = tnc.streams[ax].Connection
 
-def tncConnected(ax):
-    loggerconsole.debug ('# tncConencted %s' % (ax))
-    c = tnc.streams[ax].Connection
-    if 'UTC' in completer.options and completer.options['UTC'].Value:
-        t = datetime.utcnow()
-    else:
-        t = datetime.now()
-
-
-    if completer.options['CONSTAMP'].Value:
-        tnc.output ('*** CONNECTED to %s %s' % (c.callTo, ip.displaydatetime(t)))
-    else:
-        tnc.output ('*** CONNECTED to %s' % (c.callTo))
-    tnc.mode = tnc.modeConverse # Automatically go into CONVERSE mode
 
 def axDisconnected(ax):
     c = tnc.streams[ax].Connection
@@ -452,7 +435,6 @@ def init():
     
 
 
-    tnc.on_Connect (tncConnected)
     tnc.on_Disconnect (tncDisconnected)
     tnc.on_Received (tncReceived)
     tnc.on_Sent (tncSend)

@@ -67,7 +67,7 @@ class Individual_Command:
         self._Implemented = False # Assume not implemented
         self._Notes = None
         self._Value = None
-        self._Stage = None # What order should this be processed in? Default = 1
+        self._Stage = 1
 
     def set(self, ind):
         if 'Display' in ind: 
@@ -696,6 +696,9 @@ class process:
                     return (returns.Ok, None)
                 elif words[0] == 'ID':
                     return (returns.NotImplemented, None)
+                elif words[0] == 'DAYTIME':
+                    t = library.displaydatetime (library.datetimenow(self.tnc.completer), self.tnc.completer)
+                    return (returns.Ok, t)
                 elif words[0] == 'MHCLEAR':
                     self.tnc.mheard = []
                     return (returns.Ok, None)
@@ -723,6 +726,8 @@ class process:
                     # too short
                     (returns.Bad, None)
             
+
+
 
         if len(words) == 2 and words[0].upper() in self.completer.options:
             # Start with two words, and go from there 

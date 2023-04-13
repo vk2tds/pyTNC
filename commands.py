@@ -654,7 +654,7 @@ class process:
             line = str (self.completer.options[words[0].upper()].Value or '')
             self.completer.options[words[0].upper()].Value = words[1].upper()
             self.tnc.kiss_interface.myCallsign (self.completer.options[words[0].upper()].Value)
-            return (returns.Ok, 'KISSPORT was ' + line)
+            return (returns.Ok, 'MYCALL was ' + line)
 
 
 

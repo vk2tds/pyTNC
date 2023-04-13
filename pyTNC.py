@@ -59,7 +59,7 @@ logging.basicConfig(
 
 logger = logging.getLogger()
 # create file handler which logs even debug messages
-fh = logging.FileHandler('file')
+fh = logging.FileHandler(LOG_FILENAME)
 fh.setLevel(logging.DEBUG)
 logger.addHandler(fh)
 loggerfile = logging.getLogger('file')
@@ -116,6 +116,7 @@ class TNC:
         self.streams = {}
         for s in commands.streamlist:
             self.streams[s] = connect.Stream(s, loggerfile)
+            self.streams[s]._name = s
 
         self._currentStream = commands.streamlist[0]
 
@@ -133,7 +134,7 @@ class TNC:
     # return the stream object.
     @property
     def activeStream (self):
-        return self.streams(self._currentStream)
+        return self.streams[self._currentStream]
 
 
     def output (self, line):
@@ -168,9 +169,9 @@ class TNC:
         for s in commands.streamlist:
             self.streams[s].axReceived = cb
             
-    def on_axSent (self, cb):
-        for s in commands.streamlist:
-            self.streams[s].axSent = cb
+    # def on_axSent (self, cb):
+    #     for s in commands.streamlist:
+    #         self.streams[s].axSent = cb
             
     def on_axConnect (self, cb):
         for s in commands.streamlist:
@@ -400,9 +401,11 @@ async def main_async():
             if tnc.exitToCommandMode in chunk:
                 tnc.mode = tnc.modeCommand
             elif chunk[:3].upper() == 'BYE' :
-                tnc.streams['A'].Connection.disconnect()
+                print ('--->BYE')
+                tnc.activeStream.disconnect()
             else:
-                tnc.streams['A'].Connection.axSend(chunk)
+                print ('---> CONV SEND ', chunk)
+                tnc.activeStream.send (chunk.encode())
             True
         elif tnc.mode == tnc.modeTrans:
             True
@@ -452,7 +455,7 @@ def init():
     tnc.on_axConnect (axConnected)
     tnc.on_axDisconnect (axDisconnected)
     tnc.on_axReceived (axReceived)
-    tnc.on_axSent (axSend)
+    #tnc.on_axSent (axSend)
     tnc.on_axInit (axInit)
 
 

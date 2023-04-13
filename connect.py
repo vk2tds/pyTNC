@@ -83,10 +83,12 @@ class PeerStream():
 class Stream:
     def __init__(self, stream, logging):
         self._stream = stream 
-        self._Connection = None
-
         self._Port = None
         self._logging = logging 
+        self._peer = None
+        self._name = None # The text name of this stream.
+
+
 
         self._cbDisconnect = [] # user callbacks
         self._cbReceived = []
@@ -108,7 +110,7 @@ class Stream:
         
         self._bufferSize = 7            
         self._rxBuffer = queue.Queue(self._bufferSize)
-        self._txBuffer = queue.Queue(self._bufferSize)
+        #self._txBuffer = queue.Queue(self._bufferSize) # Probably dont need TX Buffer - have one already
 
         # Peer details
 
@@ -126,30 +128,31 @@ class Stream:
 
 
     def send (self, payload):
+        print ('---> Stream Send')
         if not self.peer is None:
+            print ('------> Actual Stream Send')
             self._peer.send (payload)
         True
+
+    def disconnect(self):
+        if not self.peer is None:
+            self._peer.disconnect()
+
 
     @property
     def peer(self):
         return self._peer
 
     @peer.setter
-    def peer(self, peer):
-        self._peer = peer
+    def peer(self, apeer):
+        self._peer = apeer
+
+
 
 
     @property
     def Stream(self):
         return self._stream
-
-    @property
-    def Connection(self):
-        return self._Connection
-    
-    @Connection.setter
-    def Connection(self, connection):
-        self._Connection = connection
 
     @property
     def cbDisconnect(self):
@@ -207,13 +210,13 @@ class Stream:
     def axReceived(self, cb):
         self._axReceived.append (cb)
 
-    @property
-    def axSent(self):
-        return self._axSent
+    # @property
+    # def axSent(self):
+    #     return self._axSent
     
-    @axSent.setter
-    def axSent(self, cb):
-        self._axSent.append (cb)
+    # @axSent.setter
+    # def axSent(self, cb):
+    #     self._axSent.append (cb)
 
     @property
     def axConnect(self):
@@ -316,8 +319,9 @@ class kiss_interface():
 
             station.connection_request.connect(self._on_connection_rq) # incoming
             station.attach() # Connect the station to the interface
+            self._stations[interface] = station
 
-            self._kissInts[interface] = station
+            #self._kissInts[interface] = station
 
                 
 
@@ -336,26 +340,28 @@ class kiss_interface():
         log = logging.getLogger("connection.%s" % peer.address)
 
         log.info("Incoming connection from %s", peer.address)
-        mystream = self._peerstream.whichstream(peer) # TODO fix to self
-
+        mystreamname = self._peerstream.whichstream(peer) # TODO fix to self
+        mystream = self._tnc.streams[mystreamname]
 
         def _on_state_change(state, **kwargs):
             nonlocal mystream
             print ('STATE')
             log.info("State is now %s", state)
             if state is peer.AX25PeerState.CONNECTING:
-                self._peerstream.peer = peer # I *THINK* I want to connect peer at this point so I could send data ready to go out.
-                True
+                #self._peerstream.peer.
+                mystream.peer = peer # I *THINK* I want to connect peer at this point so I could send data ready to go out.
+                print ('----> CONNECTING')
             elif state is peer.AX25PeerState.CONNECTED:
-                self._peerstream.peer = peer
-                # print ('---->', peer.address + ':' + peer.station().address)
+                mystream.peer = peer
+                print ('----> CONNECTED')
 
+                #TODO: COnnect text...
                 peer.send(("Hello %s\r\n" % peer.address).encode())
             elif state is peer.AX25PeerState.DISCONNECTING:
-                self._peerstream.peer = None # I *THINK* this is what I want here.
+                mystream.peer = None # I *THINK* this is what I want here.
 
             elif state is peer.AX25PeerState.DISCONNECTED:
-                self._peerstream.peer = None
+                mystream.peer = None
 
 
         def _on_rx(payload, **kwargs):
@@ -393,29 +399,29 @@ class kiss_interface():
 
 
 
-    def start_ax25_station(self, interface, call, ssid):
+    # def start_ax25_station(self, interface, call, ssid):
 
-        #AX25Station takes AX25Interface as a constructor. [SSID on network]
-        #attach interface via .attach() - links it up to an interface so it can send/receive S and I frames
+    #     #AX25Station takes AX25Interface as a constructor. [SSID on network]
+    #     #attach interface via .attach() - links it up to an interface so it can send/receive S and I frames
 
-        print ('start_ax25_station')
-        print (call)
-        print (ssid)
-        station = aioax25.station.AX25Station (self._kissInts[interface], 
-                                            call, 
-                                            ssid, 
-                                            protocol=AX25Version.AX25_20, 
-                                            log=self.logging, 
-                                            loop=self.loop)
+    #     print ('start_ax25_station')
+    #     print (call)
+    #     print (ssid)
+    #     station = aioax25.station.AX25Station (self._kissInts[interface], 
+    #                                         call, 
+    #                                         ssid, 
+    #                                         protocol=AX25Version.AX25_20, 
+    #                                         log=self.logging, 
+    #                                         loop=self.loop)
 
-        station.connection_request.connect(self._on_connection_rq) # incoming
-        station.attach() # Connect the station to the interface
+    #     station.connection_request.connect(self._on_connection_rq) # incoming
+    #     station.attach() # Connect the station to the interface
 
-        #TODO Where do stations get stored? Streams? On the current stream?
-        #self.tnc.activeStream.Port
+    #     #TODO Where do stations get stored? Streams? On the current stream?
+    #     #self.tnc.activeStream.Port
 
-        # Do we need to split here... have a listen and have a talk?
-        # Listen...
+    #     # Do we need to split here... have a listen and have a talk?
+    #     # Listen...
 
 
     def connect_ax25_station(self, device, kissPort):

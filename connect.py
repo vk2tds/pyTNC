@@ -78,9 +78,6 @@ class PeerStream():
             self._peerStream.pop(linkname)
 
 
-
-
-
 class Stream:
     def __init__(self, stream, logging):
         self._stream = stream 
@@ -92,20 +89,6 @@ class Stream:
         self._state = None
 
 
-
-        self._cbDisconnect = [] # user callbacks
-        self._cbReceived = []
-        self._cbSent = []
-        self._cbConnect = []
-        self._cbInit = []
-        self._axDisconnect = [] # ax25 callbacks
-        self._axReceived = []
-        self._axSent = []
-        self._axConnect = []
-        self._axInit = []
-
-
-
         # incoming and outgoing buffers
         # for FIFO, use .put() and .get()
         #
@@ -113,8 +96,6 @@ class Stream:
         
         self._bufferSize = 7            
         self._rxBuffer = queue.Queue(self._bufferSize)
-        #self._txBuffer = queue.Queue(self._bufferSize) # Probably dont need TX Buffer - have one already
-
         # Peer details
 
         self._peer = None
@@ -126,9 +107,7 @@ class Stream:
         else:
             # Not sure what to do if RX buffer is full.
             True
-
         # TODO Send a message somwehere to say that we have the payload. Investigate stream swapping
-
 
     def send (self, payload):
         if not self.peer is None:
@@ -174,92 +153,9 @@ class Stream:
     def state (self, c):
         self._state = c
 
-
-
-
     @property
     def Stream(self):
         return self._stream
-
-    @property
-    def cbDisconnect(self):
-        return self._cbDisconnect
-    
-    @cbDisconnect.setter
-    def cbDisconnect(self, cb):
-        self._cbDisconnect.append (cb)
-
-    @property
-    def cbReceived(self):
-        return self._cbReceived
-    
-    @cbReceived.setter
-    def cbReceived(self, cb):
-        self._cbReceived.append (cb)
-
-    @property
-    def cbSent(self):
-        return self._cbSent
-    
-    @cbSent.setter
-    def cbSent(self, cb):
-        self._cbSent.append (cb)
-
-    @property
-    def cbConnect(self):
-        return self._cbConnect
-    
-    @cbConnect.setter
-    def cbConnect(self, cb):
-        self._cbConnect.append (cb)
-
-    @property
-    def cbInit(self):
-        return self._cbInit
-    
-    @cbInit.setter
-    def cbInit(self, cb):
-        self._cbInit.append (cb)
-
-    @property
-    def axDisconnect(self):
-        return self._axDisconnect
-    
-    @axDisconnect.setter
-    def axDisconnect(self, cb):
-        self._axDisconnect.append (cb)
-
-    @property
-    def axReceived(self):
-        return self._axReceived
-    
-    @axReceived.setter
-    def axReceived(self, cb):
-        self._axReceived.append (cb)
-
-    # @property
-    # def axSent(self):
-    #     return self._axSent
-    
-    # @axSent.setter
-    # def axSent(self, cb):
-    #     self._axSent.append (cb)
-
-    @property
-    def axConnect(self):
-        return self._axConnect
-    
-    @axConnect.setter
-    def axConnect(self, cb):
-        self._axConnect.append (cb)
-
-    @property
-    def axInit(self):
-        return self._axInit
-    
-    @axInit.setter
-    def axInit(self, cb):
-        self._axInit.append (cb)
 
     @property 
     def Port(self):
@@ -290,7 +186,6 @@ class kiss_interface():
         self._peerstream = PeerStream(self._tnc)
 
     def callsign(self, call):
-        #print ('Callsign', call)
         if '-' in call:
             (c,s) = call.split ('-')
             self.call = c
@@ -300,7 +195,6 @@ class kiss_interface():
             self.ssid = None
 
     def myCallsign(self, call):
-        #print ('Callsign', call)
         if '-' in call:
             (c,s) = call.split ('-')
             self._myCall = c
@@ -309,10 +203,7 @@ class kiss_interface():
             self._myCall = c
             self._mySsid = None
 
-
-
     def kissDeviceTCP (self, device, host, port):
-        #print ('device', device)
         self._kissDevices[device] = make_device(
             type="tcp", host=host, port=port,
             log=self.logging, #.getLogger("ax25.kiss"),
@@ -325,14 +216,12 @@ class kiss_interface():
     def kissPort (self, interface):
             if not interface in self._kissInts:
                 (device,kissPort) = interface.split(':')
-                #print ('Adding here')
                 self._kissInts[interface] = aioax25.interface.AX25Interface(
                     kissport=self._kissDevices[device][int(kissPort)],         # 0 = HF; 2 = USB
                     loop=self.loop, 
                     log=self.logging, #.getLogger('ax25.interface')
                 )
 
-            #print ('Pre')
             self._kissInts[interface].bind (self._on_rx, '(.*?)', ssid=None, regex=True)
 
             # when we open a KISSport, also open a STATION. 
@@ -348,9 +237,6 @@ class kiss_interface():
             station.attach() # Connect the station to the interface
             self._stations[interface] = station
 
-            #self._kissInts[interface] = station
-
-                
 
     @property 
     def kissInts(self):
@@ -373,12 +259,10 @@ class kiss_interface():
         def _on_state_change(state, **kwargs):
             nonlocal mystream
             mystream.state = state
-            #print ('STATE')
             log.info("State is now %s", state)
             constamp = self._tnc.completer.options['CONSTAMP'].Value
             cbell = self._tnc.completer.options['CBELL'].Value
             if state is peer.AX25PeerState.CONNECTING:
-                #self._peerstream.peer.
                 mystream.peer = peer # I *THINK* I want to connect peer at this point so I could send data ready to go out.
                 print ('----> CONNECTING')
             elif state is peer.AX25PeerState.CONNECTED:
@@ -436,13 +320,9 @@ class kiss_interface():
         peer.accept()
 
 
-
-
     # *********************************************
     # THIS FOLLOWING CODE IS NOT YET ACTIVE
     # *********************************************
-
-
 
 
     def connect_ax25_station(self, device, kissPort):

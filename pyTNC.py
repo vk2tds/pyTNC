@@ -98,7 +98,6 @@ class TNC:
         self.modeTransparent = 1
         self.modeCommand = 2
         self.tncMode = self.modeCommand
-        #self._completer = completer
         self.station = None
 
         self.tncConnected = False
@@ -149,61 +148,6 @@ class TNC:
 
     def output (self, line):
         print (line)
-
-
-    # def on_Disconnect (self, cb):
-    #     for s in commands.streamlist:
-    #         self.streams[s].cbDisconnect = cb
-
-    # def on_Received (self, cb):
-    #     for s in commands.streamlist:
-    #         self.streams[s].cbReceived = cb
-            
-    # def on_Sent (self, cb):
-    #     for s in commands.streamlist:
-    #         self.streams[s].cbSent = cb
-            
-
-    # def on_Init (self, cb):
-    #     for s in commands.streamlist:
-    #         self.streams[s].cbInit = cb
-
-    # def on_axDisconnect (self, cb):
-    #     for s in commands.streamlist:
-    #         self.streams[s].axDisconnect = cb
-
-    # def on_axReceived (self, cb):
-    #     for s in commands.streamlist:
-    #         self.streams[s].axReceived = cb
-            
-    # # def on_axSent (self, cb):
-    # #     for s in commands.streamlist:
-    # #         self.streams[s].axSent = cb
-            
-    # def on_axConnect (self, cb):
-    #     for s in commands.streamlist:
-    #         self.streams[s].axConnect = cb
-
-    # def on_axInit (self, cb):
-    #     for s in commands.streamlist:
-    #         self.streams[s].axInit = cb
-
-    # def initStation (self, device, port):
-    #   try:
-    #     #axint = tnc.kiss_interface.kissDevices[str(device)].KissPorts(port).AX25Interface
-
-    #     mycall = completer.options['MYCALL'].Value
-    #     if '-' in mycall:
-    #         (call, ssid) = mycall.split('-')
-    #     else:
-    #         call = mycall
-    #         ssid = None
-    #     axver = AX25Version[completer.options['AXVERSION'].Value]
-
-    #     tnc.kiss_interface.start_ax25_station (str(device), port, call, ssid)
-
-    #   except Exception:
-    #         traceback.print_exc()
 
 
     def setBeacon (self, cond, period):
@@ -284,8 +228,6 @@ def _on_receive(interface, frame, match=None):
     # NOTE: Make sure the kissdevice lines up with the one you wnat to listen too
 
     tnc.mheard[str(frame.header.source)] = library.datetimenow(completer)
-
-    #tnc.mheard['VK2TDS-1'] = datetime.now
     tnc.monitor._on_receive_monitor(interface, frame)
 
 
@@ -299,43 +241,15 @@ streaming_queue = asyncio.Queue()
 
 def axReceived(text, ax):
     c = tnc.streams[ax].Connection
-
     tnc.output ('AX%s> %s' % (ax, text))
     
-
-
-def tncReceived(text, ax):
-    c = tnc.streams[ax].Connection
-
-    tnc.output ('%s> %s' % (ax, text))
-
-
 def axConnected(ax):
     loggerconsole.debug ('# axConnected %s ' % (ax))
     c = tnc.streams[ax].Connection
 
-
-def axDisconnected(ax):
-    c = tnc.streams[ax].Connection
-    tnc.output ('*** AXDISCONNECTED')
-
-def tncDisconnected(ax):
-    c = tnc.streams[ax].Connection
-    tnc.output ('*** DISCONNECTED %s' % (ax))
-    tnc.mode = tnc.modeCommand
-    # tnc.streams[ax] = None
-
-
-
 def axSend(text, ax):
     loggerconsole.debug ('# axSend %s %s ' %(text, ax))
     c = tnc.streams[ax].Connection
-
-
-def tncSend(text, ax):
-    loggerconsole.debug ('# tncSend %s ' % (ax))
-    c = tnc.streams[ax].Connection
-    True
 
 
 
@@ -344,10 +258,6 @@ def axInit(ax):
 
     c = tnc.streams[ax].Connection
 
-
-def tncInit(ax):
-    loggerconsole.debug ('# tncInit %s ' % (ax))
-    c = tnc.streams[ax].Connection
 
 
 
@@ -429,20 +339,6 @@ def init():
     tnc.output ('')
 
     
-
-
-    # tnc.on_Disconnect (tncDisconnected)
-    # tnc.on_Received (tncReceived)
-    # tnc.on_Sent (tncSend)
-    # tnc.on_Init (tncInit)
-
-    # tnc.on_axConnect (axConnected)
-    # tnc.on_axDisconnect (axDisconnected)
-    # tnc.on_axReceived (axReceived)
-    # #tnc.on_axSent (axSend)
-    # tnc.on_axInit (axInit)
-
-
 
     for index in ROM.TNC2_ROM:
         c = commands.Individual_Command()

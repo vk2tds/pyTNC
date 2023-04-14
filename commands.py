@@ -203,24 +203,18 @@ class BufferAwareCompleter:
                 try:
                     if begin == 0:
                         # first word
-                        #candidates = self.options.keys()
                         candidates = self.options.keys()
                     else:
                         # later word
                         first = words[0]
-                        #logging.debug (first)
                         c = self.options[first.upper()].Commands
-                        #logging.debug (c)
                         candidates = [x.upper() for x in c]
-                        #logging.debug('Xcandidates=%s',
-                        #          c)
                     if being_completed:
                         # match options with portion of input
                         # being completed
                         self.current_candidates = [
                             w for w in candidates
                             if w.upper().startswith(being_completed.upper())
-                            #if w.startswith(being_completed)
                         ]
                     else:
                         # matching empty string,
@@ -245,114 +239,11 @@ class BufferAwareCompleter:
 
 
 
-
-class connection:
-    """
-    Interface between user side and radio side. Not 100% sure this will be used in the future. 
-    """
-    def __init__ (self, callFrom, callTo, callDigi, tnc, stream):
-        self.callFrom = callFrom
-        self.callTo = callTo
-        self.callDigi = callDigi
-        self.therapist = None
-        self.connectedSession = False
-        self.tnc = tnc
-        self.stream = stream
-        self.stream.Connection = self
-
-        self.output ('Manage a connection from %s to %s via %s' % (callFrom, callTo, callDigi))
-        if self.stream.axInit:
-            for callback in self.stream.axInit:
-                callback (self.stream.Stream)
-        if self.stream.cbInit:
-            for callback in self.stream.cbInit:
-                callback (self.stream.Stream)
-
-
-        toCall = None
-        toSSID = None
-
-        if '-' in self.callTo:
-            (toCall, toSSID) = self.callTo.split('-')
-        else:
-            toCall = self.callTo
-
-        print ('CCCCC')
-
-
-
-        if self.callTo == 'ELIZA':
-            self.connect()
-
-
-    def connect(self):
-        self.output ('connection connect')
-        self.axConnected = True
-        #if self.stream['cbInit']:
-        #    for callback in self.stream['cbInit']:
-        #        callback (self.stream['Stream'])
-
-    def disconnect(self):
-        self.axConnected = False
-
-    @property
-    def axConnected(self):
-        return self.connectedSession
-    
-    @axConnected.setter
-    def axConnected(self, status):
-        # Shouldnt use this function
-        self.connectedSession = status
-        if status == True:
-            if self.stream.axConnect:
-                for callback in self.stream.axConnect:
-                    callback (self.stream.Stream)
-            if self.stream.cbConnect:
-                for callback in self.stream.cbConnect:
-                    callback (self.stream.Stream)
-        elif status == False:
-            if self.stream.axDisconnect:
-                for callback in self.stream.axDisconnect:
-                    callback (self.stream.Stream)
-            if self.stream.cbDisconnect:
-                for callback in self.stream.cbDisconnect:
-                    callback (self.stream.Stream)
-            self.callFrom = None
-            self.callTo = None
-            self.callDigi = None
-
-    def axSend(self, text):
-        self.output ('axSend %s' % (text))
-        if self.stream.axSent:
-            for callback in self.stream.axSent:
-                callback (text, self.stream.Stream)
-        if self.stream.cbSent:
-            for callback in self.stream.cbSent:
-                callback (text, self.stream.Stream)
-
-    def axReceived (self, text):
-        if self.stream.axReceived:
-            for callback in self.stream.axReceived:
-                callback (text, self.stream.Stream)
-        if self.stream.cbReceived:
-            for callback in self.stream.cbReceived:
-                callback (text, self.stream.Stream)
-
-    def output (self, line):
-        print (line)
-
-
-
-
-
 class process:
     # Process commands
     def __init__ (self, completer, tnc):
         self.completer = completer
         self.tnc = tnc
-
-
-
 
     def input_cleanup (self, words):
         """
@@ -404,7 +295,7 @@ class process:
                             words[1] = 'Off'
             if not words[1].capitalize() in c:
                 # if we cannot find it in the list, see if we can find the first capital letters
-                # ToDo: Trim words[0] to the length of the upper case letters 
+                # TODO: Trim words[0] to the length of the upper case letters 
                 for w in c:
                     if words[1].capitalize() == ''.join(filter(str.isupper, str(w))):
                         words[1] = w
@@ -432,6 +323,7 @@ class process:
 
         if words[0][0:4] == '/OPT':
             # Oops. We are in Visual Studio Code and tried to run and are already running!
+            # TODO make this work
             exit()
             return returns.NotImplemented
 
@@ -465,18 +357,17 @@ class process:
                 message = ''
                 for o in self.completer.options:
                     #TODO: If KissDev or KissPort maybe pretty print.
-                    #if 'Value' in self.completer.options[o].Value:
-                                if len(message) > 0:
-                                    message = message + '\t\t' + library.to_user (o, None, self.completer.options[o].Value)
-                                else:
-                                    message = library.to_user (o, None, self.completer.options[o].Value)
-                                cols += 1
-                                if not self.completer.options['FSCREEN'].Value:
-                                        # If we are not in FSCREEN, we only want one column
-                                        cols = 4
-                                if cols == 4:
-                                    message = message + '\n'
-                                    cols = 0                        
+                    if len(message) > 0:
+                        message = message + '\t\t' + library.to_user (o, None, self.completer.options[o].Value)
+                    else:
+                        message = library.to_user (o, None, self.completer.options[o].Value)
+                    cols += 1
+                    if not self.completer.options['FSCREEN'].Value:
+                            # If we are not in FSCREEN, we only want one column
+                            cols = 4
+                    if cols == 4:
+                        message = message + '\n'
+                        cols = 0                        
                 return (returns.Ok, message)
             if len(words) > 1: # Display <word>
                 group = words[1][0]
@@ -534,9 +425,9 @@ class process:
                     # We need digipeaters if there is a 'Via'
                     return (returns.Eh, 'Third word must be VIA if used followed by additional calls')
             #self.tnc.streams['A']['Connection'] = 
-            connection (callFrom, callTo, callDigi, self.tnc, self.tnc.activeStream) # save to stream as well
+            # connection (callFrom, callTo, callDigi, self.tnc, self.tnc.activeStream) # save to stream as well
             # self.tnc.streams['A'].Connection.connect()
-            return (returns.Ok, None)
+            return (returns.NotImplemented, None)
         elif words[0] == 'KISSDEV':
             if len(words) == 1:
 
@@ -557,8 +448,8 @@ class process:
             # KISSdev 1 tcp localhost 8001
             if len(words) == 5 and not self.tnc.kiss_interface is None:
                 #TODO: This is append only at the moment
+                #TODO Add more than TCP
                 if words[2].upper() == 'TCP':
-                    #self.tnc.kiss_interface.kissDeviceTCP (words[1], words[3], int (words[4]))
                     self.tnc.kiss_interface.kissDeviceTCP (words[1], words[3], int (words[4]))
                     # TODO: Something better than this next line...
                     line = " ".join ([words[1], words[2], words[3], words[4]])
@@ -589,8 +480,6 @@ class process:
             # KISSint 1 1
             if len(words) == 3 and not self.tnc.kiss_interface is None:
 
-                #
-                #self.tnc.kiss_interface.kissPort (words[1], int (words[2]), u)
                 line = " ".join ([words[1], words[2]])
                 if self.completer.options[words[0].upper()].Value is None or len(self.completer.options[words[0].upper()].Value) == 0:
                     self.completer.options[words[0].upper()].Value = line
@@ -604,10 +493,6 @@ class process:
 
                 self.tnc.kiss_interface.kissPort (port)
 
-
-                # *********************
-                #self.tnc.initStation (port)
-                #print (line)
                 return (returns.Ok, 'KISSPORT add ' + line)
             else:
                 return (returns.Eh, None)
@@ -669,15 +554,10 @@ class process:
                     for s in streamlist:
                         sstate = self.tnc.streams[s].state
 
-                        #sstate = 'CONNECTED' if ((not self.tnc.streams[s] is None) and (not self.tnc.streams[s].Connection is None)) else 'DISCONNECTED'
                         if sstate == aioax25.peer.AX25Peer.AX25PeerState.CONNECTED:
                             scalls = ('%s>%s' % (self.tnc.streams[s].peer.address, self.tnc.streams[s].peer._station()._address))
                             if not self.tnc.streams[s].peer._repeaters is None and len(self.tnc.streams[s].peer._repeaters) != 0:
-                                #print (self.tnc.streams[s].peer.reply_path)
-                                #print (type(self.tnc.streams[s].peer.reply_path))
                                 scalls += ' VIA ' + str (self.tnc.streams[s].peer.reply_path) # TODO improve thsi code
-                            #if not self.tnc.streams[s].Connection.callDigi == '' and not self.tnc.streams[s].Connection.callDigi is None :
-                            #    scalls += "," + ",".join(self.tnc.streams[s].Connection.callDigi)
                         else:
                             scalls = 'NO CONNECTION'
                         if len(text) > 0:
@@ -724,7 +604,7 @@ class process:
                 # 'becacon every 5' has a minimum of 2, but len() of 3 
                 if len(words) < self.completer.options[uc].Minimum:
                     # too short
-                    (returns.Bad, None)
+                    return (returns.Bad, None)
             
 
 
@@ -830,7 +710,6 @@ class Monitor:
             self.output (textInterface + ' ->')
         self.output (    'byte  ------------hex display------------ -shifted ASCII-- -----ASCII------')
         offset = 0
-        #6, 42, 59
 
         while offset < paclen:
             # deal with the string as a list
@@ -1009,9 +888,6 @@ class Monitor:
                 control = control + ' ToDo-Rn'
 
         control = ' <' + control + '>:'
-        
-        #self.output (type(frame))
-        #self.output (frame)
 
         #ADRdisp - default ON - N4UQQ>N4UQR,TPA5* <UI R>:This is a monitored frame.
         if hasattr(frame, 'payload'):
@@ -1043,9 +919,6 @@ class Monitor:
         if trace:
             # Trace mode enabled.
             self._on_receive_trace (textInterface, frame)
-
-
-
 
     def output(self, line):
         self._output (line)

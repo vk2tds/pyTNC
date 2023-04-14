@@ -239,36 +239,12 @@ tnc.kiss_interface = connect.kiss_interface (tnc, _on_receive, loggerfile)
 
 streaming_queue = asyncio.Queue()
 
-def axReceived(text, ax):
-    c = tnc.streams[ax].Connection
-    tnc.output ('AX%s> %s' % (ax, text))
-    
-def axConnected(ax):
-    loggerconsole.debug ('# axConnected %s ' % (ax))
-    c = tnc.streams[ax].Connection
-
-def axSend(text, ax):
-    loggerconsole.debug ('# axSend %s %s ' %(text, ax))
-    c = tnc.streams[ax].Connection
-
-
-
-def axInit(ax):
-    loggerconsole.debug ('# axInit %s ' % (ax))
-
-    c = tnc.streams[ax].Connection
-
-
-
 
 async def periodic():
     while True:
         if tnc:
             tnc.PPS() # call TNC 1PPS
-
         await asyncio.sleep(1)
-
-
 
 
 
@@ -338,8 +314,6 @@ def init():
     tnc.output ('Copyright 2023 Darryl Smith, VK2TDS')
     tnc.output ('')
 
-    
-
     for index in ROM.TNC2_ROM:
         c = commands.Individual_Command()
         c.set (ROM.TNC2_ROM[index])
@@ -371,8 +345,6 @@ def init():
                     ip.input_process (line) # ignore the return values
                 # Only the upper case letters are an alternative
                 completer.options[o].Shorter = ''.join(filter(str.isupper, completer.options[o].Display))
-
-
 
 
     # Custom startup for debugging... Ideally the defaults elsewhere should be the defaults...

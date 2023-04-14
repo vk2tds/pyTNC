@@ -82,12 +82,16 @@ TNC2_ROM = {
     'HEaderln': {'Commands': ['On', 'Off'], 'Group': 'M', 'Default': 'Off', 'Help': 'Print the frame header and text on the same line'},
     'HID': {'Commands': ['On', 'Off'], 'Group': 'I', 'Default': 'Off', 'Help': 'Don\'t send an ID packet every 9.5 mins when active'},
     'ID': {'Commands': [], 'Help': 'Force an ID packet (UI frame Via UNproto path)'},
+    'IDText': {'Commands': [], 'Group': 'I', 'Default': 'Welcome to pyTNC', 'Minimum': -1, 'Help': '(120 char) Text to be sent for a ID)'},    
     'LCALLS': {'Commands': [], 'Group': 'M', 'Default': '%', 'Minimum': -1, 'Help': '(O-8 calls) to receive or ignore stations (BUDLIST)'},
     'LCSTREAM': {'Commands': ['On', 'Off'], 'Group': 'C', 'Default': 'On', 'Help': 'Convert the stream select specifer to Upper case'},
     'LFIGNORE': {'Commands': ['On', 'Off'], 'Group': 'L', 'Default': 'Off', 'Help': 'TNC will ignore <LF> characters'},
     'LFadd': {'Commands': ['On', 'Off'], 'Group': 'L', 'Default': 'Off', 'Help': 'Add a Line Feed after each CR send to the terminal'},
-    'KISSdev': {'Commands': [], 'Group': 'M', 'Default': '', 'Minimum': -1, 'Stage': 2,'Help': 'Open a KISS Device in aioax25. First number is the Kiss Device number we are creating.'},
-    'KISSInt': {'Commands': [], 'Group': 'M', 'Default': '', 'Minimum': -1, 'Stage': 3, 'Help': 'Definces the Kissint for a device. First number is device number and then port number'},
+    'KISSdev': {'Commands': ['TCP', 'Serial'], 'Group': 'M', 'Default': '', 'Minimum': -1, 'Stage': 2, 
+                'Help': 'Open a KISS Device in aioax25. First number is the Kiss Device number we are creating. Examples include KISSdev picopacket tcp localhost 8001 or KISSdev picopacket SERIAL /dev/ax0 9600',
+                'Implemented': True, 'Notes': 'Serial not tested' },                
+    'KISSInt': {'Commands': [], 'Group': 'M', 'Default': '', 'Minimum': -1, 'Stage': 3, 'Help': 'Definces the Kissint for a device. First number is device number and then port number',
+                'Implemented': True, 'Notes': '' },                
     'MAll': {'Commands': ['On', 'Off'], 'Group': 'M', 'Default': 'On', 'Help': 'Monitor data frames as well as beacons'},
     'MAXframe': {'Commands': [], 'Group': 'L', 'Default': '4', 'Min': 1, 'Max': 7, 'Help': 'The window size for outstanding frames'},
     'MCOM': {'Commands': ['On', 'Off'], 'Group': 'M', 'Default': 'Off', 'Help': 'Monitor only data frames instead of all types'},
@@ -134,6 +138,8 @@ TNC2_ROM = {
     'UTC': {'Commands': ['On', 'Off'], 'Group': 'M', 'Default': 'Off', 'Help': 'Display times in UTC',
               'Implemented': True, 'Notes': '' },
 }
+
+
 
 # These are functions that might be more useful in the future. At the moment, they really are not needed.
 FUTURE = {

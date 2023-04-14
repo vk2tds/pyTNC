@@ -12,7 +12,7 @@
 # Having said that, it would be great to know if this software gets used. If you want, buy me a coffee, or send me some hardware
 # Darryl Smith, VK2TDS. darryl@radio-active.net.au Copyright 2023
 
-
+import queue 
 import asyncio
 import aioax25
 from aioax25.kiss import make_device
@@ -21,12 +21,6 @@ from aioax25.version import AX25Version
 import logging
 import commands 
 import library 
-
-import queue 
-
-
-
-
 
 
 class PeerStream():
@@ -212,6 +206,14 @@ class kiss_interface():
         
         self._kissDevices[device].open() # happens in background asynchronously
 
+    def kissDeviceSerial (self, device, baud, reset_on_close=False):
+        self._kissDevices[device] = make_device(
+            type="serial", device=device, baudrate=baud,
+            log=self.logging, #.getLogger("ax25.kiss"),
+            loop=self.loop
+            )
+        
+        self._kissDevices[device].open() # happens in background asynchronously
 
     def kissPort (self, interface):
             if not interface in self._kissInts:
@@ -219,7 +221,7 @@ class kiss_interface():
                 self._kissInts[interface] = aioax25.interface.AX25Interface(
                     kissport=self._kissDevices[device][int(kissPort)],         # 0 = HF; 2 = USB
                     loop=self.loop, 
-                    log=self.logging, #.getLogger('ax25.interface')
+                    log=self.logging,
                 )
 
             self._kissInts[interface].bind (self._on_rx, '(.*?)', ssid=None, regex=True)

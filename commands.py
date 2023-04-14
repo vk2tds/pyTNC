@@ -405,6 +405,14 @@ class process:
                 if words[1][0] == '%' or words[1][0] == '&':
                     self.completer.options['CTEXT'].Value = ''
                     return (returns.Ok, 'CTEXT')
+        elif words[0] == 'IDTEXT':
+            # special case - blank with %
+            if len(words) == 2:
+                if words[1][0] == '%' or words[1][0] == '&':
+                    self.completer.options['IDTEXT'].Value = ''
+                    return (returns.Ok, 'IDTEXT')
+        elif words[0] == 'ID':
+            True
         elif words[0] == 'CONNECT':
             if len(words) < 2:
                 return (returns.Bad, None)
@@ -445,6 +453,10 @@ class process:
                 return (returns.NotImplemented, 'TODO: Type KISSDEV 4 to remove the fourth item on the list. ')    
 
 
+
+
+
+
             # KISSdev 1 tcp localhost 8001
             if len(words) == 5 and not self.tnc.kiss_interface is None:
                 #TODO: This is append only at the moment
@@ -458,6 +470,15 @@ class process:
                     else:
                         self.completer.options[words[0].upper()].Value += ("," + line)
                     return (returns.Ok, 'KISSDEV add ' + line)
+                elif words[2].upper() == 'SERIAL':
+                    self.tnc.kiss_interface.kissDeviceSerial (words[1], words[3], int (words[4]))
+                    # TODO: Something better than this next line...
+                    line = " ".join ([words[1], words[2], words[3], words[4]])
+                    if self.completer.options[words[0].upper()].Value is None or len(self.completer.options[words[0].upper()].Value) == 0:
+                        self.completer.options[words[0].upper()].Value = line
+                    else:
+                        self.completer.options[words[0].upper()].Value += ("," + line)
+                    return (returns.Ok, 'KISSDEV add ' + line)                    
                 else: 
                     return (returns.Eh, None)
             else: 

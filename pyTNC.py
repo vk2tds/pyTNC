@@ -139,7 +139,6 @@ class TNC:
     
     @currentStream.setter
     def currentStream(self, s):
-        print (s)
         self._currentStream = s
 
     # return the stream object.
@@ -152,62 +151,59 @@ class TNC:
         print (line)
 
 
-    def on_Disconnect (self, cb):
-        for s in commands.streamlist:
-            self.streams[s].cbDisconnect = cb
-
-    def on_Received (self, cb):
-        for s in commands.streamlist:
-            self.streams[s].cbReceived = cb
-            
-    def on_Sent (self, cb):
-        for s in commands.streamlist:
-            self.streams[s].cbSent = cb
-            
-
-    def on_Init (self, cb):
-        for s in commands.streamlist:
-            self.streams[s].cbInit = cb
-
-    def on_axDisconnect (self, cb):
-        for s in commands.streamlist:
-            self.streams[s].axDisconnect = cb
-
-    def on_axReceived (self, cb):
-        for s in commands.streamlist:
-            self.streams[s].axReceived = cb
-            
-    # def on_axSent (self, cb):
+    # def on_Disconnect (self, cb):
     #     for s in commands.streamlist:
-    #         self.streams[s].axSent = cb
+    #         self.streams[s].cbDisconnect = cb
+
+    # def on_Received (self, cb):
+    #     for s in commands.streamlist:
+    #         self.streams[s].cbReceived = cb
             
-    def on_axConnect (self, cb):
-        for s in commands.streamlist:
-            self.streams[s].axConnect = cb
+    # def on_Sent (self, cb):
+    #     for s in commands.streamlist:
+    #         self.streams[s].cbSent = cb
+            
 
-    def on_axInit (self, cb):
-        for s in commands.streamlist:
-            self.streams[s].axInit = cb
+    # def on_Init (self, cb):
+    #     for s in commands.streamlist:
+    #         self.streams[s].cbInit = cb
 
-    def initStation (self, device, port):
-      print ('initStart')
-      try:
-        #axint = tnc.kiss_interface.kissDevices[str(device)].KissPorts(port).AX25Interface
+    # def on_axDisconnect (self, cb):
+    #     for s in commands.streamlist:
+    #         self.streams[s].axDisconnect = cb
 
-        mycall = completer.options['MYCALL'].Value
-        if '-' in mycall:
-            (call, ssid) = mycall.split('-')
-        else:
-            call = mycall
-            ssid = None
-        axver = AX25Version[completer.options['AXVERSION'].Value]
-        #self.station = AX25Station (axint, call, ssid, protocol = axver) # do the connection
-        #self.station.attach()
+    # def on_axReceived (self, cb):
+    #     for s in commands.streamlist:
+    #         self.streams[s].axReceived = cb
+            
+    # # def on_axSent (self, cb):
+    # #     for s in commands.streamlist:
+    # #         self.streams[s].axSent = cb
+            
+    # def on_axConnect (self, cb):
+    #     for s in commands.streamlist:
+    #         self.streams[s].axConnect = cb
 
-        tnc.kiss_interface.start_ax25_station (str(device), port, call, ssid)
+    # def on_axInit (self, cb):
+    #     for s in commands.streamlist:
+    #         self.streams[s].axInit = cb
 
-      except Exception:
-            traceback.print_exc()
+    # def initStation (self, device, port):
+    #   try:
+    #     #axint = tnc.kiss_interface.kissDevices[str(device)].KissPorts(port).AX25Interface
+
+    #     mycall = completer.options['MYCALL'].Value
+    #     if '-' in mycall:
+    #         (call, ssid) = mycall.split('-')
+    #     else:
+    #         call = mycall
+    #         ssid = None
+    #     axver = AX25Version[completer.options['AXVERSION'].Value]
+
+    #     tnc.kiss_interface.start_ax25_station (str(device), port, call, ssid)
+
+    #   except Exception:
+    #         traceback.print_exc()
 
 
     def setBeacon (self, cond, period):
@@ -435,16 +431,16 @@ def init():
     
 
 
-    tnc.on_Disconnect (tncDisconnected)
-    tnc.on_Received (tncReceived)
-    tnc.on_Sent (tncSend)
-    tnc.on_Init (tncInit)
+    # tnc.on_Disconnect (tncDisconnected)
+    # tnc.on_Received (tncReceived)
+    # tnc.on_Sent (tncSend)
+    # tnc.on_Init (tncInit)
 
-    tnc.on_axConnect (axConnected)
-    tnc.on_axDisconnect (axDisconnected)
-    tnc.on_axReceived (axReceived)
-    #tnc.on_axSent (axSend)
-    tnc.on_axInit (axInit)
+    # tnc.on_axConnect (axConnected)
+    # tnc.on_axDisconnect (axDisconnected)
+    # tnc.on_axReceived (axReceived)
+    # #tnc.on_axSent (axSend)
+    # tnc.on_axInit (axInit)
 
 
 
@@ -495,7 +491,6 @@ def init():
                 ret = ip.input_process (custom)
                 print (ret[1])
     print('')
-
 init()
 
 

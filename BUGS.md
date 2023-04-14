@@ -29,3 +29,4 @@ Need to implement CONOK
 
 
 
+* This code is not intended to deal with teletype machines or the like. If your display device works with Python, it shoudl work here. 

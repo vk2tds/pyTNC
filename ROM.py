@@ -16,7 +16,8 @@
 
 TNC2_ROM = {
     'Help': {'Commands': ['All'], 'Help':'Get help on commands'},
-    '8bitconv': {'Commands': ['On', 'Off'], 'Group': 'A', 'Default': 'Off', 'Help': 'Strip high-order bit when in convers mode'},
+    '8bitconv': {'Commands': ['On', 'Off'], 'Group': 'A', 'Default': 'On', 'Help': 'Strip high-order bit when in convers mode',
+                 'Implemented': True, 'Notes': '' },
     'ANSWRQRA': {'Commands': ['On', 'Off'], 'Group': 'A', 'Default': 'On', 'Help': 'Setting ANSWRQRA  to OFF  disables the TNC\'s  ping-response function'},
     'ACKPRIOR': {'Commands': ['On', 'Off'], 'Group': 'L', 'Default': 'On', 'Help': 'When ACKPRIOR is  ON, acknowledgments have priority'},
     'ADRdisp': {'Commands': ['On', 'Off'], 'Group': 'M', 'Default': 'On', 'Help': 'Address headers on monitored frames will be displayed.',
@@ -24,7 +25,6 @@ TNC2_ROM = {
     'AMonth': {'Commands': ['On', 'Off'], 'Group': 'M', 'Default': 'On', 'Help': 'Display months as words',
                 'Implemented': True, 'Notes': '' },               
     'AUtolf': {'Commands': ['On', 'Off'], 'Group': 'A', 'Default': 'On', 'Help': 'Send Linefeed to terminal after each CR'},
-    'AWlen': {'Commands': [7, 8], 'Group': 'A',  'Default': '7', 'Min': 7, 'Max': 8, 'Help': 'Terminal character length (7/8)'},
     'AXVersion': {'Commands': ['AX25_10', 'AX25_20', 'AX25_22'], 'Group': 'L',  'Default': 'AX25_22', 'Help': 'Which version of AX25 to use. Replaces AX2512V2 command',
                   'Implemented': True, 'Notes': '' },
     'AXDelay': {'Commands': [], 'Group': 'T', 'Default': '0', 'Min': 0, 'Max': 180, 'Help': '(O-180 * 0.1 set) Voice Repeater keyup delay'},
@@ -34,8 +34,6 @@ TNC2_ROM = {
     'BKondel': {'Commands': ['On', 'Off'], 'Group': 'C', 'Default': 'On', 'Help': 'Send BS SP BS for each DELETE character'},
     'BText': {'Commands': [], 'Group': 'I', 'Default': 'Beacon Text', 'Minimum': -1, 'Help': '(120 char) Text to be sent for a beacon)'},
     'BUdlist': {'Commands': ['On', 'Off'], 'Group': 'M',  'Default': 'Off', 'Help': 'Stations in Lcalls are ignored'},
-    'CANline': {'Commands': [], 'Group': 'C', 'Default': '$18', 'Help': '(Control-X) The Line Delete character'},
-    'CANPac': {'Commands': [], 'Group': 'C', 'Default': '$19', 'Help': '(Ctrl-Y) Cancel current character'},
     'CHeck': {'Commands': [], 'Group': 'T', 'Default': '30', 'Min': 0, 'Max': 250, 'Help': '(O-250 * 10 set) Idle link time out'},
     'CMDtime': {'Commands': [], 'Group': 'T', 'Default': '1', 'Min': 0, 'Max': 255, 'Help': '(O-255 set) transparent mode escape timer'},
     'CMSG': {'Commands': ['On', 'Off'], 'Group': 'I', 'Default': 'Off', 'Help': 'Don\'t send CTEXT when user links to your TNC',
@@ -53,7 +51,6 @@ TNC2_ROM = {
     'CONVers': {'Commands': [], 'Help': 'Enter Converse mode from command mode'},
     'CMSG': {'Commands': ['On', 'Off', 'Disc'], 'Group': 'I', 'Default': 'Off', 'Help': 'On: Send CTEXT on Connection. Disc: send CTEXT on connection and disconnect',
              'Implemented': True, 'Notes': '' },
-    'CPactime': {'Commands': ['On', 'Off'], 'Group': 'T', 'Default': 'Off', 'Help': 'Don\'t forward data based on timers (see Pactime)',},
     'CR': {'Commands': ['On', 'Off'], 'Group': 'L', 'Default': 'On', 'Help': 'Append a Carriage Return to each data packet',
            'Implemented': True, 'Notes': '' },
     'CText': {'Commands': [], 'Group': 'I',  'Default': '%', 'Minimum': -1, 'Help': '(120 Ch) Connect Message Text (see CMSG)',
@@ -86,7 +83,6 @@ TNC2_ROM = {
     'HID': {'Commands': ['On', 'Off'], 'Group': 'I', 'Default': 'Off', 'Help': 'Don\'t send an ID packet every 9.5 mins when active'},
     'ID': {'Commands': [], 'Help': 'Force an ID packet (UI frame Via UNproto path)'},
     'LCALLS': {'Commands': [], 'Group': 'M', 'Default': '%', 'Minimum': -1, 'Help': '(O-8 calls) to receive or ignore stations (BUDLIST)'},
-    'LCok': {'Commands': ['On', 'Off'], 'Group': 'A', 'Default': 'On', 'Help': 'Do not convert lower case to UPPER CASE on terminal'},
     'LCSTREAM': {'Commands': ['On', 'Off'], 'Group': 'C', 'Default': 'On', 'Help': 'Convert the stream select specifer to Upper case'},
     'LFIGNORE': {'Commands': ['On', 'Off'], 'Group': 'L', 'Default': 'Off', 'Help': 'TNC will ignore <LF> characters'},
     'LFadd': {'Commands': ['On', 'Off'], 'Group': 'L', 'Default': 'Off', 'Help': 'Add a Line Feed after each CR send to the terminal'},
@@ -110,12 +106,8 @@ TNC2_ROM = {
     'NEwmode': {'Commands': ['On', 'Off'], 'Group': 'L',  'Default': 'Off', 'Help': 'The TNC acts like a TNC I for changing modes'},
     'NOmode': {'Commands': ['On', 'Off'], 'Group': 'L', 'Default': 'Off', 'Help': 'If ON allow explicit mode change only'},
     'Paclen': {'Commands': [], 'Group': 'L', 'Default': '128', 'Min': 0, 'Max': 255, 'Help': '(O-255,0=256) size of the data field in a data frame. 0 means 256 bytes'},
-    'PACTime': {'Commands': ['Every', 'After'], 'Group': 'T', 'Minimum': 2, 'Default': 'After 10', 'Help': '(Every/After O-250 *lOO ms) Data forwarding timer'},
-    'PARity': {'Commands': [0,1,2,3], 'Group': 'A', 'Default': '3', 'Min': 0, 'Max': 3, 'Help': '(O-3) Terminal parity 0,2=None l=odd 3=even'},
-    'PASs': {'Commands': [], 'Group': 'C', 'Default': '$16', 'Help': '(CTRL-V) char to allow any character to be typed'},
     'PORT': {'Commands': [], 'Group': 'M', 'Minimum': -1, 'Stage': 3,'Help': 'List all the PORTS. Or select one for this stream'},
     'RECOnnect': {'Commands': [], 'Help': 'Like Connect but to restablish a link via a new path'},
-    'REDisplay': {'Commands': [], 'Group': 'C', 'Default': '$12', 'Help': '(CTRL-R) char to print the current input buffer'},
     'RESET': {'Commands': [], 'Help': 'RESET bbRAM PARAMETERS TO DEFAULTS'},
     'RESptime': {'Commands': [], 'Group': 'T', 'Default': '12', 'Min': 0, 'Max': 250, 'Help': '(O-250 * 100 ms) minimum delay for sending an ACK'},
     'RESTART': {'Commands': [], 'Help': 'Perform a power on reset'},
@@ -123,8 +115,6 @@ TNC2_ROM = {
     'Screenln': {'Commands': [], 'Group': 'A', 'Default': '0', 'Min': 0, 'Max': 255, 'Help': '(O-255) Terminal output width - a CR is added after this many characters'},
     'SLOTS': {'Commands': [], 'Group': 'L', 'Default': '3', 'Min': 0, 'Max': 127, 'Help': '(O-127) specifies the number  of "slots" from which to  choose when deciding to access the channel'},
     'SEndpac': {'Commands': [], 'Group': 'C', 'Default': '$0D', 'Help': '(CR) Char to force a frame to be sent)'},
-    'STArt': {'Commands': [], 'Group': 'C', 'Default': '$11', 'Help': '(CTRL-Q) the XON for data TO the terminal'},
-    'STOp': {'Commands': [], 'Group': 'C', 'Default': '$13', 'Help': '(CTRL-S) the XOFF for data TO the terminal'},
     'STREAMCa': {'Commands': ['On', 'Off'], 'Group': 'C', 'Default': 'Off', 'Help': 'Don\'t show the callsign after stream id'},
     'STREAMShow': {'Commands': ['On', 'Off'], 'Group': 'C', 'Default': 'On', 'Help': 'Show the stream ID when displaying packets'},
     'STREAMDbl': {'Commands': ['On', 'Off'], 'Group': 'C', 'Default': 'Off', 'Help': 'Don\'t print the stream switch char twice (!!A)'},
@@ -134,22 +124,28 @@ TNC2_ROM = {
     'TRANS': {'Commands': [], 'Help': 'The TNC enters Transparent data mode'},
     'STATus': {'Commands': [], 'Help': 'It  returns the  acknowledged status  of the  current  outgoing packet  link  buffer.'},
     'STREam': {'Commands': [], 'Help': 'Displays the current stream or changes stream'},
-    'TRFlow': {'Commands': ['On', 'Off'], 'Group': 'A', 'Default': 'Off', 'Help': 'Disable flow control to the Terminal (Trans mode)'},
     'TRIes': {'Commands': [], 'Group': 'L', 'Min': 0, 'Max': 15,  'Help': '(O-15) set or display the current retry counter'},
     'TXdelay': {'Commands': [], 'Group': 'T', 'Default': '30', 'Min': 0, 'Max': 120, 'Help': '(O-120 * 10ms) Keyup delay for the transmitter'},
     'TXDELAYC': {'Commands': [], 'Group': 'T', 'Default': '2', 'Min': 0, 'Max': 120, 'Help': 'specifying  additional transmit  delay time added to TXdelay in terms of CHARACTER TIME at the current radio port data rate.'},
-    'TXFlow': {'Commands': ['On', 'Off'], 'Group': 'A', 'Default': 'Off', 'Help': 'Disable flow control to the TNC (Transparent mode)'},
     'TXUIFRAM': {'Commands': ['On', 'Off'], 'Group': 'L', 'Default': 'Off', 'Help': 'The TNC will "flush its buffers" to the radio port upon loss of a connection.'},
     'Unproto': {'Commands': [], 'Group': 'I', 'Default': 'CQ','Minimum': -1, 'Upper': True, 'Help': 'Path and address to send beacon data'},
     'Users': {'Commands': [], 'Group': 'L', 'Default': '1', 'Min': 1, 'Max': 16, 'Help': 'Sets the number of streams (links) allowed'},
-    'Xflow': {'Commands': ['On', 'Off'], 'Group': 'A', 'Default': 'On', 'Help': 'XON/XOFF Flow control enabled instead of hardware'},
     'XMitok': {'Commands': ['On', 'Off'], 'Group': 'L', 'Default': 'On', 'Help': 'Allow transmitter to come on'},
-    'UTC': {'Commands': ['On', 'Off'], 'Group': 'M', 'Default': 'Off', 'Help': 'Display times in UTC'},
-    'XOff': {'Commands': [], 'Group': 'C', 'Default': '$13', 'Help': '(CTRL-S) Character to stop data from terminal'},
-    'XON': {'Commands': [], 'Group': 'C', 'Default': '$11', 'Help': '(CTRL-Q) Character to start data from terminal'},
+    'UTC': {'Commands': ['On', 'Off'], 'Group': 'M', 'Default': 'Off', 'Help': 'Display times in UTC',
+              'Implemented': True, 'Notes': '' },
+}
+
+# These are functions that might be more useful in the future. At the moment, they really are not needed.
+FUTURE = {
+    'CPactime': {'Commands': ['On', 'Off'], 'Group': 'T', 'Default': 'Off', 'Help': 'Don\'t forward data based on timers (see Pactime)',},
+    'PACTime': {'Commands': ['Every', 'After'], 'Group': 'T', 'Minimum': 2, 'Default': 'After 10', 'Help': '(Every/After O-250 *lOO ms) Data forwarding timer'},
+    'Echo': {'Commands': ['On', 'Off'], 'Group': 'A', 'Default': 'On', 'Help': 'Echo characters typed on keyboard to terminal'},
 
 }
 
+
+# The following commands are generally TNC1 or TNC2 commands that have been depricated, or commands that have no applicability when using a 
+# KISS TNC. Being able to adjust the tones or adjust the crystal are no longer needed. Neither is sending NULL characters to deal with teletypes.
 UNUSED = {
     'CALibra': {'Commands': [], 'Help': 'Used to calibrate the builtin modem'},
     'CALSet' : {'Commands': [], 'Group': 'T', 'Help': 'Used with CALibrate'},
@@ -163,5 +159,32 @@ UNUSED = {
     'NULLS': {'Commands': [], 'Group': 'A', 'Default': '0', 'Min': 0, 'Max': 30, 'Help': '(O-30) Number of nulls to send as requested'},
     'TXDIDDLE': {'Commands': ['On', 'Off'], 'Group': 'A', 'Default': 'On', 'Help': 'TXDIDDLE should be kept ON  unless you  are  certain the  TNCs  in your  network  require lengthy flagging intervals.'},
     'RXBLOCK': {'Commands': ['On', 'Off'], 'Group': 'A', 'Default': 'Off', 'Help': 'The  TNC will  send  data to  the  terminal in  RXBLOCK format.'},
+    'AWlen': {'Commands': [7, 8], 'Group': 'A',  'Default': '7', 'Min': 7, 'Max': 8, 'Help': 'Terminal character length (7/8)'},
+    'LCok': {'Commands': ['On', 'Off'], 'Group': 'A', 'Default': 'On', 'Help': 'Do not convert lower case to UPPER CASE on terminal'},
+
+
+    'REDisplay': {'Commands': [], 'Group': 'C', 'Default': '$12', 'Help': '(CTRL-R) char to print the current input buffer',
+                    'Reason': 'Operating system level'},
+    'XOff': {'Commands': [], 'Group': 'C', 'Default': '$13', 'Help': '(CTRL-S) Character to stop data from terminal',
+                    'Reason': 'Operating system level'},
+    'XON': {'Commands': [], 'Group': 'C', 'Default': '$11', 'Help': '(CTRL-Q) Character to start data from terminal',
+                    'Reason': 'Operating system level'},
+    'Xflow': {'Commands': ['On', 'Off'], 'Group': 'A', 'Default': 'On', 'Help': 'XON/XOFF Flow control enabled instead of hardware',
+                    'Reason': 'Operating system level'},
+    'PASs': {'Commands': [], 'Group': 'C', 'Default': '$16', 'Help': '(CTRL-V) char to allow any character to be typed',
+                    'Reason': 'Operating system level'},
+    'CANline': {'Commands': [], 'Group': 'C', 'Default': '$18', 'Help': '(Control-X) The Line Delete character',
+                    'Reason': 'Operating system level'},
+    'CANPac': {'Commands': [], 'Group': 'C', 'Default': '$19', 'Help': '(Ctrl-Y) Cancel current character',
+                    'Reason': 'Operating system level'},
+    'STArt': {'Commands': [], 'Group': 'C', 'Default': '$11', 'Help': '(CTRL-Q) the XON for data TO the terminal',
+                    'Reason': 'Operating system level'},
+    'STOp': {'Commands': [], 'Group': 'C', 'Default': '$13', 'Help': '(CTRL-S) the XOFF for data TO the terminal',
+                    'Reason': 'Operating system level'},
+    'PARity': {'Commands': [0,1,2,3], 'Group': 'A', 'Default': '3', 'Min': 0, 'Max': 3, 'Help': '(O-3) Terminal parity 0,2=None l=odd 3=even',
+                    'Reason': 'Operating system level'},
+    'TRFlow': {'Commands': ['On', 'Off'], 'Group': 'A', 'Default': 'Off', 'Help': 'Disable flow control to the Terminal (Trans mode)',
+                    'Reason': 'Operating system level'},
+
 
 }

@@ -215,6 +215,8 @@ async def asyncmain():
     station.attach()
     kissdev.open()
 
+    station.getpeer ()
+
     logging.getLogger("asyncmain").info("Waiting for connections")
 
     try:

@@ -37,7 +37,7 @@ class PeerStream():
     '''
 
     def __init__(self, tnc):
-        print ('PEERSTREAM')
+        #print ('PEERSTREAM')
         self._peerStream = {}
         self._tnc = tnc 
 
@@ -132,11 +132,15 @@ class Stream:
 
     def send (self, payload):
         if not self.peer is None:
-            print ('------> Actual Stream Send')
             if self._completer.options['CR'].Value:
-                self._peer.send ((payload + '\r').encode())
+                pay = (payload + '\r').encode()
             else:
-                self._peer.send (payload.encode())
+                pay = payload.encode()
+            if self._completer.options['8BITCONV'].Value:
+                pay = bytearray(pay) 
+                for i in range(len(pay)):
+                    pay[i] = pay[i] & 0x7f
+            self._peer.send(pay)
         else:
             print ('*** NOT CONENCTED FOR ACTUAL STREAM SEND')
 
@@ -286,7 +290,7 @@ class kiss_interface():
         self._peerstream = PeerStream(self._tnc)
 
     def callsign(self, call):
-        print ('Callsign', call)
+        #print ('Callsign', call)
         if '-' in call:
             (c,s) = call.split ('-')
             self.call = c
@@ -296,7 +300,7 @@ class kiss_interface():
             self.ssid = None
 
     def myCallsign(self, call):
-        print ('Callsign', call)
+        #print ('Callsign', call)
         if '-' in call:
             (c,s) = call.split ('-')
             self._myCall = c
@@ -308,7 +312,7 @@ class kiss_interface():
 
 
     def kissDeviceTCP (self, device, host, port):
-        print ('device', device)
+        #print ('device', device)
         self._kissDevices[device] = make_device(
             type="tcp", host=host, port=port,
             log=self.logging, #.getLogger("ax25.kiss"),
@@ -321,14 +325,14 @@ class kiss_interface():
     def kissPort (self, interface):
             if not interface in self._kissInts:
                 (device,kissPort) = interface.split(':')
-                print ('Adding here')
+                #print ('Adding here')
                 self._kissInts[interface] = aioax25.interface.AX25Interface(
                     kissport=self._kissDevices[device][int(kissPort)],         # 0 = HF; 2 = USB
                     loop=self.loop, 
                     log=self.logging, #.getLogger('ax25.interface')
                 )
 
-            print ('Pre')
+            #print ('Pre')
             self._kissInts[interface].bind (self._on_rx, '(.*?)', ssid=None, regex=True)
 
             # when we open a KISSport, also open a STATION. 
@@ -369,7 +373,7 @@ class kiss_interface():
         def _on_state_change(state, **kwargs):
             nonlocal mystream
             mystream.state = state
-            print ('STATE')
+            #print ('STATE')
             log.info("State is now %s", state)
             constamp = self._tnc.completer.options['CONSTAMP'].Value
             cbell = self._tnc.completer.options['CBELL'].Value

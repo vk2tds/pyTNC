@@ -534,7 +534,7 @@ class process:
                     # We need digipeaters if there is a 'Via'
                     return (returns.Eh, 'Third word must be VIA if used followed by additional calls')
             #self.tnc.streams['A']['Connection'] = 
-            connection (callFrom, callTo, callDigi, self.tnc, self.tnc.streams['A']) # save to stream as well
+            connection (callFrom, callTo, callDigi, self.tnc, self.tnc.activeStream) # save to stream as well
             # self.tnc.streams['A'].Connection.connect()
             return (returns.Ok, None)
         elif words[0] == 'KISSDEV':
@@ -607,7 +607,7 @@ class process:
 
                 # *********************
                 #self.tnc.initStation (port)
-                print (line)
+                #print (line)
                 return (returns.Ok, 'KISSPORT add ' + line)
             else:
                 return (returns.Eh, None)
@@ -673,8 +673,8 @@ class process:
                         if sstate == aioax25.peer.AX25Peer.AX25PeerState.CONNECTED:
                             scalls = ('%s>%s' % (self.tnc.streams[s].peer.address, self.tnc.streams[s].peer._station()._address))
                             if not self.tnc.streams[s].peer._repeaters is None and len(self.tnc.streams[s].peer._repeaters) != 0:
-                                print (self.tnc.streams[s].peer.reply_path)
-                                print (type(self.tnc.streams[s].peer.reply_path))
+                                #print (self.tnc.streams[s].peer.reply_path)
+                                #print (type(self.tnc.streams[s].peer.reply_path))
                                 scalls += ' VIA ' + str (self.tnc.streams[s].peer.reply_path) # TODO improve thsi code
                             #if not self.tnc.streams[s].Connection.callDigi == '' and not self.tnc.streams[s].Connection.callDigi is None :
                             #    scalls += "," + ",".join(self.tnc.streams[s].Connection.callDigi)
@@ -692,7 +692,7 @@ class process:
                     self.tnc.mode = self.tnc.modeConverse
                     return (returns.Ok, None)
                 elif words[0] == 'DISCONNE':
-                    self.tnc.streams['A'].Connection.disconnect()
+                    self.tnc.activeStream.disconnect()
                     return (returns.Ok, None)
                 elif words[0] == 'ID':
                     return (returns.NotImplemented, None)
@@ -951,7 +951,7 @@ class Monitor:
 
         if type(frame) is aioax25.frame.AX25RawFrame:
             self.output ('--->AX25RawFrame')
-            self.output (frame)
+            self.output ('RAW' + str(frame))
 
         if type(frame) is aioax25.frame.AX25RawFrame:
             control = 'RAW PACKET'
@@ -1010,8 +1010,8 @@ class Monitor:
 
         control = ' <' + control + '>:'
         
-        self.output (type(frame))
-        self.output (frame)
+        #self.output (type(frame))
+        #self.output (frame)
 
         #ADRdisp - default ON - N4UQQ>N4UQR,TPA5* <UI R>:This is a monitored frame.
         if hasattr(frame, 'payload'):

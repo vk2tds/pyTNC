@@ -37,6 +37,7 @@ import aioax25
 import aioax25.peer
 import aioax25.kiss
 
+from tabulate import tabulate
 
 import uuid
 
@@ -348,59 +349,73 @@ class process:
                 return (returns.Ok, text)
             if len(words) >= 2:
                 if words[1].upper() == 'ALL':
-                    text = ''
+                    table = []
                     for uc in self.completer.options:
                         if not self.completer.options[uc].Help is None:
-                            if len(text) > 0: 
-                                text = text + '\n'
-                            text = text + '%s\t%s' % (uc, self.completer.options[uc].Help)
+                            table.append ([uc, self.completer.options[uc].Help])
+                    text = tabulate (table, tablefmt="plain", maxcolwidths=[None, 60])
                     return (returns.Ok, text)
                 if words[1].upper() in self.completer.options:
                     uc = words[1].upper()
+                    resultList = []
                     if not self.completer.options[uc].Help is None:
-                        text = '%s\t%s' % (uc, self.completer.options[uc].Help)
+                        resultList.append ([uc, self.completer.options[uc].Help])
+                        text = tabulate (resultList, tablefmt="plain")
                         return (returns.Ok, text)
                     else:
                         text = 'No help available'
                         return (returns.Ok, text)
             return (returns.Bad, None)
         elif words[0] == 'DISPLAY':
-            if len(words) == 1: # Display
-                cols = 0
-                message = ''
-                for o in self.completer.options:
-                    #TODO: If KissDev or KissPort maybe pretty print.
-                    if len(message) > 0:
-                        message = message + '\t\t' + library.to_user (o, None, self.completer.options[o].Value)
-                    else:
-                        message = library.to_user (o, None, self.completer.options[o].Value)
-                    cols += 1
-                    if not self.completer.options['FSCREEN'].Value:
-                            # If we are not in FSCREEN, we only want one column
-                            cols = 4
-                    if cols == 4:
-                        message = message + '\n'
-                        cols = 0                        
-                return (returns.Ok, message)
+            narrowList = []
+            wideList = []
+
             if len(words) > 1: # Display <word>
                 group = words[1][0]
-                cols = 0
-                message = ''
-                for o in self.completer.options:
-                        if self.completer.options[o].Group == group: 
-                            if not self.completer.options[o].Value is None:
-                                if len(message) > 0:
-                                    message = message + '\t\t' + library.to_user (o, None, self.completer.options[o].Value)
-                                else:
-                                    message = library.to_user (o, None, self.completer.options[o].Value)
-                                cols += 1
-                                if 'FSCREEN' in self.completer.options:
-                                    if not self.completer.options['FSCREEN'].Value:
-                                        # If we are not in FSCREEN, we only want one column
-                                        cols = 4
-                                if cols == 4:
-                                    message = message + '\n'
-                                    cols = 0
+            for o in self.completer.options:
+                display = False
+                if len(words) == 1:
+                    display = True
+                elif len(words) > 1:
+                    if self.completer.options[o].Group == group: 
+                        display = True
+                if display:
+                    value = self.completer.options[o].Value
+                    if value is True:
+                        v = 'On'
+                    elif value is False:
+                        v = 'Off'
+                    elif value is None:
+                        v = ''
+                    else:
+                        v = str(value)
+                    if len(v) > 10:
+                        wideList.append ([o,v])
+                    else:
+                        narrowList.append ([o,v])
+
+            message = ''
+
+            workingList = []
+            resultList = []
+            for entry in narrowList:
+                workingList.append (entry[0])
+                workingList.append (entry[1])
+                if len(workingList) == 8:
+                    resultList.append (workingList)
+                    workingList = []
+            if len(workingList) > 0:
+                    resultList.append (workingList)
+                    workingList = []
+
+            if len(resultList) > 0:
+                message += tabulate (resultList, tablefmt="plain", maxcolwidths=[None, 20,None, 20, None, 20, None, 20])
+
+            if len(wideList) > 1:
+                if len(resultList) > 0:
+                    message += '\n'
+                message += tabulate (wideList, tablefmt="plain", maxcolwidths=[None, 60])
+            if len(message) > 0:
                 return (returns.Ok, message)
             return (returns.Bad, None)
         elif words[0] == 'LCALLS':
@@ -452,7 +467,7 @@ class process:
             return (returns.NotImplemented, None)
         elif words[0] == 'KISSDEV':
             if len(words) == 1:
-
+                resultList = []
                 text = ''
                 working = self.completer.options[words[0].upper()].Value.split(',')
                 if len(working) > 0:
@@ -460,8 +475,9 @@ class process:
                     for w in working:
                         s = w.split(' ')
                         if len(s) >= 3: # Ignore empties
-                            text = text + '%s:\t%s\t%s\t%s\t%s\n' % (i, s[0], s[1], s[2], s[3])
+                            resultList.append ([str(i)+':', s[0], s[1], s[2], s[3]])
                             i = i + 1
+                text = tabulate (resultList, tablefmt="plain")
                 return (returns.Ok, text)
             if len(words) == 2:
                 return (returns.NotImplemented, 'TODO: Type KISSDEV 4 to remove the fourth item on the list. ')    
@@ -503,11 +519,13 @@ class process:
                 working = self.completer.options[words[0].upper()].Value.split(',')
                 if len(working) > 0:
                     i = 1
+                    resultList = []
                     for w in working:
                         s = w.split(' ')
                         if len(s) >= 2: # Ignore empties
-                            text = text + '%s:\t%s\t%s' %(i, s[0], s[1])
+                            resultList.append ([str(i) + ':', s[0], s[1]])
                             i = i + 1
+                    text = tabulate (resultList, tablefmt="plain")
                 return (returns.Ok, text)
             if len(words) == 2:
                 return (returns.NotImplemented, 'TODO: Type KISSPORT 4 to remove the fourth item on the list. ')    
@@ -534,6 +552,7 @@ class process:
         elif words[0] == 'PORT':
             if len(words) == 1:
                 text = ''
+                resultList = []
                 for ki in self.tnc.kiss_interface.kissInts:
                     (d,i) = ki.split(':')
                     kD = self.tnc.kiss_interface.kissDevices[d]
@@ -543,15 +562,15 @@ class process:
                     if self.tnc.streams[self.tnc.currentStream].Port == ki:
                         active = '*'
                     if type(kD) == aioax25.kiss.TCPKISSDevice:
-                        text += '%s%s\t%s\t%s\t%s\t%s' % (ki, active, str(self.tnc.kiss_interface.kissIntsLastTX[ki] or '<NO TX SENT'), 
+                        resultList.append ([ki +active, str(self.tnc.kiss_interface.kissIntsLastTX[ki] or '<NO_TX_SENT>'), 
                                 'TCP', kD._conn_args['host'], 
-                                kD._conn_args['port'])
+                                kD._conn_args['port']])
                     if type(kD) == aioax25.kiss.SerialKISSDevice:
-                        text += '%s%s\t%s\t%s\t%s\t%s' % (ki, active, str(self.tnc.kiss_interface.kissIntsLastTX[ki] or '<NO TX SENT'), 
-                                'Serial', kD._conn_args['device'], kD._conn_args['baudrate'])
+                        resultList.append ([ki + active, str(self.tnc.kiss_interface.kissIntsLastTX[ki] or '<NO_TX_SENT>'), 
+                                'Serial', kD._conn_args['device'], kD._conn_args['baudrate']])
 
                     # TODO add other device types.                            
-
+                    text = tabulate (resultList, tablefmt="plain")
                 return (returns.Ok, text)
             if len(words) == 2:
                 # We are setting the current port
@@ -592,6 +611,7 @@ class process:
                     True
                 elif words[0] == 'CSTATUS':
                     text = ""
+                    resultList = []
                     for s in streamlist:
                         sstate = self.tnc.streams[s].state
 
@@ -601,9 +621,9 @@ class process:
                                 scalls += ' VIA ' + str (self.tnc.streams[s].peer.reply_path) # TODO improve thsi code
                         else:
                             scalls = 'NO CONNECTION'
-                        if len(text) > 0:
-                            text = text + '\n'
-                        text = text + '%s stream    State %s\t\t%s' %(s, sstate, scalls)
+                        resultList.append ([s + ' stream', sstate, scalls])                        
+
+                    text = tabulate (resultList, tablefmt="plain")
                     return (returns.Ok, text)
                 elif words[0] == 'CALIBRA':
                     return (returns.NotImplemented, None)
@@ -623,10 +643,10 @@ class process:
                     return (returns.Ok, None)
                 elif words[0] == 'MHEARD':
                     text = ""
+                    resultList = []
                     for c in self.tnc.mheard:
-                        if len(text) > 0:
-                            text = text + '\n'
-                        text = text + '%s\t\t\t%s' % (c, library.displaydatetime(self.tnc.mheard[c], self.completer))
+                        resultList.append ([c, library.displaydatetime(self.tnc.mheard[c], self.completer)])
+                    text = tabulate (resultList, tablefmt="plain")
                     return (returns.Ok, text)
                 elif words[0] == 'RESTART':
                     return (returns.NotImplemented, None)

@@ -31,7 +31,7 @@
 #     KISS: Is this a command that needs to be sent to the KISS interface
 
 TNC2_ROM = {
-    'Help': {'Commands': ['All'], 'Help':'Get help on commands'},
+    'Help': {'Commands': ['All'], 'Help':'Get help on commands. HELP ALL for everything'},
     '8bitconv': {'Commands': ['On', 'Off'], 'Group': 'A', 'Default': 'On', 'Help': 'Strip high-order bit when in convers mode',
                  'Implemented': True, 'Notes': '' },
     'ANSWRQRA': {'Commands': ['On', 'Off'], 'Group': 'A', 'Default': 'On', 'Help': 'Setting ANSWRQRA  to OFF  disables the TNC\'s  ping-response function'},
@@ -84,8 +84,6 @@ TNC2_ROM = {
     'Escape': {'Commands': ['On', 'Off'], 'Group': 'A', 'Default': 'Off', 'Help': 'Don\'t translate ES@ character ($lB) to $ ($24:)'},
     'Flow': {'Commands': ['On', 'Off'], 'Group': 'A', 'Default': 'On', 'Help': 'Don\'t print to terminal while user is typing'},
     'FIRMRNR': {'Commands': ['On', 'Off'], 'Group': 'L', 'Default': 'On', 'Help': 'When this TNC\'s buffers fill, an RNR is sent'},
-    'FSCreen': {'Commands': ['On', 'Off'], 'Group': 'L', 'Default': 'On', 'Help': 'Display command generates 4 columns - default ON',
-                'Implemented': True, 'Notes': '' },
     'FRack': {'Commands': [], 'Group': 'T', 'Default': '3', 'Min': 1, 'Max': 15, 'Help': '(l-15 set) Time needed to ack a packet per station'},
     'FUlldup': {'Commands': ['On', 'Off'], 'Group': 'L', 'Default': 'Off', 'Help': 'Operate in Simplex mode',
                  'KISS': True },
@@ -163,6 +161,9 @@ FUTURE = {
     'AXDelay': {'Commands': [], 'Group': 'T', 'Default': '0', 'Min': 0, 'Max': 180, 'Help': '(O-180 * 0.1 set) Voice Repeater keyup delay'},
     'AXHang': {'Commands': [], 'Group': 'T',  'Default': '0', 'Min': 0, 'Max': 20, 'Help': '(O-20 * 0.1 set) Voice Repeater hang time'},
     'SEndpac': {'Commands': [], 'Group': 'C', 'Default': '$0D', 'Help': '(CR) Char to force a frame to be sent)'},
+    'FSCreen': {'Commands': ['On', 'Off'], 'Group': 'L', 'Default': 'On', 'Help': 'Display command generates 4 columns - default ON',
+                'Implemented': False, 'Notes': 'Moved to tabulate' },
+
 
 }
 
@@ -185,7 +186,7 @@ UNUSED = {
     'AWlen': {'Commands': [7, 8], 'Group': 'A',  'Default': '7', 'Min': 7, 'Max': 8, 'Help': 'Terminal character length (7/8)'},
     'LCok': {'Commands': ['On', 'Off'], 'Group': 'A', 'Default': 'On', 'Help': 'Do not convert lower case to UPPER CASE on terminal'},
     'HID': {'Commands': ['On', 'Off'], 'Group': 'I', 'Default': 'Off', 'Help': 'Don\'t send an ID packet every 9.5 mins when active',
-            'Implemented': True, 'Notes': 'Test on all ports' },                
+            'Implemented': False, 'Notes': 'Was in for one commit 15 April 2023. Removed since not needed' },                
 
 
     'REDisplay': {'Commands': [], 'Group': 'C', 'Default': '$12', 'Help': '(CTRL-R) char to print the current input buffer',

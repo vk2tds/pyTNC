@@ -81,6 +81,7 @@ class Stream:
         self._peer = None
         self._name = None # The text name of this stream.
         self._state = None
+        self._lastTX = None
 
 
         # incoming and outgoing buffers
@@ -105,6 +106,8 @@ class Stream:
 
     def send (self, payload):
         if not self.peer is None:
+            # Some convoluted code to remove top bit if needed
+            # also, add CR if needed
             if self._completer.options['CR'].Value:
                 pay = (payload + '\r').encode()
             else:
@@ -114,6 +117,11 @@ class Stream:
                 for i in range(len(pay)):
                     pay[i] = pay[i] & 0x7f
             self._peer.send(pay)
+
+            self._lastTX = library.datetimeNow(self.completer)
+
+
+
         else:
             print ('*** NOT CONENCTED FOR ACTUAL STREAM SEND')
 
@@ -130,6 +138,10 @@ class Stream:
     def peer(self, apeer):
         self._peer = apeer
 
+
+    @property
+    def lastTX(self):
+        return self._lastTX
 
     @property
     def completer (self):
@@ -168,6 +180,7 @@ class kiss_interface():
     def __init__ (self, tnc, on_rx, logging):
         self._kissDevices = {}
         self._kissInts = {}
+        self._kissIntsLastTX = {} # time of last transmission on this port
         self._stations = {}
         self.logging = logging
         self.loop = asyncio.get_event_loop()
@@ -223,6 +236,7 @@ class kiss_interface():
                     loop=self.loop, 
                     log=self.logging,
                 )
+                self._kissIntsLastTX[interface] = None
 
             self._kissInts[interface].bind (self._on_rx, '(.*?)', ssid=None, regex=True)
 
@@ -244,7 +258,10 @@ class kiss_interface():
     def kissInts(self):
         return self._kissInts
 
-
+    @property
+    def kissIntsLastTX(self):
+        return self._kissIntsLastTX
+    
     @property
     def kissDevices(self):
         return self._kissDevices
@@ -350,5 +367,8 @@ class kiss_interface():
         # **************
         peer.send (data)
         # **************
+
+
+
 
 

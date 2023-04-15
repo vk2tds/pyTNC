@@ -12,14 +12,29 @@
 # Having said that, it would be great to know if this software gets used. If you want, buy me a coffee, or send me some hardware
 # Darryl Smith, VK2TDS. darryl@radio-active.net.au Copyright 2023
 
-#TODO record for each command how much of the command has been implemented, along with notes. 
+
+# Column Names:
+#     Display: Case sensitive command. Upper case characters are the the minimum needed to identify this Commands
+#     Commands: A list of commands for the second word in the command that can be used with tab completion
+#     Group: The letter indicates grouping of commands for the DISPLAY command
+#     Default: The power on default value for the command
+#     Help: Help text for the command
+#     Min: A minimum value where it is a number
+#     Max: A maximum value where it is a number 
+#     Upper: Force the value to Upper case
+#     Minimum: How many items are needed for the command
+#     Shorter: Unused
+#     Value: Eventual value stored for the command
+#     Stage: Some commands should be loaded before others. Lower stage number gets run first
+#     Implemented: Indication that this command actually works
+#     Notes: Any notes on the implementation
+#     KISS: Is this a command that needs to be sent to the KISS interface
 
 TNC2_ROM = {
     'Help': {'Commands': ['All'], 'Help':'Get help on commands'},
     '8bitconv': {'Commands': ['On', 'Off'], 'Group': 'A', 'Default': 'On', 'Help': 'Strip high-order bit when in convers mode',
                  'Implemented': True, 'Notes': '' },
     'ANSWRQRA': {'Commands': ['On', 'Off'], 'Group': 'A', 'Default': 'On', 'Help': 'Setting ANSWRQRA  to OFF  disables the TNC\'s  ping-response function'},
-    'ACKPRIOR': {'Commands': ['On', 'Off'], 'Group': 'L', 'Default': 'On', 'Help': 'When ACKPRIOR is  ON, acknowledgments have priority'},
     'ADRdisp': {'Commands': ['On', 'Off'], 'Group': 'M', 'Default': 'On', 'Help': 'Address headers on monitored frames will be displayed.',
                 'Implemented': True, 'Notes': '' },
     'AMonth': {'Commands': ['On', 'Off'], 'Group': 'M', 'Default': 'On', 'Help': 'Display months as words',
@@ -27,11 +42,8 @@ TNC2_ROM = {
     'AUtolf': {'Commands': ['On', 'Off'], 'Group': 'A', 'Default': 'On', 'Help': 'Send Linefeed to terminal after each CR'},
     'AXVersion': {'Commands': ['AX25_10', 'AX25_20', 'AX25_22'], 'Group': 'L',  'Default': 'AX25_22', 'Help': 'Which version of AX25 to use. Replaces AX2512V2 command',
                   'Implemented': True, 'Notes': '' },
-    'AXDelay': {'Commands': [], 'Group': 'T', 'Default': '0', 'Min': 0, 'Max': 180, 'Help': '(O-180 * 0.1 set) Voice Repeater keyup delay'},
-    'AXHang': {'Commands': [], 'Group': 'T',  'Default': '0', 'Min': 0, 'Max': 20, 'Help': '(O-20 * 0.1 set) Voice Repeater hang time'},
     'ACKTIME': {'Commands': [], 'Group': 'T', 'Default': '14', 'Min': 0, 'Max': 250, 'Help': '(O-250 * 10 mSec) ACKTIME specifies the time required to send an RR or RNR response frame'},
     'Beacon': {'Commands': ['Every', 'After'], 'Group': 'I', 'Minimum': 2, 'Default': 'Every 0', 'Help': 'Every/After O-250 *lO sec'},
-    'BKondel': {'Commands': ['On', 'Off'], 'Group': 'C', 'Default': 'On', 'Help': 'Send BS SP BS for each DELETE character'},
     'BText': {'Commands': [], 'Group': 'I', 'Default': 'Beacon Text', 'Minimum': -1, 'Help': '(120 char) Text to be sent for a beacon)'},
     'BUdlist': {'Commands': ['On', 'Off'], 'Group': 'M',  'Default': 'Off', 'Help': 'Stations in Lcalls are ignored'},
     'CHeck': {'Commands': [], 'Group': 'T', 'Default': '30', 'Min': 0, 'Max': 250, 'Help': '(O-250 * 10 set) Idle link time out'},
@@ -59,10 +71,8 @@ TNC2_ROM = {
                  'Implemented': True, 'Notes': '' },                
     'DAYUsa': {'Commands': ['On', 'Off'], 'Group': 'M', 'Default': 'On', 'Help': 'Print date as mm/dd/yy instead of dd-mm-yy',
                'Implemented': True, 'Notes': 'Uses the process.displaydatetime() function'},
-    'DELete': {'Commands': ['On', 'Off'], 'Group': 'C', 'Default': 'Off', 'Help': 'The character delete is BS ($08) not DEL ($7E)'},
     'DIGipeat': {'Commands': ['On', 'Off'], 'Group': 'L', 'Default': 'On', 'Help': 'Allow stations to use you as a Digipeater'},
     'Disconne': {'Commands': [], 'Help': 'Request a link disconnect from the other station'},
-    'DEADTIME': {'Commands': [], 'Group': 'T', 'Default': '33', 'Min': 0, 'Max': 250, 'Help': '0-250 * 10mSec specifies the  time it  takes a  station\'s receiver  todetect the  fact that  a remote  transmitter  has keyed  up'},
     'Display': {'Commands': ['Async',                # 
                 'Character', 
                 'Health', 
@@ -70,7 +80,6 @@ TNC2_ROM = {
                 'Link',
                 'Monitor',
                 'Timing'], 'Help': '(Async/Character/Id/Monitor/Timing) Parameters'},
-    'DWait': {'Commands': [], 'Group': 'T', 'Default': '16', 'Min': 0, 'Max': 250, 'Help': '(O-250 * 10 msec) Delay to let digipeater repeat'},
     'Echo': {'Commands': ['On', 'Off'], 'Group': 'A', 'Default': 'On', 'Help': 'Echo characters typed on keyboard to terminal'},
     'Escape': {'Commands': ['On', 'Off'], 'Group': 'A', 'Default': 'Off', 'Help': 'Don\'t translate ES@ character ($lB) to $ ($24:)'},
     'Flow': {'Commands': ['On', 'Off'], 'Group': 'A', 'Default': 'On', 'Help': 'Don\'t print to terminal while user is typing'},
@@ -78,15 +87,14 @@ TNC2_ROM = {
     'FSCreen': {'Commands': ['On', 'Off'], 'Group': 'L', 'Default': 'On', 'Help': 'Display command generates 4 columns - default ON',
                 'Implemented': True, 'Notes': '' },
     'FRack': {'Commands': [], 'Group': 'T', 'Default': '3', 'Min': 1, 'Max': 15, 'Help': '(l-15 set) Time needed to ack a packet per station'},
-    'FUlldup': {'Commands': ['On', 'Off'], 'Group': 'L', 'Default': 'Off', 'Help': 'Operate in Simplex mode'},
+    'FUlldup': {'Commands': ['On', 'Off'], 'Group': 'L', 'Default': 'Off', 'Help': 'Operate in Simplex mode',
+                 'KISS': True },
     'HEaderln': {'Commands': ['On', 'Off'], 'Group': 'M', 'Default': 'Off', 'Help': 'Print the frame header and text on the same line'},
-    'HID': {'Commands': ['On', 'Off'], 'Group': 'I', 'Default': 'Off', 'Help': 'Don\'t send an ID packet every 9.5 mins when active'},
-    'ID': {'Commands': [], 'Help': 'Force an ID packet (UI frame Via UNproto path)'},
-    'IDText': {'Commands': [], 'Group': 'I', 'Default': 'Welcome to pyTNC', 'Minimum': -1, 'Help': '(120 char) Text to be sent for a ID)'},    
+    'ID': {'Commands': [], 'Help': 'Force an ID packet (UI frame Via UNproto path)',
+           'Implemented': True, 'Notes': '' },                
+    'IDText': {'Commands': [], 'Group': 'I', 'Default': 'Welcome to pyTNC', 'Minimum': -1, 'Help': '(120 char) Text to be sent for a ID)', 
+               'Implemented': True, 'Notes': '' },                   
     'LCALLS': {'Commands': [], 'Group': 'M', 'Default': '%', 'Minimum': -1, 'Help': '(O-8 calls) to receive or ignore stations (BUDLIST)'},
-    'LCSTREAM': {'Commands': ['On', 'Off'], 'Group': 'C', 'Default': 'On', 'Help': 'Convert the stream select specifer to Upper case'},
-    'LFIGNORE': {'Commands': ['On', 'Off'], 'Group': 'L', 'Default': 'Off', 'Help': 'TNC will ignore <LF> characters'},
-    'LFadd': {'Commands': ['On', 'Off'], 'Group': 'L', 'Default': 'Off', 'Help': 'Add a Line Feed after each CR send to the terminal'},
     'KISSdev': {'Commands': ['TCP', 'Serial'], 'Group': 'M', 'Default': '', 'Minimum': -1, 'Stage': 2, 
                 'Help': 'Open a KISS Device in aioax25. First number is the Kiss Device number we are creating. Examples include KISSdev picopacket tcp localhost 8001 or KISSdev picopacket SERIAL /dev/ax0 9600',
                 'Implemented': True, 'Notes': 'Serial not tested' },                
@@ -107,18 +115,21 @@ TNC2_ROM = {
     'MStamp': {'Commands': ['On', 'Off'], 'Group': 'M', 'Default': 'Off', 'Help': 'Monitored frames are Not time stamped'},
     'MYALIAScall': {'Commands': [], 'Group': 'I', 'Minimum': -1, 'Help': 'An identifier for a digipeater'},
     'MYcall': {'Commands': [], 'Group': 'I', 'Default': 'N0CALL-0', 'Upper': True, 'Help': 'The station callsign for ID and linking'},
-    'NEwmode': {'Commands': ['On', 'Off'], 'Group': 'L',  'Default': 'Off', 'Help': 'The TNC acts like a TNC I for changing modes'},
     'NOmode': {'Commands': ['On', 'Off'], 'Group': 'L', 'Default': 'Off', 'Help': 'If ON allow explicit mode change only'},
     'Paclen': {'Commands': [], 'Group': 'L', 'Default': '128', 'Min': 0, 'Max': 255, 'Help': '(O-255,0=256) size of the data field in a data frame. 0 means 256 bytes'},
     'PORT': {'Commands': [], 'Group': 'M', 'Minimum': -1, 'Stage': 3,'Help': 'List all the PORTS. Or select one for this stream'},
+    'PErsist': {'Commands': [], 'Group': 'T', 'Default': '63', 'Min': 0, 'Max': 255, 
+                'Help': 'This command, used with SLOTTIME, implements an algorithm for channel access to send packets',
+                'KISS': True },
     'RECOnnect': {'Commands': [], 'Help': 'Like Connect but to restablish a link via a new path'},
     'RESET': {'Commands': [], 'Help': 'RESET bbRAM PARAMETERS TO DEFAULTS'},
     'RESptime': {'Commands': [], 'Group': 'T', 'Default': '12', 'Min': 0, 'Max': 250, 'Help': '(O-250 * 100 ms) minimum delay for sending an ACK'},
     'RESTART': {'Commands': [], 'Help': 'Perform a power on reset'},
     'RETry': {'Commands': [], 'Group': 'L', 'Default': '10', 'Min': 0, 'Max': 15, 'Help': '(O-15) maximum number of retries for a frame'},
     'Screenln': {'Commands': [], 'Group': 'A', 'Default': '0', 'Min': 0, 'Max': 255, 'Help': '(O-255) Terminal output width - a CR is added after this many characters'},
-    'SLOTS': {'Commands': [], 'Group': 'L', 'Default': '3', 'Min': 0, 'Max': 127, 'Help': '(O-127) specifies the number  of "slots" from which to  choose when deciding to access the channel'},
-    'SEndpac': {'Commands': [], 'Group': 'C', 'Default': '$0D', 'Help': '(CR) Char to force a frame to be sent)'},
+    'SLottime': {'Commands': [], 'Group': 'T', 'Default': '10', 'Min': 0, 'Max': 255, 
+                 'Help': '(O-250 * 100 ms) n specifies the amount of time, in 10 ms increments, between successive tries of the persistence algorithm',
+                 'KISS': True },
     'STREAMCa': {'Commands': ['On', 'Off'], 'Group': 'C', 'Default': 'Off', 'Help': 'Don\'t show the callsign after stream id'},
     'STREAMShow': {'Commands': ['On', 'Off'], 'Group': 'C', 'Default': 'On', 'Help': 'Show the stream ID when displaying packets'},
     'STREAMDbl': {'Commands': ['On', 'Off'], 'Group': 'C', 'Default': 'Off', 'Help': 'Don\'t print the stream switch char twice (!!A)'},
@@ -129,8 +140,8 @@ TNC2_ROM = {
     'STATus': {'Commands': [], 'Help': 'It  returns the  acknowledged status  of the  current  outgoing packet  link  buffer.'},
     'STREam': {'Commands': [], 'Help': 'Displays the current stream or changes stream'},
     'TRIes': {'Commands': [], 'Group': 'L', 'Min': 0, 'Max': 15,  'Help': '(O-15) set or display the current retry counter'},
-    'TXdelay': {'Commands': [], 'Group': 'T', 'Default': '30', 'Min': 0, 'Max': 120, 'Help': '(O-120 * 10ms) Keyup delay for the transmitter'},
-    'TXDELAYC': {'Commands': [], 'Group': 'T', 'Default': '2', 'Min': 0, 'Max': 120, 'Help': 'specifying  additional transmit  delay time added to TXdelay in terms of CHARACTER TIME at the current radio port data rate.'},
+    'TXdelay': {'Commands': [], 'Group': 'T', 'Default': '30', 'Min': 0, 'Max': 120, 'Help': '(O-120 * 10ms) Keyup delay for the transmitter',
+                'KISS': True },
     'TXUIFRAM': {'Commands': ['On', 'Off'], 'Group': 'L', 'Default': 'Off', 'Help': 'The TNC will "flush its buffers" to the radio port upon loss of a connection.'},
     'Unproto': {'Commands': [], 'Group': 'I', 'Default': 'CQ','Minimum': -1, 'Upper': True, 'Help': 'Path and address to send beacon data'},
     'Users': {'Commands': [], 'Group': 'L', 'Default': '1', 'Min': 1, 'Max': 16, 'Help': 'Sets the number of streams (links) allowed'},
@@ -141,11 +152,17 @@ TNC2_ROM = {
 
 
 
+
+
 # These are functions that might be more useful in the future. At the moment, they really are not needed.
 FUTURE = {
     'CPactime': {'Commands': ['On', 'Off'], 'Group': 'T', 'Default': 'Off', 'Help': 'Don\'t forward data based on timers (see Pactime)',},
     'PACTime': {'Commands': ['Every', 'After'], 'Group': 'T', 'Minimum': 2, 'Default': 'After 10', 'Help': '(Every/After O-250 *lOO ms) Data forwarding timer'},
     'Echo': {'Commands': ['On', 'Off'], 'Group': 'A', 'Default': 'On', 'Help': 'Echo characters typed on keyboard to terminal'},
+    'DELete': {'Commands': ['On', 'Off'], 'Group': 'C', 'Default': 'Off', 'Help': 'The character delete is BS ($08) not DEL ($7E)'},
+    'AXDelay': {'Commands': [], 'Group': 'T', 'Default': '0', 'Min': 0, 'Max': 180, 'Help': '(O-180 * 0.1 set) Voice Repeater keyup delay'},
+    'AXHang': {'Commands': [], 'Group': 'T',  'Default': '0', 'Min': 0, 'Max': 20, 'Help': '(O-20 * 0.1 set) Voice Repeater hang time'},
+    'SEndpac': {'Commands': [], 'Group': 'C', 'Default': '$0D', 'Help': '(CR) Char to force a frame to be sent)'},
 
 }
 
@@ -167,6 +184,8 @@ UNUSED = {
     'RXBLOCK': {'Commands': ['On', 'Off'], 'Group': 'A', 'Default': 'Off', 'Help': 'The  TNC will  send  data to  the  terminal in  RXBLOCK format.'},
     'AWlen': {'Commands': [7, 8], 'Group': 'A',  'Default': '7', 'Min': 7, 'Max': 8, 'Help': 'Terminal character length (7/8)'},
     'LCok': {'Commands': ['On', 'Off'], 'Group': 'A', 'Default': 'On', 'Help': 'Do not convert lower case to UPPER CASE on terminal'},
+    'HID': {'Commands': ['On', 'Off'], 'Group': 'I', 'Default': 'Off', 'Help': 'Don\'t send an ID packet every 9.5 mins when active',
+            'Implemented': True, 'Notes': 'Test on all ports' },                
 
 
     'REDisplay': {'Commands': [], 'Group': 'C', 'Default': '$12', 'Help': '(CTRL-R) char to print the current input buffer',
@@ -191,6 +210,18 @@ UNUSED = {
                     'Reason': 'Operating system level'},
     'TRFlow': {'Commands': ['On', 'Off'], 'Group': 'A', 'Default': 'Off', 'Help': 'Disable flow control to the Terminal (Trans mode)',
                     'Reason': 'Operating system level'},
-
+    'LCSTREAM': {'Commands': ['On', 'Off'], 'Group': 'C', 'Default': 'On', 'Help': 'Convert the stream select specifer to Upper case',
+                    'Reason': 'Most systems can now do upper and lower case. Who knew?'},
+    'TXDELAYC': {'Commands': [], 'Group': 'T', 'Default': '2', 'Min': 0, 'Max': 120, 'Help': 'specifying  additional transmit  delay time added to TXdelay in terms of CHARACTER TIME at the current radio port data rate.',
+                 'Reason': 'Not used with KISS'},
+    'SLOTS': {'Commands': [], 'Group': 'L', 'Default': '3', 'Min': 0, 'Max': 127, 'Help': '(O-127) specifies the number  of "slots" from which to  choose when deciding to access the channel',
+              'Reason': 'Not used with KISS'},
+    'ACKPRIOR': {'Commands': ['On', 'Off'], 'Group': 'L', 'Default': 'On', 'Help': 'When ACKPRIOR is  ON, acknowledgments have priority'},
+    'BKondel': {'Commands': ['On', 'Off'], 'Group': 'C', 'Default': 'On', 'Help': 'Send BS SP BS for each DELETE character'},
+    'DEADTIME': {'Commands': [], 'Group': 'T', 'Default': '33', 'Min': 0, 'Max': 250, 'Help': '0-250 * 10mSec specifies the  time it  takes a  station\'s receiver  todetect the  fact that  a remote  transmitter  has keyed  up'},
+    'DWait': {'Commands': [], 'Group': 'T', 'Default': '16', 'Min': 0, 'Max': 250, 'Help': '(O-250 * 10 msec) Delay to let digipeater repeat'},
+    'LFIGNORE': {'Commands': ['On', 'Off'], 'Group': 'L', 'Default': 'Off', 'Help': 'TNC will ignore <LF> characters'},
+    'LFadd': {'Commands': ['On', 'Off'], 'Group': 'L', 'Default': 'Off', 'Help': 'Add a Line Feed after each CR send to the terminal'},
+    'NEwmode': {'Commands': ['On', 'Off'], 'Group': 'L',  'Default': 'Off', 'Help': 'The TNC acts like a TNC I for changing modes'}, 
 
 }

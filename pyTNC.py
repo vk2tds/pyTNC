@@ -41,7 +41,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from datetime import datetime
 from datetime import timezone
-
+from datetime import timedelta
 
 #local
 import commands 
@@ -102,7 +102,7 @@ class TNC:
 
         self.tncConnected = False
         self.mheard = {}
-        self.kissinterface = None
+        self.kiss_interface = None
         self.exitToCommandMode = '*** COMMAND MODE ***'
 
         self.beaconCondition = 'AFTER'
@@ -149,6 +149,18 @@ class TNC:
     def output (self, line):
         print (line)
 
+    def sendID (self, port):
+        self.kiss_interface.kissIntsLastID[port] = library.datetimenow(self._completer)
+        frame = aioax25.frame.AX25UnnumberedInformationFrame(
+            destination='ID',
+            source=self._completer.options['MYCALL'].Value,
+            repeaters=None, 
+            pid=aioax25.frame.AX25Frame.PID_NO_L3,
+            payload=str.encode(self._completer.options['IDTEXT'].Value)
+        )
+
+        self.kiss_interface.kissInts[port].transmit (frame)
+        self.kiss_interface.kissIntsLastID[port] = library.datetimenow(self._completer)
 
     def setBeacon (self, cond, period):
         self.beaconPeriod = int(period)
@@ -165,13 +177,14 @@ class TNC:
             else:
                 self.beaconDue = 0
 
-    def PPS(self):
+
+    def PPSbeacon(self):
         # One pulse per second. Duh. Needs to be triggered of course.
         try:
             t = time.time()
             if self.beaconDue != 0:
                 if self.beaconDue <= t:
-                    axint = tnc.kiss_interface.kissDevices['1'].KissPorts(0).AX25Interface
+                    #axint = self.kiss_interface.kissDevices['1'].KissPorts(0).AX25Interface
 
                     u = completer.options['UNPROTO'].Value.split()
                     dest = u[0]
@@ -183,14 +196,19 @@ class TNC:
  
                     frame = aioax25.frame.AX25UnnumberedInformationFrame(
                         destination=dest,
-                        source=completer.options['MYCALL'].Value,
+                        source=self._completer.options['MYCALL'].Value,
                         repeaters=r, 
                         pid=aioax25.frame.AX25Frame.PID_NO_L3,
-                        payload=str.encode(completer.options['BTEXT'].Value)
+                        payload=str.encode(self._completer.options['BTEXT'].Value)
                     )
                     print (frame)
 
-                    axint.transmit (frame, callback = self.on_axSent) #callback=None)
+                    self.kiss_interface.kissInts[self.kiss_interface.activeStream.Port].transmit (frame)
+
+                    self.kiss_interface.kissIntsLastTX[self.kiss_interface.activeStream.Port] = library.datetimenow(self._completer) 
+
+
+                    #axint.transmit (frame) #callback=None)
 
                     if self.beaconCondition == 'AFTER':
                         self.beaconDue = 0
@@ -198,6 +216,38 @@ class TNC:
                         self.beaconDue = t + (self.beaconPeriod * 10) 
         except Exception:
             traceback.print_exc()
+
+    def PPSid(self):
+        try:
+            dtNow = library.datetimenow(self._completer)
+            # Update the kissIntsLastTX - easiest way :()
+            for s in commands.streamlist:
+                port = self.streams[s].Port
+                if not port is None:
+                    dt = self.streams[s].lastTX
+                    if dt is None:
+                        dt = dtNow
+                    if self.kiss_interface.kissIntsLastTX[port] is None:
+                        self.kiss_interface.kissIntsLastTX[port] = dtNow
+                    if dt > self.kiss_interface.kissIntsLastTX[port]:
+                        self.kiss_interface.kissIntsLastTX[port] = dtNow
+            if completer.options['HID'].Value:
+                # Beacon every 9.5 minutes
+                for s in self.kiss_interface.kissIntsLastTX:
+                    if not s in self.kiss_interface.kissIntsLastID or self.kiss_interface.kissIntsLastID[s] is None:
+                        self.kiss_interface.kissIntsLastID[s] = dtNow # Assume we transmit first ID in 9.5 minutes
+                    
+                    if (self.kiss_interface.kissIntsLastTX[s] - self.kiss_interface.kissIntsLastID[s]) > timedelta (seconds=970):
+                        self.sendID (s)    
+        except Exception:
+            traceback.print_exc()
+
+    def PPS(self):
+        self.PPSbeacon()
+        self.PPSid()
+
+
+
 
 
     @property

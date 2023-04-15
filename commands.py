@@ -35,6 +35,7 @@ import inspect
 from pprint import pprint
 import aioax25
 import aioax25.peer
+import aioax25.kiss
 
 
 import uuid
@@ -67,6 +68,7 @@ class Individual_Command:
         self._Implemented = False # Assume not implemented
         self._Notes = None
         self._Value = None
+        self._KISS = False
         self._Stage = 1
 
     def set(self, ind):
@@ -99,8 +101,8 @@ class Individual_Command:
             self._Implemented = ind['Implemented']
         if 'Notes' in ind:
             self._Notes = ind['Notes']
-        else:
-            self._Stage = 1
+        if 'KISS' in ind:
+            self._KISS = ind['KISS']
 
     @property
     def Display(self):
@@ -163,6 +165,9 @@ class Individual_Command:
     def Stage(self):
         return self._Stage
 
+    @property
+    def KISS(self):
+        return self._KISS
 
 
 
@@ -244,6 +249,12 @@ class process:
     def __init__ (self, completer, tnc):
         self.completer = completer
         self.tnc = tnc
+
+        self.kisscmd = {'TXDELAY': aioax25.kiss.CMD_TXDELAY,
+            'PERSIST': aioax25.kiss.CMD_P,
+            'SLOTTIME': aioax25.kiss.CMD_SLOTTIME,
+            'FULLDUP': aioax25.kiss.CMD_FDUPLEX}
+
 
     def input_cleanup (self, words):
         """
@@ -412,7 +423,8 @@ class process:
                     self.completer.options['IDTEXT'].Value = ''
                     return (returns.Ok, 'IDTEXT')
         elif words[0] == 'ID':
-            True
+            self.tnc.sendID(self.tnc.activeStream.Port) # Send an ID out the active port on the active stream
+            return (returns.Ok, None)
         elif words[0] == 'CONNECT':
             if len(words) < 2:
                 return (returns.Bad, None)
@@ -529,7 +541,14 @@ class process:
                     if self.tnc.streams[self.tnc.currentStream].Port == ki:
                         active = '*'
                     if type(kD) == aioax25.kiss.TCPKISSDevice:
-                        text += '%s%s\t%s\t%s\t%s' % (ki, active, 'TCP', kD._conn_args['host'], kD._conn_args['port'])
+                        text += '%s%s\t%s\t%s\t%s\t%s\t%s' % (ki, active, str(self.tnc.kiss_interface.kissIntsLastTX[ki] or '<NO TX SENT'), 
+                                str(self.tnc.kiss_interface.kissIntsLastID[ki] or '<NO ID SENT>'),
+                                'TCP', kD._conn_args['host'], kD._conn_args['port'])
+                    if type(kD) == aioax25.kiss.SerialKISSDevice:
+                        text += '%s%s\t%s\t%s\t%s\t%s\t%s' % (ki, active, str(self.tnc.kiss_interface.kissIntsLastTX[ki] or '<NO TX SENT'), 
+                                str(self.tnc.kiss_interface.kissIntsLastID[ki] or '<NO ID SENT>'),
+                                'Serial', kD._conn_args['device'], kD._conn_args['baudrate'])
+
                     # TODO add other device types.                            
 
                 return (returns.Ok, text)
@@ -595,8 +614,6 @@ class process:
                 elif words[0] == 'DISCONNE':
                     self.tnc.activeStream.disconnect()
                     return (returns.Ok, None)
-                elif words[0] == 'ID':
-                    return (returns.NotImplemented, None)
                 elif words[0] == 'DAYTIME':
                     t = library.displaydatetime (library.datetimenow(self.tnc.completer), self.tnc.completer)
                     return (returns.Ok, t)
@@ -654,6 +671,8 @@ class process:
                         return (returns.Ok, text)
 
     
+         
+
         if len(words) == 2:
             uc = words[0].upper()
             if words[0] in self.completer.options:
@@ -666,7 +685,15 @@ class process:
                         if number > self.completer.options[uc].Max: 
                             return returns.Bad
                         text = library.to_user (uc, self.completer.options[uc].Value, number)
-                        self.completer.options[uc].Value = number   
+                        self.completer.options[uc].Value = number 
+
+                        # # Now process KISS commands
+                        # if uc in self.kisscmd.keys():
+                        #     # PERPORT
+                        #     # we are a KISS comman
+                        #     processKISS
+
+
                         return (returns.Ok, text)
                 else:
                     uc = words[0].upper()

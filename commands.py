@@ -71,6 +71,8 @@ class Individual_Command:
         self._KISS = False
         self._Stage = 1
 
+
+
     def set(self, ind):
         if 'Display' in ind: 
             self._Display = ind['Display']
@@ -541,12 +543,11 @@ class process:
                     if self.tnc.streams[self.tnc.currentStream].Port == ki:
                         active = '*'
                     if type(kD) == aioax25.kiss.TCPKISSDevice:
-                        text += '%s%s\t%s\t%s\t%s\t%s\t%s' % (ki, active, str(self.tnc.kiss_interface.kissIntsLastTX[ki] or '<NO TX SENT'), 
-                                str(self.tnc.kiss_interface.kissIntsLastID[ki] or '<NO ID SENT>'),
-                                'TCP', kD._conn_args['host'], kD._conn_args['port'])
+                        text += '%s%s\t%s\t%s\t%s\t%s' % (ki, active, str(self.tnc.kiss_interface.kissIntsLastTX[ki] or '<NO TX SENT'), 
+                                'TCP', kD._conn_args['host'], 
+                                kD._conn_args['port'])
                     if type(kD) == aioax25.kiss.SerialKISSDevice:
-                        text += '%s%s\t%s\t%s\t%s\t%s\t%s' % (ki, active, str(self.tnc.kiss_interface.kissIntsLastTX[ki] or '<NO TX SENT'), 
-                                str(self.tnc.kiss_interface.kissIntsLastID[ki] or '<NO ID SENT>'),
+                        text += '%s%s\t%s\t%s\t%s\t%s' % (ki, active, str(self.tnc.kiss_interface.kissIntsLastTX[ki] or '<NO TX SENT'), 
                                 'Serial', kD._conn_args['device'], kD._conn_args['baudrate'])
 
                     # TODO add other device types.                            

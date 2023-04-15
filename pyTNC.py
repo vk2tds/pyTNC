@@ -150,7 +150,6 @@ class TNC:
         print (line)
 
     def sendID (self, port):
-        self.kiss_interface.kissIntsLastID[port] = library.datetimenow(self._completer)
         frame = aioax25.frame.AX25UnnumberedInformationFrame(
             destination='ID',
             source=self._completer.options['MYCALL'].Value,
@@ -160,7 +159,7 @@ class TNC:
         )
 
         self.kiss_interface.kissInts[port].transmit (frame)
-        self.kiss_interface.kissIntsLastID[port] = library.datetimenow(self._completer)
+        self.kiss_interface.kissIntsLastTX[port] = library.datetimenow(self._completer)
 
     def setBeacon (self, cond, period):
         self.beaconPeriod = int(period)
@@ -217,34 +216,8 @@ class TNC:
         except Exception:
             traceback.print_exc()
 
-    def PPSid(self):
-        try:
-            dtNow = library.datetimenow(self._completer)
-            # Update the kissIntsLastTX - easiest way :()
-            for s in commands.streamlist:
-                port = self.streams[s].Port
-                if not port is None:
-                    dt = self.streams[s].lastTX
-                    if dt is None:
-                        dt = dtNow
-                    if self.kiss_interface.kissIntsLastTX[port] is None:
-                        self.kiss_interface.kissIntsLastTX[port] = dtNow
-                    if dt > self.kiss_interface.kissIntsLastTX[port]:
-                        self.kiss_interface.kissIntsLastTX[port] = dtNow
-            if completer.options['HID'].Value:
-                # Beacon every 9.5 minutes
-                for s in self.kiss_interface.kissIntsLastTX:
-                    if not s in self.kiss_interface.kissIntsLastID or self.kiss_interface.kissIntsLastID[s] is None:
-                        self.kiss_interface.kissIntsLastID[s] = dtNow # Assume we transmit first ID in 9.5 minutes
-                    
-                    if (self.kiss_interface.kissIntsLastTX[s] - self.kiss_interface.kissIntsLastID[s]) > timedelta (seconds=970):
-                        self.sendID (s)    
-        except Exception:
-            traceback.print_exc()
-
     def PPS(self):
         self.PPSbeacon()
-        self.PPSid()
 
 
 

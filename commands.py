@@ -36,6 +36,7 @@ from pprint import pprint
 import aioax25
 import aioax25.peer
 import aioax25.kiss
+import copy
 
 from tabulate import tabulate
 
@@ -625,7 +626,12 @@ class process:
                                 scalls += ' VIA ' + str (self.tnc.streams[s].peer.reply_path) # TODO improve thsi code
                         else:
                             scalls = 'NO CONNECTION'
-                        resultList.append ([s + ' stream', sstate, scalls])                        
+                        bytes = 0
+                        if not self.tnc.streams[s]._rxBuffer.empty():
+                            tempq = self.tnc.streams[s]._rxBuffer.queue
+                            for x in tempq:
+                                bytes += len(x)
+                        resultList.append ([s + ' stream', sstate, scalls, str(bytes)])                        
 
                     text = tabulate (resultList, tablefmt="plain")
                     return (returns.Ok, text)

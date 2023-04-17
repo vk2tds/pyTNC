@@ -125,12 +125,11 @@ class TNC:
         # An indication that we have receieved a packet with payload from over the air
         # This function can be called from a STREAM class, or can be called from a library when
         # the user changes stream.
-
         if self.activeStream._rxBuffer.qsize() > 0:
             toPrint = False
             if self.tncMode == self.modeCommand:
                 toPrint = False
-            elif self.tncMode == self.modeCommand:
+            elif self.tncMode == self.modeConverse:
                 toPrint = True
             elif self.tncMode == self.modeTransparent:
                 toPrint = True

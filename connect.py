@@ -89,20 +89,21 @@ class Stream:
         #
         #TODO expand buffer sizes dynamically saving content
         
-        self._bufferSize = 7            
-        self._rxBuffer = queue.Queue(self._bufferSize)
+        #self._bufferSize = 7            
+        self._rxBuffer = queue.Queue()
         # Peer details
 
         self._peer = None
 
 
     def received (self, payload):
+        print ('***** stream received', payload)
         if not self._rxBuffer.full():
             self._rxBuffer.put(payload)    
         else:
             # Not sure what to do if RX buffer is full.
             True
-        # TODO Send a message somwehere to say that we have the payload. Investigate stream swapping
+        # TNC is informed by the kiss_interface _on_rx
 
     def send (self, payload):
         if not self.peer is None:
@@ -118,7 +119,7 @@ class Stream:
                     pay[i] = pay[i] & 0x7f
             self._peer.send(pay)
 
-            self._lastTX = library.datetimeNow(self.completer)
+            self._lastTX = library.datetimenow(self.completer)
 
 
 
@@ -334,7 +335,9 @@ class kiss_interface():
                 mystream.send("Could not decode %r: %s" % (payload, e))
                 return
 
-            self._peerstream.received (payload)
+            
+            mystream.received (payload)
+            self._tnc.receive()
 
 
             #TODO: Do I need a TX buffer? Is it in the peer.send object?

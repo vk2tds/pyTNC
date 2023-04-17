@@ -249,9 +249,10 @@ class BufferAwareCompleter:
 
 class process:
     # Process commands
-    def __init__ (self, completer, tnc):
+    def __init__ (self, completer, tnc, init):
         self.completer = completer
         self.tnc = tnc
+        self.init = init
 
         self.kisscmd = {'TXDELAY': aioax25.kiss.CMD_TXDELAY,
             'PERSIST': aioax25.kiss.CMD_P,
@@ -267,6 +268,8 @@ class process:
         words [0] = words[0].upper()
         if words[0] == 'K':
             words[0] = 'CONNECT'
+        if words[0] == '?':
+            words = ['HELP', 'ALL']
 
         if not words[0] in self.completer.options:
             # didnt find the first word, so see if we can do a shorter version
@@ -588,6 +591,7 @@ class process:
             if len(words) == 2:
                 if words[1] in streamlist:
                     self.tnc.currentStream = words[1]
+                    self.tnc.receive() # On change stream, check to see if there is any payload to display
             return (returns.Eh, None)
 
         elif words[0] == 'MYCALL' and len(words) == 2:
@@ -625,12 +629,14 @@ class process:
 
                     text = tabulate (resultList, tablefmt="plain")
                     return (returns.Ok, text)
-                elif words[0] == 'CALIBRA':
-                    return (returns.NotImplemented, None)
+                elif words[0] == 'RESET':
+                    self.init()
+                    return (returns.Ok, None)
                 elif words[0] == 'CALSET':
                     return (returns.NotImplemented, None)
                 elif words[0] == 'CONVERS':
                     self.tnc.mode = self.tnc.modeConverse
+                    self.tnc.receive() # should this be AFTER the OK?
                     return (returns.Ok, None)
                 elif words[0] == 'DISCONNE':
                     self.tnc.activeStream.disconnect()
@@ -652,6 +658,7 @@ class process:
                     return (returns.NotImplemented, None)
                 elif words[0] == 'TRANS':
                     self.tnc.mode = self.tnc.modeTrans
+                    self.tnc.receive() # should this be after the OK?
                     return (returns.Ok, None)
                 elif words[0] == 'STATUS':
                     return (returns.NotImplemented, None)

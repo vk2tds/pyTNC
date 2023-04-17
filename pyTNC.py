@@ -121,6 +121,24 @@ class TNC:
         self._currentStream = commands.streamlist[0]
 
 
+    def receive(self):
+        # An indication that we have receieved a packet with payload from over the air
+        # This function can be called from a STREAM class, or can be called from a library when
+        # the user changes stream.
+
+        if self.activeStream._rxBuffer.qsize() > 0:
+            toPrint = False
+            if self.tncMode == self.modeCommand:
+                toPrint = False
+            elif self.tncMode == self.modeCommand:
+                toPrint = True
+            elif self.tncMode == self.modeTransparent:
+                toPrint = True
+            if toPrint:
+                while not self.activeStream._rxBuffer.empty():
+                    tnc.output (self.activeStream._rxBuffer.get()) #TODO add timeout?
+
+
     @property
     def completer (self):
         return self._completer
@@ -254,13 +272,6 @@ def _on_receive(interface, frame, match=None):
     tnc.monitor._on_receive_monitor(interface, frame)
 
 
-ip = {}
-
-TNC2 = {}
-tnc = TNC() 
-tnc.kiss_interface = connect.kiss_interface (tnc, _on_receive, loggerfile)
-
-streaming_queue = asyncio.Queue()
 
 
 async def periodic():
@@ -296,7 +307,7 @@ async def main_async():
             if tnc.exitToCommandMode in chunk:
                 tnc.mode = tnc.modeCommand
             elif chunk[:3].upper() == 'BYE' :
-                print ('--->BYE')
+                tnc.output ('--->BYE')
                 tnc.activeStream.disconnect()
             else:
                 tnc.activeStream.send (chunk)
@@ -328,14 +339,39 @@ def cancel_all():
 def output (line):
     print ('%s' %(line))
 
+
+
+ip = None
+tnc = None
+
+
+streaming_queue = asyncio.Queue()
+
+
+
 def init():
     global completer
     global ip 
+    global tnc
     global console
+
+    if not tnc is None:
+        # we must be doing a power on reset!!!
+        tnc.kiss_interface.closedown()
+        tnc.output ('Power On Reset')
+        del tnc
+
+
+    tnc = TNC() 
+    tnc.kiss_interface = connect.kiss_interface (tnc, _on_receive, loggerfile)
 
     tnc.output ('TAPR TNC2 Clone')
     tnc.output ('Copyright 2023 Darryl Smith, VK2TDS')
     tnc.output ('')
+
+    TNC2 = {}
+
+
 
     for index in ROM.TNC2_ROM:
         c = commands.Individual_Command()
@@ -357,7 +393,7 @@ def init():
     readline.parse_and_bind('tab: complete')
     readline.parse_and_bind('"ç": "%s\n"' % (tnc.exitToCommandMode)) # Alt-C / Option-C on MacOS depending on the keyboard 
 
-    ip = commands.process (completer, tnc)
+    ip = commands.process (completer, tnc, init)
 
     # First, process defaults
     for stage in range (1,4): # Process defaults in stages. 1 is default, then 2, 3, etc. Needed for KissDev and KissPort
@@ -382,8 +418,11 @@ def init():
                 ret = ip.input_process (custom)
                 print (ret[1])
     print('')
-init()
 
+
+
+
+init()
 
 semaphore = Semaphore()
 

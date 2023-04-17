@@ -119,8 +119,8 @@ TNC2_ROM = {
     'PErsist': {'Commands': [], 'Group': 'T', 'Default': '63', 'Min': 0, 'Max': 255, 
                 'Help': 'This command, used with SLOTTIME, implements an algorithm for channel access to send packets',
                 'KISS': True },
-    'RECOnnect': {'Commands': [], 'Help': 'Like Connect but to restablish a link via a new path'},
-    'RESET': {'Commands': [], 'Help': 'RESET bbRAM PARAMETERS TO DEFAULTS'},
+    'RESET': {'Commands': [], 'Help': 'RESET bbRAM PARAMETERS TO DEFAULTS',
+              'Implemented': True, 'Notes': 'The closedown() function triggers errors in the underlying library' },
     'RESptime': {'Commands': [], 'Group': 'T', 'Default': '12', 'Min': 0, 'Max': 250, 'Help': '(O-250 * 100 ms) minimum delay for sending an ACK'},
     'RESTART': {'Commands': [], 'Help': 'Perform a power on reset'},
     'RETry': {'Commands': [], 'Group': 'L', 'Default': '10', 'Min': 0, 'Max': 15, 'Help': '(O-15) maximum number of retries for a frame'},
@@ -163,6 +163,7 @@ FUTURE = {
     'SEndpac': {'Commands': [], 'Group': 'C', 'Default': '$0D', 'Help': '(CR) Char to force a frame to be sent)'},
     'FSCreen': {'Commands': ['On', 'Off'], 'Group': 'L', 'Default': 'On', 'Help': 'Display command generates 4 columns - default ON',
                 'Implemented': False, 'Notes': 'Moved to tabulate' },
+    'RECOnnect': {'Commands': [], 'Help': 'Like Connect but to restablish a link via a new path'},
 
 
 }

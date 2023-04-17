@@ -192,6 +192,14 @@ class kiss_interface():
         self._tnc = tnc
         self._peerstream = PeerStream(self._tnc)
 
+    def __del__(self):
+        for x in self._kissInts:
+            del self._kissInts[x]
+        for x in self._kissDevices:
+            del self._kissDevices[x]
+        for x in self._stations:
+            del self._stations[x]
+
     def callsign(self, call):
         if '-' in call:
             (c,s) = call.split ('-')
@@ -252,6 +260,10 @@ class kiss_interface():
             station.connection_request.connect(self._on_connection_rq) # incoming
             station.attach() # Connect the station to the interface
             self._stations[interface] = station
+
+    def closedown (self):
+        for device in self._kissDevices:
+            self._kissDevices[device].close()
 
 
     @property 

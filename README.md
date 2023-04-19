@@ -22,7 +22,7 @@ There are custom settings are stored in the same directory as the code. These ar
 
 #TODO: only open the standard 'custom.txt' if a local copy does not exist.
 
-== TNC Operational Modes ==
+## TNC Operational Modes ##
 
 There are three TNC operational modes, just like most TNC's. They are:
 * Command Mode
@@ -39,11 +39,11 @@ From Command Mode you can enter Converse and Transparent Mode by typing 'CONV' (
 
 Exiting back to Command Mode is a minor issue at the moment. ALT-C on my Mac exits into Command Mode. In the future, Ctrl-C will need to be implemented. 
 
-== Changing the Callsign ==
+## Changing the Callsign ##
 
 To set the callsign, use a command like 'MYCALL VK2TDS-10', replacing my callsign with your callsign obviously. The callsign should be set before you use the KISS commands below. In future this will likely be fixed. It might even already be fixed. 
 
-== Connecting to a TNC == 
+## Connecting to a TNC ##
 
 At the moment, the software is required to connect to a KISS TNC via TCP. More connection modes will come. Since I am using a Mac, this is what I need to use. There are two very important KISS commands that need to be used, KISSDEV and KISSINT. KISSDEV should be used first, since it sets up the device, followed by KISSINT, which sets up the interface on that device. 
 
@@ -67,7 +67,7 @@ There needs to be a default interface for us to use. To make things easy, we use
 
 The TNC can operate in AX.25v2.0 or AX.25v2.2 mode. In the latter, the protocol will fall back to AX.25v2.0 if the other end does not support the more modern version. You can force the TNC to use AX.25v2.0 with teh command 'AXVERSION AX25_20'.
 
-== Streams ==
+## Streams ##
 
 At the time of writing, streams are still being developed. The idea first is that a Stream is 'attached' to a KISSport. You can then make or receieve connections on that KISSport. Multiple streams can be 'attached' to the same KISSport, so that you could have multiple connections active at the same time on the one KISSport. For example, you could connect to VK2SE on Stream A, and VK2AAB on Stream B. Any packets that come in on Stream A whilst you are active on Stream B would be cached until you change stream. PORTS and Connections operate within a stream. Connections stay in their current state when you change streams. When you return to a stream, it is as if you had never left it. 
 
@@ -102,7 +102,7 @@ TODO: should it be STREAMSHOW or PORTSHOW??
 
 
 
-=== ROM.PY ===
+### ROM.PY ###
 All the TNC commands, default values, help and more are stored in ROM.py. This file is processed by being read into a class. Certain values are then over-ridden by the custom.txt file entries. 
 
 
@@ -118,7 +118,7 @@ All the TNC commands, default values, help and more are stored in ROM.py. This f
 
 
 
-Multi-Connects
+### Multi-Connects ###
 The TNC makes it possible for you to talk to more than one person at the same time. Single port TNCs, such as the KPC-3 Plus, support 26 streams on the one port. Multi- port TNCs, such as the KPC-9612 Plus, support 26 streams per port.
 The command MAXUSERS determines how many streams may be used at one time, per port, and the command USERS determines how many people can connect to the TNC per port. An incoming connect uses the next available stream. If the number of streams set by USERS is full, then a station attempting a connect with your TNC will receive a busy message instead of a connect. However, if MAXUSERS is set larger than USERS, you can still issue outgoing connects on additional streams.
 To determine which port you are on, simply use the STATUS command, typing STAT at the command prompt. The TNC will report which streams are active and which one you are on. If you wish to remain on the current stream to communicate, no action is necessary. To change streams ( to make another connect or to send data to another

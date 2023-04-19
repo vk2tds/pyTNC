@@ -1,21 +1,47 @@
 # pyTNC
 AX.25 Ham Radio TNC
 
-This code is designed to implement a TAPR TNC-2 type interface, written in Python. The code is definitely a work in progress, with lots more work needed. Thing such as error checking are rarely implemented. 
+This code is designed to implement a TAPR TNC-2 type interface, written in Python. The code is definitely a work in progress, with lots more work needed. Thing such as error checking are rarely implemented. The software is designed to conenct to a KISS TNC via TCP. The best solution for this might be DIREWOLF. Commands have been added to allow settings to be stored for use at runtime. 
 
-The software is designed to conenct to a KISS TNC via TCP. The best solution for this might be DIREWOLF. Commands have been added to allow settings to be stored for use at runtime. 
+This software mostly implements 'Connected Mode' functions. Unconnected Information (UI) modes such as APRS are better implemented in other software, such as in Direwolf itself. This softwaer was written because there really was not anything out there for the Mac dealing with Connected Mode
 
-The first thing that you should note is that custom settings are stored in the same directory as the code. These are user settings and  work exactly as if they had been typed on the pyTNC command line. The file is called 'custom.txt'
+It relies on a number of libraries that might not be installed by default under Python. See the INSTALLING section below. These include:
+* aioax25
+* asyncio
+* gnureadline
+* tabulate
+* tracback
 
-The software has a command line GUI. At some point, a TCP interface would be cool, so that you could telnet in remotely. We are not to that point yet. The  commands are basically TNC-2, with changes. They should all be documented if you type 'HELP ALL'. You can also get help with a command by replacing 'ALL' with the name of the command. For instance 'HELP CONNECT' will tell you how to connect. This help does need to be expanded. 
+The software has a command line GUI. At some point, a TCP interface would be cool, so that you could telnet in remotely. We are not to that point yet. The  commands are basically TNC-2, with changes. They should all be documented if you type 'HELP ALL'. You can also get help with a command by replacing 'ALL' with the name of the command. For instance 'HELP CONNECT' will tell you how to connect. This help does need to be expanded. If gnureadline or readline is opperating correctly, tab completion *should* work. No promises though.
 
-The command to exit CONV mode is an issue at the moment. ALT-C on my Mac exits into command mode
+At the time of writing, another TNC can connect *TO* pyTNC successfully. The reverse path connecting *FROM* pyTNC does not work yet. I have not yet tested DIGIPEATING, and I have no idea if it will work or not. Streams have been implemented, but more work is needed on them. Per KISS port or per STREAM settings are on my agenda. 
+
+Some commands may be implemented in the GUI only, where values change, but nothing happens in the background. This software is still under development, and might always be. Also, some commands might only work the first time they are run. KISSINT and KISSDEV are functions that likely work this way, when they are run with options modifying existing values. 
+
+There are custom settings are stored in the same directory as the code. These are user settings and  work exactly as if they had been typed on the pyTNC command line. The file is called 'custom.txt'. 
+
+#TODO: only open the standard 'custom.txt' if a local copy does not exist.
+
+== TNC Operational Modes ==
+
+There are three TNC operational modes, just like most TNC's. They are:
+* Command Mode
+* Converse Mode
+* Transparent Mode
+
+Command Mode is, as you would expect, how you interface with the TNC settings. Converse and Transparent modes conversely deal with communications with a remote station. 
+
+One of the best ways to become familiar with Command Mode is to start the software, whereupon you will be presented with Command Mode. From there typing the command 'HELP ALL' will give you a list of all the possible commands that pyTNC knows about. If you ever just need help on a single command, you can type 'HELP' followed by the name of the command. Thus, typing 'HELP CONNECT' will display the help on the 'CONNECT' command.
+
+Tab Completion *should* be operational in Command Mode. If it does not, this would be an issue with 'readline' or 'gnureadline'. The 'gnureadline' library works well for me under MacOS. 
+
+From Command Mode you can enter Converse and Transparent Mode by typing 'CONV' (or 'CONVERSE') to get into Converse mode; and 'TRANS' to get into Transparent mode. Once in Converse or Transparent Mode, anything you type will be sent to the station you are connected to and vice versa. 
+
+Exiting back to Command Mode is a minor issue at the moment. ALT-C on my Mac exits into Command Mode. In the future, Ctrl-C will need to be implemented. 
 
 == Changing the Callsign ==
 
-To set the callsign, use 'MYCALL VK2TDS-10', replacing my callsign with your callsign obviously. The callsign should be set before you use the KISS commands below. In future this will likely be fixed. Therefore, at this point, work out how to connect to the TNC.
-
-
+To set the callsign, use a command like 'MYCALL VK2TDS-10', replacing my callsign with your callsign obviously. The callsign should be set before you use the KISS commands below. In future this will likely be fixed. It might even already be fixed. 
 
 == Connecting to a TNC == 
 
@@ -28,7 +54,7 @@ An example appears below:
 
 Looking at the KISSDEV line, the first thing to note is the name 'picopacket'. This is freeform text. The only requirement is that it is the same as the ones used in KISSINT.
 
-We then go to TCP, indicating that we are connecting via TCP. Then onto the hostname and port for the KISS interface. This is fairly straightforward.
+We then go to TCP, indicating that we are connecting via TCP. Then onto the hostname and port for the KISS interface. This is fairly straightforward. At the moment, TCP and SERIAL transports have been implemented. 
 
 Each KISS device can have miltiple interfaces. An interface is generally a radio port. These start at index 0, and go up from there. 
 
@@ -39,24 +65,15 @@ You can see what has been set up by just typing the commands 'KISSINT' and 'KISS
 There needs to be a default interface for us to use. To make things easy, we use the 'PORT' command to see the available ports and select a new one. A port might be called something like 'picopacket:0'. To change to that port, type 'PORT picopacket:0'. If there is an asterisk next to one of the ports, that means it is the currently selected port. You can ignore the asterisk if changing ports.
 
 
-
-
-
-
-== AX25 Version ==
-
-To change the version of AX.25 being used, use the 'AXVERSION' command. It is slightly non-standard, as it only changes between AX.25v2.0 and AX.25v2.2. The default is the more modern version. To change to AX.25v2.0, you can use the command 'AXVERSION AX25_20'. 
-
-
-
-
-
+The TNC can operate in AX.25v2.0 or AX.25v2.2 mode. In the latter, the protocol will fall back to AX.25v2.0 if the other end does not support the more modern version. You can force the TNC to use AX.25v2.0 with teh command 'AXVERSION AX25_20'.
 
 == Streams ==
 
-At the time of writing, streams are still being developed. You can see the current stream by typing 'STREAM' and change streams with the stream command followed by a character, for instance, 'STREAM B'. 
+At the time of writing, streams are still being developed. The idea first is that a Stream is 'attached' to a KISSport. You can then make or receieve connections on that KISSport. Multiple streams can be 'attached' to the same KISSport, so that you could have multiple connections active at the same time on the one KISSport. For example, you could connect to VK2SE on Stream A, and VK2AAB on Stream B. Any packets that come in on Stream A whilst you are active on Stream B would be cached until you change stream. PORTS and Connections operate within a stream. Connections stay in their current state when you change streams. When you return to a stream, it is as if you had never left it. 
 
-PORTS and CONNECTIONS operate within a stream. Connections stay in their current state when you change streams. When you return to a stream, it is as if you had never left it. 
+You can see the current stream by typing 'STREAM' and change streams with the stream command followed by a character, for instance, 'STREAM B'. 
+
+The 'PORT' command will show the KISSport for all streams, with an asterisk for the KISSport that this Stream is currently connected to. You can change the port the stream is connected to with a command such as 'PORT picopacket:0' .
 
 There is a new command called 'STREAMSHOW', which when active, will display the stream when monitoring packets. Beware, this command may be changed to 'PORTSHOW' as the concept of streams is further developed. 
 
@@ -77,11 +94,6 @@ There is a new command called 'STREAMSHOW', which when active, will display the 
 
 
 
-
-
-
-
-
 TODO: have the custom.txt search in the home directory for the user too
 TODO: Take over Control-C
 TODO: Changing callsign after KISS is opened.
@@ -90,214 +102,17 @@ TODO: should it be STREAMSHOW or PORTSHOW??
 
 
 
-== CODE ==
-
-
-
 === ROM.PY ===
 All the TNC commands, default values, help and more are stored in ROM.py. This file is processed by being read into a class. Certain values are then over-ridden by the custom.txt file entries. 
 
 
-=== commands.py ===
-
-This file does a lot of heavy lifting. 
-
-Firstly, it contains a class (Individual_Command) that stores all the details from ROM.py. Then it contains classes for processing commands - A Buffer Aware Completer class and an input processing class.
-
-There is also a class to display packet dumps. This is in this file since most UI is done in this file.
-
-Finally, thee is the 'connection' class that might not end up being used. In all honesty, I am trying to find a way to remove this code. 
 
 
-
-
-
-* You can connect to Eliza by typing 'C ELIZA' at the CMD prompt. Exit by typing 'BYE'
-* Over time functionality is added to pyTNC.py and then over time moved to another library. This code is very much being worked on
-
-* I have disconnected ELIZA at the moment. She *MIGHT* be connected back in the future. 
-
-* Look at the following commands
-    #MFILTER Comma separated characters to totally ignore
-    #MSTAMP WB9FLW>AD7I,K9NG*,N2WX-71 05/24/97 16:53:19]:Hi Paul.
-    #UTC - display in UTC. Default OFF
-
-    #MONITOR - 1 = No characters > 0x7F; 2 = MONITOR ON
-
-
-    #CONRPT - if on, LTEXT -> L3TEXT, STEXT, CTEXT (if CMSG = On) sent on connection
-    #    break if CMSGDISC????
-
-    #CPOLL?
-    #CSTATUS - Status of connection streams
-    #CTEXT
-    #DGPscall
-    #Digipeat - Complex
-    #EBEACON - Default OFF - BTEXT echoed to terminal on transmission
-    #ENCRYPT, ENSHIFT
-    #Group - default Off - group monitoring (MASTERM) - Ignore this command
-
-    #STATUS
-
-* pyTNC._on_receive notes
-    # interface = ax25int above
-    # frame = the incoming UI frame (aioax25.frame.AX25UnnumberedInformationFrame)
-    # match = Regular expression Match object, if regular expressions were used in
-    #         the bind() call.
-    #p ('_on_receive')
-    #p (frame.header)
-    #p (frame.header.destination)
-    #p (frame.header.source)
-    #p (frame.header.repeaters)
-    #p (frame.header.cr)     # cd = Command Response bit
-    #p (frame.header.src_cr)
-    #p ('Control %x' %(frame.control))
-    #p (frame.pid)
-    #p (frame.frame_payload)
-    #p (frame)
-    #p (str(type(frame)))
-    #p (type(frame) is aioax25.frame.AX25UnnumberedInformationFrame)
-    #https://stackoverflow.com/questions/70181515/how-to-have-a-comfortable-e-g-gnu-readline-style-input-line-in-an-asyncio-tas
-
-
-
-
-
-
-
-#Right, so the `Signal()` class is from the `signalslot` package.  It
-#has a `.connect()` method to which you pass a function reference which
-#takes keyword arguments.  It takes some ideas from Qt which uses this
-#"observer" pattern quite heavily.
-#
-#https://signalslot.readthedocs.io/en/latest/
-#
-#So in this case; we need a handler that picks up the `peer` argument,
-#something like:
-#
-#```
-#def _on_connection_rq(peer, **kwargs):
-#   # Accept the connection
-#   peer.accept()
-#   # do something else with peer here
-#
-#station.connection_request.connect(_on_connection_rq)
-
-
-
-
-
-
-
-
-
-
-
-
-== Notes on using the AIOAX25 library ==
-
-AX25Station takes AX25Interface as a constructor. [SSID on network]
-attach interface via .attach() - links it up to an interface so it can send/receive S and I frames
-
-Incoming connections signalled via connection_request
-handler is passed AX25Peer instance via peer keyword argument
-- Call accept() to send a UA frame; or reject to send a DM frame
-
-To make outbound connection call .get_peer() to get instance of AX25Peer for the remote station
-Then call .connect() which will try sending XID (unless told it is ax25 2.0 before), followed by SABM or SABME
-
-AX25Peer is supposed to buffer incoming stream and emit via received_information [Not yet implemented]
-
-AX25Peer send is missing. Should be a `.send()` that basically buffers the outgoing traffic, slices it into
-I-frames, and sends them.
-
-
-
-
-
-
-
-
-
-
-
-
-
-Now, at present there isn't a `def send(self, data):` method on
-`AX25Peer`.  I'm thinking if there was, `data` should take `bytes` as
-input (to send a string; call `.encode()` on it first), and it'll
-buffer it for segmentation and transmission.
-
-Likewise, `received_information` could return back raw bytes from the
-I-frame payload, and/or it could hand back the incoming I-frame.
-`signalslot` is the implementation used for implementing these signals,
-and it works entirely through keyword arguments.  So I'm thinking that
-whatever is "connected" to `received_information` should be able to accept
-these keyword arguments (if a callback is not interested, it can use
-`**kwargs` at the end to 'swallow' the things it's not interested in):
 
 - `station`: `AX25Station` instance receiving the traffic
 - `peer`: `AX25Peer` from whom the traffic was received from
 - `frame`: The `AX25InformationFrame` containing the payload
 - `data`: The receive buffer content (`bytes`), which can be empty
-
-The thinking that `data` is any _new_ data received, discounting
-de-duplications and out-of-order transmissions: if `data` is an empty
-byte string, then the I-frame received pertains to out-of-order data
-that has either already been seen or follows a frame that hasn't been
-seen yet.
-
-As I say, I'm open to ideas here.  This is meant to be a fairly
-low-level interface that would then be overlaid by a higher-level
-interface that mimics the interface used for things like TCP and serial
-(AX.25 connected mode becomes "just another `asyncio` transport).  But,
-you know the saying, learn to crawl before attempting to walk or run.
-:-)
-
-Regards,
--- 
-
-
-
-    Command KISSDEV calls \/
-
-    def kissDeviceTCP (self, device, host, port):
-        self._kissDevices[device] = KissDevice (host, port, 'TCP')
-
-        #self._kissDevices[dev].KissDevice = self.start_ax25_device (host, port, 'TCP')
-
-    calls \/
-
-     def start_ax25_device(self, host, port, phy):
-            kissdevice = make_device(
-            type="tcp", host="localhost", port=8001,
-            log=self.logging, #.getLogger("ax25.kiss"),
-            loop=self.loop
-            )
-            kissdevice.open() # happens in background asynchronously
-
-            return kissdevice
-
-
-    Command KISSINT calls \/
-
-    def kissPort (self, interface):
-            #axint = self.start_ax25_port (self._kissDevices[dev].KissDevice, kissPort)
-            #self._kissDevices[dev].setKissPorts (kissPort, KissPort (axint, None, None, None))
-            #self.start_ax25_station (dev, kissPort)
-
-    Calls \/
-
-    def start_ax25_port(self, port):
-        ax25int = aioax25.interface.AX25Interface(
-            kissport=kissdevice[int(kissPort)],         # 0 = HF; 2 = USB
-            loop=self.loop, 
-            log=self.logging, #.getLogger('ax25.interface')
-        )
-
-        ax25int.bind (self.on_rx, '(.*?)', ssid=None, regex=True)
-
-
 
 
 
@@ -324,42 +139,5 @@ When CONOK is OFF, you can still connect to your mailbox.
 When operating with multiple connects allowed, the connection will take place on the next available stream. Connect requests in excess of the number allowed by the USERS command will receive a <DM> response and the “connect request: (call)” message will be output to your terminal if INTFACE is TERMINAL or NEWUSER.
 See also: conmode, connect, intface, maxusers, monitor, nomode, and users
 
-
-
-
-
-
-# Probably not needed and can be done in a class.
-# def _on_connection_rq(peer, **kwargs):
-#     log = logging.getLogger("connection.%s" % peer.address)
-
-#     log.info("Incoming connection from %s", peer.address)
-
-#     print ('Incoming Connection')
-#     def _on_state_change(state, **kwargs):
-#         print ('State')
-#         log.info("State is now %s", state)
-#         if state is peer.AX25PeerState.CONNECTED:
-#             peer.send(("Hello %s\r\n" % peer.address).encode())
-
-#     def _on_rx(payload, **kwargs):
-#         print ('RX')
-#         try:
-#             payload = payload.decode()
-#         except Exception as e:
-#             log.exception("Could not decode %r", payload)
-#             peer.send("Could not decode %r: %s", payload, e)
-#             return
-
-#         log.info("Received: %r", payload)
-#         peer.send(("You sent: %r\r\n" % payload).encode())
-
-#         if payload == "bye\r":
-#             peer.send(("Disconnecting\r\n").encode())
-#             peer.disconnect()
-
-#     peer.connect_state_changed.connect(_on_state_change)
-#     peer.received_information.connect(_on_rx)
-#     peer.accept()
 
 

@@ -38,10 +38,6 @@ from aioax25.version import AX25Version
 from threading import Thread
 from threading import Semaphore
 from pathlib import Path
-from types import SimpleNamespace
-from datetime import datetime
-from datetime import timezone
-from datetime import timedelta
 
 #local
 import commands 

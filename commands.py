@@ -22,25 +22,17 @@
 # TNC2 Commands
 # https://web.tapr.org/meetings/CNC_1986/CNC1986-TNC-2Setting-W2VY.pdf
 
-import string
 import re
-from datetime import timezone
-import datetime
 import gnureadline as readline
 import aioax25
 import library
 import enum
-import sys 
-import inspect
 from pprint import pprint
 import aioax25
 import aioax25.peer
 import aioax25.kiss
-import copy
 
 from tabulate import tabulate
-
-import uuid
 
 
 streamlist = ('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J')
@@ -447,6 +439,7 @@ class process:
             self.tnc.sendID(self.tnc.activeStream.Port) # Send an ID out the active port on the active stream
             return (returns.Ok, None)
         elif words[0] == 'CONNECT':
+            self.tnc.output ('CONNECT is not yet implemented. Remove this message when it does, and update the documentation')
             if len(words) < 2:
                 return (returns.Bad, None)
             # put the words back together and then split them with space and commas
@@ -1004,3 +997,6 @@ class Monitor:
 
     def output(self, line):
         self._output (line)
+
+
+

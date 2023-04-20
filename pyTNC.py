@@ -43,6 +43,7 @@ from pathlib import Path
 import commands 
 import connect 
 import ROM
+import packet
 
 formater = logging.Formatter('%(name)-13s: %(levelname)-8s %(message)s')
 
@@ -105,7 +106,7 @@ class TNC:
         self.beaconPeriod = 0 # Beacon every 0 * 10 seconds
         self.beaconDue = 0
 
-        self.monitor = commands.Monitor()
+        self.monitor = packet.Monitor()
         self._completer = None
 
 
@@ -131,7 +132,12 @@ class TNC:
                 toPrint = True
             if toPrint:
                 while not self.activeStream._rxBuffer.empty():
-                    tnc.output (self.activeStream._rxBuffer.get()) #TODO add timeout?
+                    tnc.output (self.activeStream._rxBuffer.get())
+
+    def justConnected(self, s, message):
+        # we are connected on a stream...
+
+        print ('--->', s, message)
 
 
     @property
@@ -213,7 +219,6 @@ class TNC:
                         pid=aioax25.frame.AX25Frame.PID_NO_L3,
                         payload=str.encode(self._completer.options['BTEXT'].Value)
                     )
-                    print (frame)
 
                     self.kiss_interface.kissInts[self.kiss_interface.activeStream.Port].transmit (frame)
 
@@ -401,18 +406,29 @@ def init():
                 completer.options[o].Shorter = ''.join(filter(str.isupper, completer.options[o].Display))
 
 
-    # Custom startup for debugging... Ideally the defaults elsewhere should be the defaults...
-    # well, except for KISSdev and KISSPort, which can have multiple calls
-    tnc.output ('Loading custom settings..')
-    p = Path(__file__).with_name('custom.txt')
-    if p.exists():
+    # Load settings from custom settings file. 
+    # Try... current directory, home directory, Install directory in that order...
+
+    path = None
+    config_file = 'pyTNC.conf'
+    if Path.cwd().joinpath(config_file).exists():
+        path = Path.cwd().joinpath(config_file)
+    elif Path.home().joinpath(config_file).exists():
+        path = Path.home().joinpath(config_file)
+    elif Path(__file__).with_name(config_file).exists():
+        path = Path(__file__).with_name(config_file)
+
+    if not path is None:
+        tnc.output ('Loading custom settings from %s' % (path))
         #if os.path.isfile (filename):
-        with p.open('r') as f:
+        with path.open('r') as f:
             lines = f.readlines()
             for custom in lines:
                 ret = ip.input_process (custom)
-                print (ret[1])
-    print('')
+                tnc.output (ret[1])
+    else:
+        tnc.output ('No custom settings found')
+    tnc.output ('')
 
 
 

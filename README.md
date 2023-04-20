@@ -14,11 +14,13 @@ It relies on a number of libraries that might not be installed by default under 
 
 The software has a command line GUI. At some point, a TCP interface would be cool, so that you could telnet in remotely. We are not to that point yet. The  commands are basically TNC-2, with changes. They should all be documented if you type 'HELP ALL'. You can also get help with a command by replacing 'ALL' with the name of the command. For instance 'HELP CONNECT' will tell you how to connect. This help does need to be expanded. If gnureadline or readline is opperating correctly, tab completion *should* work. No promises though.
 
+Apart from the 'HELP' command, you can use the 'NOTES' command. It will give you some technical notes on commands. This is more intended to provide highly technical information about the command, any bugs and possible changes in the future. 'NOTES' are not perfect, but will hopefully save time debugging any issues.
+
 At the time of writing, another TNC can connect *TO* pyTNC successfully. The reverse path connecting *FROM* pyTNC does not work yet. I have not yet tested DIGIPEATING, and I have no idea if it will work or not. Streams have been implemented, but more work is needed on them. Per KISS port or per STREAM settings are on my agenda. 
 
 Some commands may be implemented in the GUI only, where values change, but nothing happens in the background. This software is still under development, and might always be. Also, some commands might only work the first time they are run. KISSINT and KISSDEV are functions that likely work this way, when they are run with options modifying existing values. 
 
-There are custom settings are stored in the same directory as the code. These are user settings and  work exactly as if they had been typed on the pyTNC command line. The file is called 'custom.txt'. 
+There are custom settings are stored in the same directory as the code. These are user settings and  work exactly as if they had been typed on the pyTNC command line. The file is called 'pyTNC.conf'. These are the 'standard' custom settings. Custom settinsg are loaded from ONE of the following locations - the current directory, the home directory, or the directory where pyTNC was installed. The software will only load settings from the first location it finds. 
 
 #TODO: only open the standard 'custom.txt' if a local copy does not exist.
 
@@ -65,7 +67,7 @@ You can see what has been set up by just typing the commands 'KISSINT' and 'KISS
 There needs to be a default interface for us to use. To make things easy, we use the 'PORT' command to see the available ports and select a new one. A port might be called something like 'picopacket:0'. To change to that port, type 'PORT picopacket:0'. If there is an asterisk next to one of the ports, that means it is the currently selected port. You can ignore the asterisk if changing ports.
 
 
-The TNC can operate in AX.25v2.0 or AX.25v2.2 mode. In the latter, the protocol will fall back to AX.25v2.0 if the other end does not support the more modern version. You can force the TNC to use AX.25v2.0 with teh command 'AXVERSION AX25_20'.
+The TNC can operate in AX.25v2.0 or AX.25v2.2 mode. In the latter, the protocol will fall back to AX.25v2.0 if the other end does not support the more modern version. You can force the TNC to use AX.25v2.0 with the command 'AXVERSION AX25_20'. For the truely intrepid, you can also use 'AXVERSION AX25_10' to use a really old version of the protocol.
 
 ## Streams ##
 

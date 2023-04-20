@@ -165,6 +165,9 @@ class Individual_Command:
     def KISS(self):
         return self._KISS
 
+    @property
+    def Notes(self):
+        return self._Notes
 
 
 
@@ -362,6 +365,17 @@ class process:
                         text = 'No help available'
                         return (returns.Ok, text)
             return (returns.Bad, None)
+        elif words[0] == 'NOTES':
+            table = []
+            for uc in self.completer.options:
+                if len(words) == 1 or ((len(words) >= 2) and (words[0] == uc)):
+                    if not self.completer.options[uc].Notes is None and len(self.completer.options[uc].Notes) > 0:
+                        table.append ([uc, self.completer.options[uc].Notes])
+            if len(table) > 0:
+                text = tabulate (table, maxcolwidths=[None, 50])
+                return (returns.Ok, text)
+            return (returns.Bad, None)
+
         elif words[0] == 'DISPLAY':
             narrowList = []
             wideList = []
@@ -599,8 +613,7 @@ class process:
         elif words[0] == 'RECONNECT':
             return (returns.NotImplemented, None)
         if len(words) == 1 and words[0].upper() in self.completer.options:        # If a single word only, and it has a value,
-            if not self.completer.options[words[0].upper()].Value is None:       # then print the value
-                #ToDo: Print True as 'On'
+            if not self.completer.options[words[0].upper()].Value is None:      
                 text = library.to_user (words[0], None, self.completer.options[words[0].upper()].Value)
                 return (returns.Ok, text)
         
@@ -860,6 +873,7 @@ class Monitor:
 
         displayPacket = False
 
+        #TODO _tnc.connected is ARGH!!!
         if self._tnc.connected:
             if mcon == False:
                 # do not display in Connected mode if mcon = False
@@ -903,9 +917,9 @@ class Monitor:
         else:
             callsigns = frame.header.source.__str__() + '>' + frame.header.destination.__str__()
 
-        if type(frame) is aioax25.frame.AX25RawFrame:
-            self.output ('--->AX25RawFrame')
-            self.output ('RAW' + str(frame))
+        #if type(frame) is aioax25.frame.AX25RawFrame:
+        #    self.output ('--->AX25RawFrame')
+        #    self.output ('RAW' + str(frame))
 
         if type(frame) is aioax25.frame.AX25RawFrame:
             control = 'RAW PACKET'
